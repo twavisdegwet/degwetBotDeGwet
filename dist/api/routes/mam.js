@@ -142,18 +142,62 @@ router.post('/download', async (req, res) => {
             }
         }
         const mamCookie = `mam_id=${MAM_ID}`;
-        const torrentId = await delugeClient.downloadTorrentFromUrl(downloadUrl, mamCookie, torrentName);
+        let torrentId;
+        let duplicateTorrentHash;
+        try {
+            torrentId = await delugeClient.downloadTorrentFromUrl(downloadUrl, mamCookie, torrentName);
+        }
+        catch (error) {
+            if (error instanceof Error && error.message.includes('Torrent already in session')) {
+                const hashMatch = error.message.match(/\(([a-f0-9]{40})\)/);
+                if (hashMatch) {
+                    duplicateTorrentHash = hashMatch[1];
+                }
+                console.log(`Duplicate torrent detected: ${duplicateTorrentHash || 'unknown hash'}`);
+                const existingTorrents = await delugeClient.getTorrents();
+                const existingTorrent = duplicateTorrentHash
+                    ? existingTorrents.find((t) => t.id === duplicateTorrentHash)
+                    : existingTorrents.find((t) => torrentName && t.name && t.name.toLowerCase().includes(torrentName.toLowerCase().substring(0, 20)));
+                if (existingTorrent) {
+                    return res.json({
+                        isDuplicate: true,
+                        isDuplicateError: true,
+                        torrentId: existingTorrent.id,
+                        torrentInfo: {
+                            name: existingTorrent.name,
+                            state: existingTorrent.state,
+                            progress: existingTorrent.progress || 0
+                        },
+                        canUploadToGDrive: existingTorrent.state === 'Seeding' || (existingTorrent.progress && existingTorrent.progress >= 100),
+                        message: `Torrent already exists in Deluge. ${existingTorrent.state === 'Seeding' || (existingTorrent.progress && existingTorrent.progress >= 100) ? 'Ready for Google Drive upload.' : 'Still downloading.'}`
+                    });
+                }
+                else {
+                    return res.status(409).json({
+                        error: 'Torrent already exists in Deluge but could not be found',
+                        isDuplicate: true,
+                        isDuplicateError: true,
+                        duplicateHash: duplicateTorrentHash
+                    });
+                }
+            }
+            else {
+                throw error;
+            }
+        }
         const existingTorrents = await delugeClient.getTorrents();
         const torrentInfo = existingTorrents.find((t) => t.id === torrentId);
         const isExisting = torrentInfo && torrentInfo.progress !== undefined && torrentInfo.progress > 0;
         return res.json({
             torrentId,
             isDuplicate: isExisting,
+            isDuplicateError: false,
             torrentInfo: torrentInfo ? {
                 name: torrentInfo.name,
                 state: torrentInfo.state,
                 progress: torrentInfo.progress || 0
             } : undefined,
+            canUploadToGDrive: torrentInfo && (torrentInfo.state === 'Seeding' || (torrentInfo.progress && torrentInfo.progress >= 100)),
             message: isExisting
                 ? `Torrent already exists in Deluge (ID: ${torrentId})`
                 : 'Torrent added successfully to Deluge'

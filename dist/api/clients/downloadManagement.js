@@ -41,6 +41,19 @@ class DownloadManager {
             throw new Error('Failed to search torrents in Deluge');
         }
     }
+    async getTorrentInfo(torrentId) {
+        try {
+            const result = await this.delugeClient.sendRequest('web.get_torrent_status', [
+                torrentId,
+                ['name', 'save_path']
+            ]);
+            return result || null;
+        }
+        catch (error) {
+            console.error(`Error getting torrent info for ${torrentId}:`, error);
+            return null;
+        }
+    }
 }
 exports.DownloadManager = DownloadManager;
 //# sourceMappingURL=downloadManagement.js.map

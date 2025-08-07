@@ -32,19 +32,38 @@ class UploadManagementClient {
         if (!fs_1.default.existsSync(this.tempDir)) {
             fs_1.default.mkdirSync(this.tempDir, { recursive: true });
         }
+        else {
+            try {
+                const files = fs_1.default.readdirSync(this.tempDir);
+                for (const file of files) {
+                    const filePath = path_1.default.join(this.tempDir, file);
+                    if (fs_1.default.statSync(filePath).isDirectory()) {
+                        (0, child_process_1.execSync)(`rm -rf "${filePath}"`);
+                    }
+                    else {
+                        fs_1.default.unlinkSync(filePath);
+                    }
+                }
+            }
+            catch (error) {
+                console.error('Error cleaning temp directory:', error);
+            }
+        }
     }
     async isAuthenticated() {
         try {
             await this.drive.about.get({ fields: 'user' });
+            console.log('✅ Google Drive authentication successful! I\'m more connected than Jon is to reality.');
             return true;
         }
         catch (error) {
-            console.error('Authentication check failed:', error);
+            console.error('❌ Authentication check failed. This is worse than a Monday without lasagna:', error);
             return false;
         }
     }
     async createFolder(name, parentId) {
         try {
+            console.log(`📁 Creating folder "${name}" - This is more organized than Jon's sock drawer.`);
             const fileMetadata = {
                 name: name,
                 mimeType: 'application/vnd.google-apps.folder'
@@ -58,10 +77,11 @@ class UploadManagementClient {
                 fields: 'id',
                 supportsAllDrives: true
             });
+            console.log(`✅ Folder created successfully! I'm more productive than Odie on his best day.`);
             return response.data.id;
         }
         catch (error) {
-            console.error('Error creating folder:', error);
+            console.error('❌ Error creating folder. I blame Nermal for being too distracting:', error);
             throw new Error(`Failed to create folder: ${name}`);
         }
     }
@@ -94,6 +114,7 @@ class UploadManagementClient {
     async copyFilesToTemp(files, basePath) {
         const tempSessionDir = path_1.default.join(this.tempDir, `session_${Date.now()}`);
         fs_1.default.mkdirSync(tempSessionDir, { recursive: true });
+        console.log(`📋 Copying ${files.length} files to temp directory. This is harder work than avoiding Mondays.`);
         const copiedFiles = [];
         for (const file of files) {
             const sourcePath = path_1.default.join(basePath, file.path);
@@ -102,12 +123,13 @@ class UploadManagementClient {
             try {
                 await execAsync(`cp "${sourcePath}" "${destPath}"`);
                 copiedFiles.push(destPath);
-                console.log(`Copied: ${fileName}`);
+                console.log(`✅ Copied: ${fileName} - One step closer to my lasagna break.`);
             }
             catch (error) {
-                console.error(`Failed to copy ${fileName}:`, error);
+                console.error(`❌ Failed to copy ${fileName}. This is more frustrating than Odie's existence:`, error);
             }
         }
+        console.log(`🎉 Finished copying files! I deserve a nap and a whole pan of lasagna.`);
         return copiedFiles;
     }
     extractMetadataFromName(torrentName) {
@@ -159,29 +181,30 @@ class UploadManagementClient {
         try {
             const hasMP3s = await (0, mp3Converter_1.hasMP3Files)(tempDir);
             if (!hasMP3s) {
-                console.log('No MP3 files found for conversion');
+                console.log('🎵 No MP3 files found for conversion. That\'s disappointing. Like finding an empty lasagna pan.');
                 return null;
             }
-            console.log('Converting MP3 files to M4B using improved converter...');
+            console.log('🎵 Converting MP3 files to M4B... This will take longer than my afternoon nap, but it\'ll be worth it!');
             const metadata = this.extractMetadataFromName(torrentName);
-            console.log('Extracted metadata:', metadata);
+            console.log('📖 Extracted metadata like a detective. I\'m basically Sherlock Holmes, but lazier:', metadata);
             const result = await (0, mp3Converter_1.convertMp3ToM4b)(tempDir, {
                 title: metadata.title,
                 author: metadata.author,
                 autoApprove: true
             });
             if (result.success && result.outputPath) {
-                console.log(`✅ MP3 to M4B conversion successful: ${result.outputPath}`);
-                console.log(`⏱️  Conversion took: ${Math.round((result.duration || 0) / 1000)}s`);
+                const durationMinutes = Math.round((result.duration || 0) / 1000 / 60);
+                console.log(`✅ MP3 to M4B conversion successful! I'm more accomplished than Jon on his best day: ${result.outputPath}`);
+                console.log(`⏱️  Conversion took: ${durationMinutes} minutes. That's ${durationMinutes} minutes I could have spent napping.`);
                 return result.outputPath;
             }
             else {
-                console.error(`❌ MP3 to M4B conversion failed: ${result.error}`);
+                console.error(`❌ MP3 to M4B conversion failed. This is worse than a Monday morning: ${result.error}`);
                 return null;
             }
         }
         catch (error) {
-            console.error('Error in MP3 to M4B conversion:', error);
+            console.error('❌ Error in MP3 to M4B conversion. I blame Nermal for being too distracting:', error);
             return null;
         }
     }
@@ -230,10 +253,10 @@ class UploadManagementClient {
     async cleanupTemp(tempDir) {
         try {
             await execAsync(`rm -rf "${tempDir}"`);
-            console.log(`Cleaned up temp directory: ${tempDir}`);
+            console.log(`🧹 Cleaned up temp directory: ${tempDir}. I'm tidier than Jon's cooking attempts.`);
         }
         catch (error) {
-            console.error('Error cleaning up temp directory:', error);
+            console.error('❌ Error cleaning up temp directory. This mess is worse than Odie\'s drool:', error);
         }
     }
     async uploadTorrent(torrentObject, options = {}) {

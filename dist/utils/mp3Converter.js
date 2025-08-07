@@ -85,12 +85,12 @@ async function convertFromMamDownload(sourceDirectory, mamMetadata) {
 }
 async function hasMP3Files(directory) {
     try {
-        const { stdout } = await execAsync(`find "${directory}" -name "*.mp3" -type f | head -1`);
+        const { stdout } = await execAsync(`find "${directory}" -iname "*.mp3" -type f | head -1`);
         return stdout.trim().length > 0;
     }
     catch (error) {
         logger_1.Logger.error(`Error checking for MP3 files in ${directory}:`, error);
-        return false;
+        throw error;
     }
 }
 //# sourceMappingURL=mp3Converter.js.map

@@ -2,8 +2,7 @@ import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { DownloadManager } from '../../api/clients/downloadManagement';
 import { DelugeClient } from '../../api/clients/delugeClient';
 import { env } from '../../config/env';
-import axios from 'axios';
-import { analyzeContentType, formatFileSize } from '../utils';
+import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from '../uploadUtils';
 
 const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
 
@@ -66,41 +65,13 @@ export async function execute(interaction: CommandInteraction) {
       const selection = parseInt(m.content) - 1;
       const selectedTorrent = (interaction.client as any).uploadTorrentList.get(interaction.user.id).torrents[selection];
 
-      const files = await downloadManager.getTorrentFiles(selectedTorrent.id);
-      const analysis = analyzeContentType(files);
-
-      // Check if there are MP3 files - if so, always prompt the user
-      const hasMp3Files = analysis.audioFiles.some(file => file.toLowerCase().endsWith('.mp3'));
+      // Check for MP3 files and prompt user with the new unified system
+      const hasMp3Files = await checkForMp3AndPrompt(selectedTorrent.id, m, 'gdrive_upload');
       
-      if (hasMp3Files) {
-        const contentType = analysis.type === 'audiobook' ? 'audiobook' : 'content with MP3 files';
-        await m.reply({
-          content: `🎵 This ${contentType} is full of MP3s, like a lasagna is full of cheese. I can convert them to a single M4B file, but it'll take a while. You could probably take a nap, wake up, and it still wouldn't be done. So, what's the plan?`,
-          components: [
-            {
-              type: 1,
-              components: [
-                {
-                  type: 2,
-                  style: 1,
-                  label: 'Yes, convert to M4B',
-                  custom_id: `gdrive_upload_convert_${selectedTorrent.id}`
-                },
-                {
-                  type: 2,
-                  style: 2,
-                  label: 'No, upload as is',
-                  custom_id: `gdrive_upload_no_convert_${selectedTorrent.id}`
-                }
-              ]
-            }
-          ]
-        });
-        return;
+      if (!hasMp3Files) {
+        // If no MP3 files detected, proceed with upload without conversion
+        await uploadToGDrive(m, selectedTorrent, false);
       }
-      
-      // If no MP3 files detected, proceed with upload without conversion
-      await uploadToGDrive(m, selectedTorrent, false);
     });
   } catch (error) {
     console.error('Error handling gdrive-upload command:', error);
@@ -109,94 +80,33 @@ export async function execute(interaction: CommandInteraction) {
 }
 
 export async function handleGDriveUploadInteraction(interaction: any) {
-  if (!interaction.isButton()) return;
-
-  const [action, ...params] = interaction.customId.split('_');
-
-  if (action === 'gdrive' && params[0] === 'upload') {
-    const convert = params[1] === 'convert';
-    const torrentId = params[2];
-
-    await interaction.deferUpdate();
-
-    const downloadManager = new DownloadManager(delugeClient);
-    const torrents = await downloadManager.listCompletedTorrents();
-    const selectedTorrent = torrents.find(t => t.id === torrentId);
-
-    if (selectedTorrent) {
-      await interaction.editReply({ content: `You clicked a button! That's more effort than I've put in all day. And I'm a robot. Now I'm going to upload **${selectedTorrent.name}**. Don't rush me, I'm thinking about lasagna.`, components: [] });
-      await uploadToGDrive(interaction, selectedTorrent, convert, true);
-    } else {
-      await interaction.editReply({ content: 'I couldn\'t find the torrent. It probably ran away to find a more interesting bot. One with more lasagna.', components: [] });
+  // Use the new unified upload button handler
+  await handleUploadButtonInteraction(interaction, 'gdrive_upload', async (torrentId: string, convert: boolean) => {
+    // Custom upload logic for gdrive-upload command
+    const result = await uploadTorrentToGDrive(torrentId, convert);
+    
+    // Update the interaction with the result
+    try {
+      await interaction.editReply({ content: result.message, components: [] });
+    } catch (editError: any) {
+      if (editError.code === 50027) { // Invalid Webhook Token
+        await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+      } else {
+        throw editError;
+      }
     }
-  }
+  });
 }
 
 async function uploadToGDrive(replyTarget: any, torrent: { id: string, name: string }, convert: boolean, isButtonInteraction: boolean = false) {
-  let statusMessage;
+  // Use the new unified upload system
+  const result = await uploadTorrentToGDrive(torrent.id, convert);
   
   if (isButtonInteraction) {
     // For button interactions that have been deferred, use editReply
-    statusMessage = await replyTarget.editReply({ 
-      content: `🚀 Okay, I'm uploading **${torrent.name}** to Google Drive. This is hard work. I need a nap. And a lasagna. But mostly a nap.${convert ? '\n🎵 I\'m also converting MP3s to M4B, so this might take a while. Like, a really long while.' : ''}`,
-      components: []
-    });
+    await replyTarget.editReply({ content: result.message, components: [] });
   } else {
     // For regular message replies
-    statusMessage = await replyTarget.reply({ 
-      content: `🚀 Okay, I'm uploading **${torrent.name}** to Google Drive. This is hard work. I need a nap. And a lasagna. But mostly a nap.${convert ? '\n🎵 I\'m also converting MP3s to M4B, so this might take a while. Like, a really long while.' : ''}`,
-      fetchReply: true 
-    });
-  }
-
-  try {
-    const uploadResponse = await axios.post('http://localhost:3000/api/uploads/torrent', {
-      torrentId: torrent.id,
-      convertMp3ToM4b: convert
-    });
-
-    if (uploadResponse.data.success) {
-      const downloadManager = new DownloadManager(delugeClient);
-      const files = await downloadManager.getTorrentFiles(torrent.id);
-      const analysis = analyzeContentType(files);
-      let successMessage = `✅ Hooray! **${torrent.name}** is on Google Drive. That was almost as satisfying as a nap after a big meal. Almost.\n\n`;
-      successMessage += `📁 I uploaded ${uploadResponse.data.uploadedFiles.length} files`;
-
-      if (analysis.totalSize > 0) {
-        successMessage += ` (${formatFileSize(analysis.totalSize)})`;
-      }
-      successMessage += '\n';
-
-      const contentParts = [];
-      if (analysis.audioFiles.length > 0) {
-        contentParts.push(`${analysis.audioFiles.length} audio file${analysis.audioFiles.length > 1 ? 's' : ''}`);
-      }
-      if (analysis.ebookFiles.length > 0) {
-        contentParts.push(`${analysis.ebookFiles.length} e-book file${analysis.ebookFiles.length > 1 ? 's' : ''}`);
-      }
-      if (analysis.otherFiles.length > 0) {
-        contentParts.push(`${analysis.otherFiles.length} other file${analysis.otherFiles.length > 1 ? 's' : ''}`);
-      }
-
-      if (contentParts.length > 0) {
-        successMessage += `${analysis.emoji} Content: ${contentParts.join(', ')}\n`;
-      }
-
-      if (uploadResponse.data.convertedFile) {
-        successMessage += `🎵 Converted to: ${uploadResponse.data.convertedFile}\n`;
-      }
-
-      if (uploadResponse.data.folderId) {
-        successMessage += `📂 [View Folder](https://drive.google.com/drive/folders/${uploadResponse.data.folderId})\n`;
-        successMessage += `📂 Folder ID: ${uploadResponse.data.folderId}`;
-      }
-
-      await statusMessage.edit({ content: successMessage, components: [] });
-    } else {
-      await statusMessage.edit({ content: `❌ The upload failed. I'm so depressed. I think I'll go eat a whole pan of lasagna to feel better. \n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`, components: [] });
-    }
-  } catch (error: any) {
-    console.error('Error uploading torrent:', error);
-    await statusMessage.edit({ content: `❌ The upload failed. I blame Odie. It's always Odie's fault. \n\nError: ${error.response?.data?.error || error.message}`, components: [] });
+    await replyTarget.reply({ content: result.message, fetchReply: true });
   }
 }

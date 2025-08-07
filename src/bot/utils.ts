@@ -4,6 +4,7 @@ import { CommandInteraction } from 'discord.js';
 import { DownloadManager } from '../api/clients/downloadManagement';
 import { DelugeClient } from '../api/clients/delugeClient';
 import { env } from '../config/env';
+import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
 
 const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
 
@@ -349,74 +350,15 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
         // Start the upload process
         await message.reply(`🎉 **${torrentName}** is downloaded! I'd say that calls for a victory lasagna, but we've got more work to do. Checking for MP3 files now. This is the exciting part! (It's not, I'd rather be napping).`);
         
-        // Check if there are MP3 files and prompt user
-        const downloadManager = new DownloadManager(delugeClient);
-        const files = await downloadManager.getTorrentFiles(torrentId);
-        const analysis = analyzeContentType(files);
-        const hasMp3Files = analysis.audioFiles.some(file => file.toLowerCase().endsWith('.mp3'));
+        // Use the new unified upload system
+        const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
         
-        console.log(`DEBUG: Torrent ${torrentId} analysis:`, {
-          totalFiles: files.length,
-          audioFiles: analysis.audioFiles.length,
-          hasMp3Files,
-          audioFileNames: analysis.audioFiles.slice(0, 5) // Show first 5 for debugging
-        });
-        
-        if (hasMp3Files) {
-          const contentType = analysis.type === 'audiobook' ? 'audiobook' : 'content with MP3 files';
-          console.log(`DEBUG: Prompting user for MP3 conversion for torrent ${torrentId}`);
-          await message.reply({
-            content: `🎵 Hey, so, this ${contentType} has MP3 files. We can convert them to a single M4B file, which is pretty neat for audiobooks. But, uh, it takes a while. Like, a really long while. You could probably watch a whole Garfield movie in the time it takes. And eat a whole lasagna. So, what do you say?`,
-            components: [
-              {
-                type: 1,
-                components: [
-                  {
-                    type: 2,
-                    style: 1,
-                    label: 'Yes, convert to M4B',
-                    custom_id: `auto_upload_convert_${torrentId}`
-                  },
-                  {
-                    type: 2,
-                    style: 2,
-                    label: 'No, upload as is',
-                    custom_id: `auto_upload_no_convert_${torrentId}`
-                  }
-                ]
-              }
-            ]
-          });
-          return; // Wait for user interaction
-        }
-        
-        // If no MP3 files, proceed with upload
-        try {
-          const uploadResponse = await axios.post('http://localhost:3000/api/uploads/torrent', {
-            torrentId: torrentId,
-            convertMp3ToM4b: false
-          });
-
-          if (uploadResponse.data.success) {
-            let successMessage = `✅ **${torrentName}** is on Google Drive! I did it! I'm a hero! A true champion! Now, where's my lasagna? I was promised lasagna.\n\n`;
-            successMessage += `📁 I uploaded ${uploadResponse.data.uploadedFiles.length} files.\n`;
-            
-            if (uploadResponse.data.convertedFile) {
-              successMessage += `🎵 Converted to: ${uploadResponse.data.convertedFile}\n`;
-            }
-            
-            if (uploadResponse.data.folderId) {
-              successMessage += `📂 [View Folder](https://drive.google.com/drive/folders/${uploadResponse.data.folderId})\n`;
-              successMessage += `📂 Folder ID: ${uploadResponse.data.folderId}`;
-            }
-
-            await message.reply(successMessage);
-          } else {
-            await message.reply(`❌ The auto-upload failed. This is a catastrophe. A disaster. A real Monday of a problem. I'm going to go lie down and think about what went wrong. And also about lasagna. Mostly lasagna.\n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`);
-          }
-        } catch (error: any) {
-          console.error('Error in auto-upload:', error);
-          await message.reply(`❌ The auto-upload failed. I blame Nermal. That cat is just too cute and distracting. It's not my fault.\n\nError: ${error.response?.data?.error || error.message}`);
+        if (!hasMp3Files) {
+          // If no MP3 files, proceed with upload
+          const result = await uploadTorrentToGDrive(torrentId, false, 
+            `✅ **${torrentName}** is on Google Drive! I did it! I'm a hero! A true champion! Now, where's my lasagna? I was promised lasagna.\n\n`
+          );
+          await message.reply(result.message);
         }
         
       } else {
@@ -451,49 +393,24 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
 
 // Function to handle auto-upload button interactions
 export async function handleAutoUploadInteraction(interaction: any) {
-  if (!interaction.isButton()) return;
-
-  const [action, upload, convertAction, torrentId] = interaction.customId.split('_');
-
-  if (action === 'auto' && upload === 'upload') {
-    const convert = convertAction === 'convert';
-
-    await interaction.deferUpdate();
-
+  // Use the new unified upload button handler
+  await handleUploadButtonInteraction(interaction, 'auto_upload', async (torrentId: string, convert: boolean) => {
+    // Custom upload logic for auto-upload (getebook/getaudiobook)
+    const result = await uploadTorrentToGDrive(torrentId, convert, 
+      `✅ It's on Google Drive! I'm a genius! A coding prodigy! A... very tired bot who needs a nap. And a lasagna. Did I mention the lasagna?\n\n`
+    );
+    
+    // Update the interaction with the result
     try {
-      const uploadResponse = await axios.post('http://localhost:3000/api/uploads/torrent', {
-        torrentId: torrentId,
-        convertMp3ToM4b: convert
-      });
-
-      if (uploadResponse.data.success) {
-        let successMessage = `✅ It's on Google Drive! I'm a genius! A coding prodigy! A... very tired bot who needs a nap. And a lasagna. Did I mention the lasagna?\n\n`;
-        successMessage += `📁 I uploaded ${uploadResponse.data.uploadedFiles.length} files`;
-        
-        if (convert && uploadResponse.data.convertedFile) {
-          successMessage += `\n🎵 Converted to: ${uploadResponse.data.convertedFile}`;
-        }
-        
-        if (uploadResponse.data.folderId) {
-          successMessage += `\n📂 [View Folder](https://drive.google.com/drive/folders/${uploadResponse.data.folderId})`;
-          successMessage += `\n📂 Folder ID: ${uploadResponse.data.folderId}`;
-        }
-
-        await interaction.editReply({ content: successMessage, components: [] });
+      await interaction.editReply({ content: result.message, components: [] });
+    } catch (editError: any) {
+      if (editError.code === 50027) { // Invalid Webhook Token
+        await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
       } else {
-        await interaction.editReply({ 
-          content: `❌ The upload failed. I'm starting to think this whole 'work' thing is a bad idea. I should have just stayed in bed and dreamed of lasagna.\n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`, 
-          components: [] 
-        });
+        throw editError;
       }
-    } catch (error: any) {
-      console.error('Error uploading torrent:', error);
-      await interaction.editReply({ 
-        content: `❌ The upload failed. This is all Odie's fault. I just know it. That dog is always causing trouble.\n\nError: ${error.response?.data?.error || error.message}`, 
-        components: [] 
-      });
     }
-  }
+  });
 }
 
 // Function to handle duplicate torrent upload button interactions
@@ -507,41 +424,25 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
       await interaction.deferUpdate();
 
       try {
-        // Get torrent files to check for MP3s
-        const downloadManager = new DownloadManager(delugeClient);
-        const files = await downloadManager.getTorrentFiles(torrentId);
-        const analysis = analyzeContentType(files);
-        const hasMp3Files = analysis.audioFiles.some(file => file.toLowerCase().endsWith('.mp3'));
-
-        if (hasMp3Files) {
-          const contentType = analysis.type === 'audiobook' ? 'audiobook' : 'content with MP3 files';
-          await interaction.editReply({
-            content: `🎵 Hey, so, this ${contentType} has MP3 files. We can convert them to a single M4B file, which is pretty neat for audiobooks. But, uh, it takes a while. Like, a really long while. You could probably watch a whole Garfield movie in the time it takes. And eat a whole lasagna. So, what do you say?`,
-            components: [
-              {
-                type: 1,
-                components: [
-                  {
-                    type: 2,
-                    style: 1,
-                    label: 'Yes, convert to M4B',
-                    custom_id: `duplicate_convert_${torrentId}`
-                  },
-                  {
-                    type: 2,
-                    style: 2,
-                    label: 'No, upload as is',
-                    custom_id: `duplicate_no_convert_${torrentId}`
-                  }
-                ]
-              }
-            ]
-          });
-          return;
+        // Check for MP3 files using the unified system
+        const hasMp3Files = await checkForMp3AndPrompt(torrentId, interaction, 'duplicate');
+        
+        if (!hasMp3Files) {
+          // If no MP3 files, proceed with upload
+          const result = await uploadTorrentToGDrive(torrentId, false, 
+            `✅ The duplicate is on Google Drive! I'm so good at this, I should get a medal. Or a lifetime supply of lasagna. I'd prefer the lasagna.\n\n`
+          );
+          
+          try {
+            await interaction.editReply({ content: result.message, components: [] });
+          } catch (editError: any) {
+            if (editError.code === 50027) { // Invalid Webhook Token
+              await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+            } else {
+              throw editError;
+            }
+          }
         }
-
-        // If no MP3 files, proceed with upload
-        await uploadDuplicateTorrent(interaction, torrentId, false);
 
       } catch (error: any) {
         console.error('Error checking torrent files:', error);
@@ -557,87 +458,22 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
         components: [] 
       });
     } else if (actionType === 'convert' || actionType === 'no') {
-      // Handle MP3 conversion choice
-      await interaction.deferUpdate();
-      const convert = actionType === 'convert';
-      await uploadDuplicateTorrent(interaction, torrentId, convert);
-    }
-  }
-}
-
-// Helper function to upload duplicate torrent
-async function uploadDuplicateTorrent(interaction: any, torrentId: string, convert: boolean) {
-  try {
-    // Show status message immediately
-    const statusMessage = convert 
-      ? `🚀 Starting upload to Google Drive with MP3→M4B conversion...\n\n⏳ This may take a while (30+ minutes) depending on file size.`
-      : `🚀 Starting upload to Google Drive...`;
-    
-    await interaction.editReply({ 
-      content: statusMessage, 
-      components: [] 
-    });
-
-    const uploadResponse = await axios.post('http://localhost:3000/api/uploads/torrent', {
-      torrentId: torrentId,
-      convertMp3ToM4b: convert
-    });
-
-      if (uploadResponse.data.success) {
-        let successMessage = `✅ The duplicate is on Google Drive! I'm so good at this, I should get a medal. Or a lifetime supply of lasagna. I'd prefer the lasagna.\n\n`;
-        successMessage += `📁 I uploaded ${uploadResponse.data.uploadedFiles.length} files`;
-      
-      if (convert && uploadResponse.data.convertedFile) {
-        successMessage += `\n🎵 Converted to: ${uploadResponse.data.convertedFile}`;
-      }
-      
-      if (uploadResponse.data.folderId) {
-        successMessage += `\n📂 [View Folder](https://drive.google.com/drive/folders/${uploadResponse.data.folderId})`;
-        successMessage += `\n📂 Folder ID: ${uploadResponse.data.folderId}`;
-      }
-
-      // Try to edit the reply first, but if it fails (token expired), send a new message
-      try {
-        await interaction.editReply({ content: successMessage, components: [] });
-      } catch (editError: any) {
-        if (editError.code === 50027) { // Invalid Webhook Token
-          // Token expired, send a new message to the channel instead
-          await interaction.channel?.send(`<@${interaction.user.id}> ${successMessage}`);
-        } else {
-          throw editError;
+      // Use the unified upload button handler for conversion choices
+      await handleUploadButtonInteraction(interaction, 'duplicate', async (torrentId: string, convert: boolean) => {
+        const result = await uploadTorrentToGDrive(torrentId, convert, 
+          `✅ The duplicate is on Google Drive! I'm so good at this, I should get a medal. Or a lifetime supply of lasagna. I'd prefer the lasagna.\n\n`
+        );
+        
+        try {
+          await interaction.editReply({ content: result.message, components: [] });
+        } catch (editError: any) {
+          if (editError.code === 50027) { // Invalid Webhook Token
+            await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+          } else {
+            throw editError;
+          }
         }
-      }
-    } else {
-      const errorMessage = `❌ The duplicate upload failed. This is a dark day. A day without sunshine. A day without lasagna. The horror.\n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`;
-      
-      try {
-        await interaction.editReply({ 
-          content: errorMessage, 
-          components: [] 
-        });
-      } catch (editError: any) {
-        if (editError.code === 50027) { // Invalid Webhook Token
-          await interaction.channel?.send(`<@${interaction.user.id}> ${errorMessage}`);
-        } else {
-          throw editError;
-        }
-      }
-    }
-  } catch (error: any) {
-    console.error('Error uploading duplicate torrent:', error);
-    const errorMessage = `❌ The duplicate upload failed. I'm not saying it was aliens, but it was aliens. Or Nermal. Probably Nermal.\n\nError: ${error.response?.data?.error || error.message}`;
-    
-    try {
-      await interaction.editReply({ 
-        content: errorMessage, 
-        components: [] 
       });
-    } catch (editError: any) {
-      if (editError.code === 50027) { // Invalid Webhook Token
-        await interaction.channel?.send(`<@${interaction.user.id}> ${errorMessage}`);
-      } else {
-        console.error('Failed to send error message:', editError);
-      }
     }
   }
 }

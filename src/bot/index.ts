@@ -74,20 +74,24 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     }
   } else if (interaction.isButton()) {
     try {
-      // Check which type of button interaction this is
+      // Use the unified upload button handler system
       if (interaction.customId.startsWith('auto_upload_')) {
         await handleAutoUploadInteraction(interaction);
       } else if (interaction.customId.startsWith('duplicate_')) {
         await handleDuplicateUploadInteraction(interaction);
-      } else {
+      } else if (interaction.customId.startsWith('gdrive_upload_')) {
         await handleGDriveUploadInteraction(interaction);
+      } else {
+        // Fallback for any other button interactions
+        console.log(`Unhandled button interaction: ${interaction.customId}`);
+        await interaction.reply({ content: 'I don\'t know what that button does. This is more confusing than trying to understand why Jon thinks he can cook.', ephemeral: true });
       }
     } catch (error) {
       console.error('Error handling button interaction:', error);
       // Only try to reply if the interaction hasn't been replied to or deferred
       if (!interaction.replied && !interaction.deferred) {
         try {
-          await interaction.reply({ content: 'There was an error while handling this button press!', ephemeral: true });
+          await interaction.reply({ content: 'There was an error while handling this button press! I blame Odie. It\'s always Odie\'s fault.', ephemeral: true });
         } catch (replyError) {
           console.error('Failed to send error reply:', replyError);
         }
@@ -95,9 +99,9 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         // If already replied/deferred, try to follow up or edit
         try {
           if (interaction.deferred) {
-            await interaction.editReply({ content: 'There was an error while handling this button press!' });
+            await interaction.editReply({ content: 'There was an error while handling this button press! This is worse than a Monday morning.' });
           } else {
-            await interaction.followUp({ content: 'There was an error while handling this button press!', ephemeral: true });
+            await interaction.followUp({ content: 'There was an error while handling this button press! I need a nap and some lasagna.', ephemeral: true });
           }
         } catch (followUpError) {
           console.error('Failed to send error follow-up:', followUpError);
