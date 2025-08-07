@@ -56,36 +56,40 @@ export class UploadManagementClient {
     this.drive = google.drive({ version: 'v3', auth: this.auth });
     this.parentFolderId = parentFolderId;
 
-    // Ensure temp directory exists and clean it first
+    // Ensure temp directory exists
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir, { recursive: true });
-    } else {
-      // Clean the directory before using it
-      try {
-        const files = fs.readdirSync(this.tempDir);
-        for (const file of files) {
-          const filePath = path.join(this.tempDir, file);
-          if (fs.statSync(filePath).isDirectory()) {
-            execSync(`rm -rf "${filePath}"`);
-          } else {
-            fs.unlinkSync(filePath);
-          }
+    }
+  }
+
+  /**
+   * Clean the entire temp directory
+   */
+  private async cleanTempDirectory(): Promise<void> {
+    try {
+      const files = fs.readdirSync(this.tempDir);
+      for (const file of files) {
+        const filePath = path.join(this.tempDir, file);
+        if (fs.statSync(filePath).isDirectory()) {
+          execSync(`rm -rf "${filePath}"`);
+        } else {
+          fs.unlinkSync(filePath);
         }
-      } catch (error) {
-        console.error('Error cleaning temp directory:', error);
       }
+      console.log('🧹 Cleaned entire temp directory. I\'m tidier than Jon\'s cooking attempts.');
+    } catch (error) {
+      console.error('❌ Error cleaning temp directory. This mess is worse than Odie\'s drool:', error);
     }
   }
 
   /**
    * Check if client can authenticate with Google Drive
    */
-  async isAuthenticated(progressCallback?: (message: string) => void): Promise<boolean> {
+  async isAuthenticated(): Promise<boolean> {
     try {
       await this.drive.about.get({ fields: 'user' });
       const message = '✅ Google Drive authentication successful! I\'m more connected than Jon is to reality.';
       console.log(message);
-      if (progressCallback) progressCallback(message);
       return true;
     } catch (error) {
       console.error('❌ Authentication check failed. This is worse than a Monday without lasagna:', error);
@@ -166,14 +170,14 @@ export class UploadManagementClient {
   /**
    * Copy files to temp directory
    */
-  private async copyFilesToTemp(files: Array<{path: string, size: number}>, basePath: string, progressCallback?: (message: string) => void): Promise<string[]> {
+  private async copyFilesToTemp(files: Array<{path: string, size: number}>, basePath: string): Promise<string[]> {
     const tempSessionDir = path.join(this.tempDir, `session_${Date.now()}`);
     fs.mkdirSync(tempSessionDir, { recursive: true });
     
     const startMessage = `📋 Copying ${files.length} files to temp directory. This is harder work than avoiding Mondays.`;
+    // Only log to console, don't send Discord messages for each file
     console.log(startMessage);
-    if (progressCallback) progressCallback(startMessage);
-
+    
     const copiedFiles: string[] = [];
 
     for (const file of files) {
@@ -193,7 +197,7 @@ export class UploadManagementClient {
 
     const finishMessage = `🎉 Finished copying ${copiedFiles.length} files! I deserve a nap and a whole pan of lasagna.`;
     console.log(finishMessage);
-    if (progressCallback) progressCallback(finishMessage);
+    // Don't send this as a separate Discord message, just log it
     return copiedFiles;
   }
 
@@ -383,16 +387,25 @@ export class UploadManagementClient {
     const { progressCallback } = options;
 
     try {
+      // Clean the temp directory before starting any operations
+      await this.cleanTempDirectory();
+
       // Check authentication
-      if (!(await this.isAuthenticated(progressCallback))) {
+      if (!(await this.isAuthenticated())) {
         throw new Error('Cannot authenticate with Google Drive');
       }
 
       // Analyze content type
       const contentAnalysis = this.analyzeContentType(torrentObject.files);
-      const analysisMessage = `Content analysis: ${contentAnalysis.type} (${contentAnalysis.audioFiles.length} audio, ${contentAnalysis.ebookFiles.length} ebook, ${contentAnalysis.otherFiles.length} other files)`;
-      console.log(analysisMessage);
-      if (progressCallback) progressCallback(analysisMessage);
+      
+      // Format file size
+      const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      };
 
       // Determine base path for files
       const basePath = torrentObject.savePath || '/mnt/nas/nzbget/nzb/completed/torrent';
@@ -416,17 +429,30 @@ export class UploadManagementClient {
         }
         
         const folderName = folderPrefix + torrentObject.name;
-        folderId = await this.createFolder(folderName, options.parentFolderId, progressCallback);
+        
+        // Create consolidated message with content analysis, file size, folder creation, and copy start
+        const consolidatedMessage = `Content analysis: ${contentAnalysis.type} (${contentAnalysis.audioFiles.length} audio, ${contentAnalysis.ebookFiles.length} ebook, ${contentAnalysis.otherFiles.length} other files, ${formatFileSize(contentAnalysis.totalSize)})
+
+📁 Creating folder "${folderName}" and copying files to temporary directory... Andrew Garfield would be proud of this level of dedication. To Lasagna`;
+        
+        console.log(consolidatedMessage);
+        if (progressCallback) progressCallback(consolidatedMessage);
+        
+        folderId = await this.createFolder(folderName, options.parentFolderId);
         const folderMessage = `Created folder: ${folderName} (ID: ${folderId})`;
         console.log(folderMessage);
-        if (progressCallback) progressCallback(folderMessage);
+        // Don't send this as a separate Discord message, just log it
+      } else {
+        // If not creating a subfolder, still send the analysis message
+        const analysisMessage = `Content analysis: ${contentAnalysis.type} (${contentAnalysis.audioFiles.length} audio, ${contentAnalysis.ebookFiles.length} ebook, ${contentAnalysis.otherFiles.length} other files, ${formatFileSize(contentAnalysis.totalSize)})
+
+📋 Copying files to temporary directory... Andrew Garfield would be proud of this level of dedication. To Lasagna`;
+        console.log(analysisMessage);
+        if (progressCallback) progressCallback(analysisMessage);
       }
 
-      // Copy files to temp directory
-      const copyStartMessage = 'Copying files to temporary directory...';
-      console.log(copyStartMessage);
-      if (progressCallback) progressCallback(copyStartMessage);
-      const copiedFiles = await this.copyFilesToTemp(torrentObject.files, basePath, progressCallback);
+      // Copy files to temp directory (no separate message needed)
+      const copiedFiles = await this.copyFilesToTemp(torrentObject.files, basePath);
 
       if (copiedFiles.length === 0) {
         throw new Error('No files were successfully copied to temp directory');
@@ -439,7 +465,7 @@ export class UploadManagementClient {
       let filesToUpload = copiedFiles;
 
       if (options.convertMp3ToM4b && mp3Files.length > 0) {
-        const conversionStartMessage = 'Converting MP3 files to M4B...';
+        const conversionStartMessage = 'Converting MP3 files to M4B (this will take like 30 minutes per half GB)...';
         console.log(conversionStartMessage);
         if (progressCallback) progressCallback(conversionStartMessage);
         const m4bFile = await this.convertMp3ToM4bImproved(tempSessionDir, torrentObject.name);
@@ -453,7 +479,7 @@ export class UploadManagementClient {
       }
 
       // Upload files to Google Drive
-      const uploadStartMessage = `Uploading ${filesToUpload.length} files to Google Drive...`;
+      const uploadStartMessage = `📤 Uploading ${filesToUpload.length} files to Google Drive...`;
       console.log(uploadStartMessage);
       if (progressCallback) progressCallback(uploadStartMessage);
       
@@ -462,9 +488,13 @@ export class UploadManagementClient {
         try {
           const fileId = await this.uploadFile(filePath, fileName, folderId);
           uploadedFiles.push(fileName);
-          const uploadMessage = `Uploaded: ${fileName} (ID: ${fileId})`;
-          console.log(uploadMessage);
-          if (progressCallback) progressCallback(uploadMessage);
+          console.log(`Uploaded: ${fileName} (ID: ${fileId})`);
+          // Send progress update for every 10th file or important files
+          if (uploadedFiles.length % 10 === 0 || uploadedFiles.length === filesToUpload.length) {
+            if (progressCallback) {
+              progressCallback(`📤 Uploaded ${uploadedFiles.length}/${filesToUpload.length} files...`);
+            }
+          }
         } catch (error) {
           console.error(`Failed to upload ${fileName}:`, error);
         }
@@ -486,6 +516,7 @@ export class UploadManagementClient {
       
       return {
         success: false,
+        folderId,
         uploadedFiles,
         error: error instanceof Error ? error.message : 'Unknown error'
       };

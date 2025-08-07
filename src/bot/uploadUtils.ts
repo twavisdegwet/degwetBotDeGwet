@@ -6,35 +6,7 @@ import { analyzeContentType, formatFileSize } from './utils';
 
 const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
 
-// Garfield-themed jokes for upload operations
-const GARFIELD_JOKES = [
-  "This is harder than getting Odie to fetch the newspaper without eating it first.",
-  "I'm working harder than a cat trying to open a can of tuna with no thumbs.",
-  "This upload is taking longer than my afternoon nap. And that's saying something!",
-  "I'd rather be eating lasagna, but someone has to do the work around here.",
-  "This is more exhausting than dodging Nermal's attempts at being cute.",
-  "Working on a Monday? This goes against everything I believe in.",
-  "I'm putting more effort into this than Jon puts into his dating life.",
-  "This is almost as satisfying as pushing Odie off the table. Almost.",
-  "If uploads were lasagna, this would be a feast!",
-  "I'm being more productive than Jon on his best day."
-];
-
-const MP3_CONVERSION_JOKES = [
-  "🎵 This audiobook has more MP3s than I have complaints about Mondays. We can convert them to a single M4B file, but it'll take longer than my post-lasagna nap. What do you say?",
-  "🎵 Found MP3 files! Converting them to M4B is like combining all the layers of a lasagna into one perfect bite. It takes time, but it's worth it. Should I do the magic?",
-  "🎵 MP3s detected! I can merge them into an M4B file faster than Odie can drool on the carpet. Well, maybe not that fast, but I'll try. Convert them?",
-  "🎵 These MP3 files are scattered like Odie's brain cells. I can organize them into a nice M4B file. It'll take a while - perfect time for a nap. Shall I proceed?",
-  "🎵 MP3 conversion time! This is more exciting than watching Jon try to impress a date. And by exciting, I mean I'd rather be sleeping. Convert anyway?"
-];
-
-function getRandomJoke(): string {
-  return GARFIELD_JOKES[Math.floor(Math.random() * GARFIELD_JOKES.length)];
-}
-
-function getRandomMp3Joke(): string {
-  return MP3_CONVERSION_JOKES[Math.floor(Math.random() * MP3_CONVERSION_JOKES.length)];
-}
+import { getRandomUploadJoke, getRandomConversionJoke } from './badjokes';
 
 export interface UploadResult {
   success: boolean;
@@ -71,7 +43,7 @@ export async function uploadTorrentToGDrive(
       const files = await downloadManager.getTorrentFiles(torrentId);
       const analysis = analyzeContentType(files);
       
-      let successMessage = customMessage || `✅ ${getRandomJoke()}\n\n`;
+      let successMessage = customMessage || `✅ ${getRandomUploadJoke()}\n\n`;
       successMessage += `📁 Uploaded ${uploadResponse.data.uploadedFiles.length} files`;
 
       if (analysis.totalSize > 0) {
@@ -113,7 +85,7 @@ export async function uploadTorrentToGDrive(
     } else {
       return {
         success: false,
-        message: `❌ Upload failed. ${getRandomJoke()} This is worse than running out of lasagna.\n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`,
+        message: `❌ Upload failed. ${getRandomUploadJoke()} This is worse than running out of lasagna.\n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`,
         uploadedFiles: uploadResponse.data.uploadedFiles,
         error: uploadResponse.data.error
       };
@@ -122,7 +94,7 @@ export async function uploadTorrentToGDrive(
     console.error('Error uploading torrent:', error);
     return {
       success: false,
-      message: `❌ Upload failed. I blame Nermal. It's always Nermal's fault.\n\nError: ${error.response?.data?.error || error.message}`,
+        message: `❌ Upload failed. ${getRandomUploadJoke()} This is worse than running out of lasagna.\n\nError: ${error.response?.data?.error || error.message}`,
       uploadedFiles: [],
       error: error.response?.data?.error || error.message
     };
@@ -163,7 +135,10 @@ async function uploadTorrentWithProgress(
     // Create progress callback that sends messages to Discord
     const progressCallback = async (message: string) => {
       try {
+        // Send all progress messages to Discord
         await progressTarget.channel?.send(`<@${progressTarget.user.id}> ${message}`);
+        // Log all messages to console for debugging
+        console.log(`Progress: ${message}`);
       } catch (error) {
         console.error('Error sending progress message:', error);
       }
@@ -187,7 +162,7 @@ async function uploadTorrentWithProgress(
     if (result.success) {
       const analysis = analyzeContentType(torrentFiles);
       
-      let successMessage = `✅ ${getRandomJoke()}\n\n`;
+      let successMessage = `✅ ${getRandomUploadJoke()}\n\n`;
       successMessage += `📁 Uploaded ${result.uploadedFiles.length} files`;
 
       if (analysis.totalSize > 0) {
@@ -214,7 +189,19 @@ async function uploadTorrentWithProgress(
         successMessage += `🎵 Converted to: ${result.convertedFile}\n`;
       }
 
-      if (result.folderId) {
+      // Send the Google Drive link as a separate message if we have a progress target
+      if (result.folderId && progressTarget) {
+        try {
+          const linkMessage = `📂 [View Folder](https://drive.google.com/drive/folders/${result.folderId})\n📂 Folder ID: ${result.folderId}`;
+          await progressTarget.channel?.send(`<@${progressTarget.user.id}> ${linkMessage}`);
+        } catch (error) {
+          console.error('Error sending Google Drive link message:', error);
+          // If we can't send a separate message, include it in the main message
+          successMessage += `\n📂 [View Folder](https://drive.google.com/drive/folders/${result.folderId})\n`;
+          successMessage += `📂 Folder ID: ${result.folderId}`;
+        }
+      } else if (result.folderId) {
+        // Fallback: include in main message if no progress target
         successMessage += `📂 [View Folder](https://drive.google.com/drive/folders/${result.folderId})\n`;
         successMessage += `📂 Folder ID: ${result.folderId}`;
       }
@@ -229,7 +216,7 @@ async function uploadTorrentWithProgress(
     } else {
       return {
         success: false,
-        message: `❌ Upload failed. ${getRandomJoke()} This is worse than running out of lasagna.\n\nError: ${result.error}\n\nPartially uploaded files: ${result.uploadedFiles.length}`,
+        message: `❌ Upload failed. ${getRandomUploadJoke()} This is worse than running out of lasagna.\n\nError: ${result.error}\n\nPartially uploaded files: ${result.uploadedFiles.length}`,
         uploadedFiles: result.uploadedFiles,
         error: result.error
       };
@@ -260,30 +247,38 @@ export async function checkForMp3AndPrompt(
     const hasMp3Files = analysis.audioFiles.some(file => file.toLowerCase().endsWith('.mp3'));
     
     if (hasMp3Files) {
-      await replyTarget.reply({
-        content: getRandomMp3Joke(),
+      // Create a dedicated status message that will be updated
+      const statusMessage = await replyTarget.channel.send('🔄 Checking files...');
+      
+      const promptMessage = {
+        content: getRandomConversionJoke(),
         components: [
           {
             type: 1,
             components: [
               {
                 type: 2,
-                style: 1, // Primary button (blue)
-                label: '🎵 Yes, convert to M4B',
-                custom_id: `${actionPrefix}_convert_${torrentId}`,
+                style: 1,
+                label: '🎵 Convert to M4B',
+                custom_id: `${actionPrefix}:convert:${torrentId}`,
                 emoji: { name: '🎵' }
               },
               {
                 type: 2,
-                style: 2, // Secondary button (gray)
-                label: '📁 No, upload as-is',
-                custom_id: `${actionPrefix}_no_convert_${torrentId}`,
+                style: 2,
+                label: '📁 Upload As-Is',
+                custom_id: `${actionPrefix}:no-convert:${torrentId}`,
                 emoji: { name: '📁' }
               }
             ]
           }
         ]
-      });
+      };
+
+      // Edit the status message with the actual prompt
+      await statusMessage.edit(promptMessage);
+      return true;
+      
       return true; // MP3s found, user prompted
     }
     
@@ -298,7 +293,7 @@ export async function checkForMp3AndPrompt(
  * Create a status message for upload operations
  */
 export function createUploadStatusMessage(torrentName: string, convert: boolean): string {
-  const baseMessage = `🚀 ${getRandomJoke()} Now uploading **${torrentName}** to Google Drive.`;
+  const baseMessage = `🚀 ${getRandomUploadJoke()} Now uploading **${torrentName}** to Google Drive.`;
   
   if (convert) {
     return `${baseMessage}\n\n🎵 Converting MP3s to M4B... This will take longer than Jon's attempts at cooking. Grab some lasagna and wait.`;
@@ -320,20 +315,18 @@ export async function handleUploadButtonInteraction(
   const customId = interaction.customId;
   if (!customId.startsWith(actionPrefix)) return;
 
-  const parts = customId.split('_');
-  if (parts.length < 4) return;
+  const parts = customId.split(':');
+  if (parts.length < 3) return;
 
-  // For custom_id format: "gdrive_upload_convert_torrentId" or "gdrive_upload_no_convert_torrentId"
-  // parts[0] = "gdrive", parts[1] = "upload", parts[2] = "convert" or "no", parts[3] = "convert" or torrentId
   let convert = false;
   let torrentId = '';
-  
-  if (parts[2] === 'convert') {
+
+  if (parts[1] === 'convert') {
     convert = true;
-    torrentId = parts.slice(3).join('_'); // Handle torrent IDs with underscores
-  } else if (parts[2] === 'no' && parts[3] === 'convert') {
+    torrentId = parts.slice(2).join(':');
+  } else if (parts[1] === 'no-convert') {
     convert = false;
-    torrentId = parts.slice(4).join('_'); // Handle torrent IDs with underscores
+    torrentId = parts.slice(2).join(':');
   } else {
     console.error(`Invalid button custom_id format: ${customId}`);
     return;
@@ -362,7 +355,7 @@ export async function handleUploadButtonInteraction(
     // If direct lookup failed, search through completed torrents
     if (!selectedTorrent) {
       const torrents = await downloadManager.listCompletedTorrents();
-      selectedTorrent = torrents.find((t: {id: string, name: string}) => t.id === torrentId);
+      selectedTorrent = torrents.find((t: {id: string, name: string}) => t.id.toLowerCase() === torrentId.toLowerCase());
       
       if (selectedTorrent) {
         console.log(`Found torrent in completed list: ${selectedTorrent.name}`);

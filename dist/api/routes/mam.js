@@ -12,6 +12,7 @@ const SearchRequestSchema = zod_1.z.object({
     text: zod_1.z.string().min(1),
     srchIn: zod_1.z.array(zod_1.z.string()).optional(),
     searchType: zod_1.z.enum(['all', 'active', 'inactive', 'fl', 'fl-VIP', 'VIP', 'nVIP', 'nMeta']).optional(),
+    searchIn: zod_1.z.string().optional(),
     cat: zod_1.z.array(zod_1.z.string()).optional(),
     sortType: zod_1.z.enum([
         'titleAsc', 'titleDesc', 'fileAsc', 'fileDesc', 'sizeAsc', 'sizeDesc',
@@ -21,7 +22,17 @@ const SearchRequestSchema = zod_1.z.object({
     ]).optional(),
     startNumber: zod_1.z.number().int().optional(),
     perpage: zod_1.z.number().int().min(5).max(100).optional(),
-    filetype: zod_1.z.string().optional()
+    filetype: zod_1.z.string().optional(),
+    browseFlagsHideVsShow: zod_1.z.number().int().optional(),
+    minSize: zod_1.z.number().int().optional(),
+    maxSize: zod_1.z.number().int().optional(),
+    unit: zod_1.z.number().int().optional(),
+    minSeeders: zod_1.z.number().int().optional(),
+    maxSeeders: zod_1.z.number().int().optional(),
+    minLeechers: zod_1.z.number().int().optional(),
+    maxLeechers: zod_1.z.number().int().optional(),
+    minSnatched: zod_1.z.number().int().optional(),
+    maxSnatched: zod_1.z.number().int().optional()
 });
 const DownloadRequestSchema = zod_1.z.object({
     id: zod_1.z.string().optional(),
@@ -69,11 +80,22 @@ router.post('/search', async (req, res) => {
             text: validatedRequest.text,
             srchIn: validatedRequest.srchIn || ['title', 'author'],
             searchType: validatedRequest.searchType || 'all',
+            searchIn: validatedRequest.searchIn || 'torrents',
             cat: validatedRequest.cat || ['0'],
             sortType: validatedRequest.sortType || 'default',
             startNumber: validatedRequest.startNumber || 0,
             perpage: validatedRequest.perpage || 25,
-            filetype: validatedRequest.filetype
+            filetype: validatedRequest.filetype,
+            browseFlagsHideVsShow: validatedRequest.browseFlagsHideVsShow,
+            minSize: validatedRequest.minSize,
+            maxSize: validatedRequest.maxSize,
+            unit: validatedRequest.unit,
+            minSeeders: validatedRequest.minSeeders,
+            maxSeeders: validatedRequest.maxSeeders,
+            minLeechers: validatedRequest.minLeechers,
+            maxLeechers: validatedRequest.maxLeechers,
+            minSnatched: validatedRequest.minSnatched,
+            maxSnatched: validatedRequest.maxSnatched
         };
         const response = await mamClient.searchTorrents(searchParams);
         const formattedResults = formatTorrentResults(response.data, mamClient);

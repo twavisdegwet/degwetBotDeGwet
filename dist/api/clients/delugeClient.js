@@ -146,32 +146,43 @@ class DelugeClient {
                     console.log(`Adding torrent to Deluge using core.add_torrent_file...`);
                     console.log(`Download location: /mnt/nas/nzb/completed/torrent`);
                     const tempFilename = `discord_torrent_${Date.now()}.torrent`;
-                    const response = await this.axiosInstance.post('json', {
-                        id: Date.now(),
-                        method: 'core.add_torrent_file',
-                        params: [
-                            tempFilename,
-                            torrentData,
-                            {
-                                download_location: '/mnt/nas/nzb/completed/torrent',
-                                move_completed: true,
-                                move_completed_path: '/mnt/nas/nzb/completed/torrent',
-                                add_paused: false
-                            }
-                        ]
-                    });
-                    if (response.data && response.data.error) {
-                        console.log('❌ Deluge error:', response.data.error);
-                        throw new Error(`Deluge RPC error: ${response.data.error.message}`);
+                    try {
+                        const response = await this.axiosInstance.post('json', {
+                            id: Date.now(),
+                            method: 'core.add_torrent_file',
+                            params: [
+                                tempFilename,
+                                torrentData,
+                                {
+                                    download_location: '/mnt/nas/nzb/completed/torrent',
+                                    move_completed: true,
+                                    move_completed_path: '/mnt/nas/nzb/completed/torrent',
+                                    add_paused: false
+                                }
+                            ]
+                        });
+                        if (response.data && response.data.error) {
+                            console.log('❌ Deluge error:', response.data.error);
+                            throw new Error(`Deluge RPC error: ${response.data.error.message}`);
+                        }
+                        const result = response.data.result;
+                        if (result && typeof result === 'string' && result.length === 40) {
+                            console.log(`✅ Successfully added torrent to Deluge with hash: ${result}`);
+                            return result;
+                        }
+                        else {
+                            console.log('❌ Unexpected response from Deluge:', response.data);
+                            throw new Error('No valid torrent ID returned from Deluge');
+                        }
                     }
-                    const result = response.data.result;
-                    if (result && typeof result === 'string' && result.length === 40) {
-                        console.log(`✅ Successfully added torrent to Deluge with hash: ${result}`);
-                        return result;
-                    }
-                    else {
-                        console.log('❌ Unexpected response from Deluge:', response.data);
-                        throw new Error('No valid torrent ID returned from Deluge');
+                    catch (error) {
+                        if (error instanceof Error && error.message.includes('Torrent already in session')) {
+                            const err = new Error('Torrent already exists in Deluge');
+                            err.code = 'DUPLICATE_TORRENT';
+                            err.hash = error.message.match(/\(([a-f0-9]+)\)/)?.[1];
+                            throw err;
+                        }
+                        throw error;
                     }
                 }
                 catch (downloadError) {

@@ -67,10 +67,15 @@ class MamClient {
                 searchPayload.append('tor[text]', params.text);
             }
             if (params.srchIn) {
-                params.srchIn.forEach(val => searchPayload.append('tor[srchIn][]', val));
+                params.srchIn.forEach(field => {
+                    searchPayload.append(`tor[srchIn][${field}]`, 'true');
+                });
             }
             if (params.searchType) {
                 searchPayload.append('tor[searchType]', params.searchType);
+            }
+            if (params.searchIn) {
+                searchPayload.append('tor[searchIn]', params.searchIn);
             }
             if (params.cat) {
                 params.cat.forEach(val => searchPayload.append('tor[cat][]', val));
@@ -83,6 +88,36 @@ class MamClient {
             }
             if (params.perpage !== undefined) {
                 searchPayload.append('perpage', params.perpage.toString());
+            }
+            if (params.browseFlagsHideVsShow !== undefined) {
+                searchPayload.append('tor[browseFlagsHideVsShow]', params.browseFlagsHideVsShow.toString());
+            }
+            if (params.minSize !== undefined) {
+                searchPayload.append('tor[minSize]', params.minSize.toString());
+            }
+            if (params.maxSize !== undefined) {
+                searchPayload.append('tor[maxSize]', params.maxSize.toString());
+            }
+            if (params.unit !== undefined) {
+                searchPayload.append('tor[unit]', params.unit.toString());
+            }
+            if (params.minSeeders !== undefined) {
+                searchPayload.append('tor[minSeeders]', params.minSeeders.toString());
+            }
+            if (params.maxSeeders !== undefined) {
+                searchPayload.append('tor[maxSeeders]', params.maxSeeders.toString());
+            }
+            if (params.minLeechers !== undefined) {
+                searchPayload.append('tor[minLeechers]', params.minLeechers.toString());
+            }
+            if (params.maxLeechers !== undefined) {
+                searchPayload.append('tor[maxLeechers]', params.maxLeechers.toString());
+            }
+            if (params.minSnatched !== undefined) {
+                searchPayload.append('tor[minSnatched]', params.minSnatched.toString());
+            }
+            if (params.maxSnatched !== undefined) {
+                searchPayload.append('tor[maxSnatched]', params.maxSnatched.toString());
             }
             const response = await this.axiosInstance.post('/tor/js/loadSearchJSONbasic.php', searchPayload);
             console.log('Raw MAM search response:', JSON.stringify(response.data, null, 2));

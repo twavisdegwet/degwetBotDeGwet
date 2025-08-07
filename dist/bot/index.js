@@ -41,6 +41,7 @@ const getEbookCommand = __importStar(require("./commands/getebook"));
 const gdriveUploadCommand = __importStar(require("./commands/gdrive-upload"));
 const gdriveStatusCommand = __importStar(require("./commands/gdrive-status"));
 const helpCommand = __importStar(require("./commands/help"));
+const badjokes_1 = require("./badjokes");
 const gdrive_upload_1 = require("./commands/gdrive-upload");
 const utils_1 = require("./utils");
 const client = new discord_js_1.Client({
@@ -91,11 +92,12 @@ client.on('interactionCreate', async (interaction) => {
         }
         catch (error) {
             console.error(error);
+            const joke = (0, badjokes_1.getPersonality)();
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.followUp({ content: `There was an error while executing this command! ${joke}`, ephemeral: true });
             }
             else {
-                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.reply({ content: `There was an error while executing this command! ${joke}`, ephemeral: true });
             }
         }
     }
@@ -112,14 +114,14 @@ client.on('interactionCreate', async (interaction) => {
             }
             else {
                 console.log(`Unhandled button interaction: ${interaction.customId}`);
-                await interaction.reply({ content: 'I don\'t know what that button does. This is more confusing than trying to understand why Jon thinks he can cook.', ephemeral: true });
+                await interaction.reply({ content: `I don't know what that button does. ${(0, badjokes_1.getPersonality)()}`, ephemeral: true });
             }
         }
         catch (error) {
             console.error('Error handling button interaction:', error);
             if (!interaction.replied && !interaction.deferred) {
                 try {
-                    await interaction.reply({ content: 'There was an error while handling this button press! I blame Odie. It\'s always Odie\'s fault.', ephemeral: true });
+                    await interaction.reply({ content: `There was an error while handling this button press! ${(0, badjokes_1.getPersonality)()}`, ephemeral: true });
                 }
                 catch (replyError) {
                     console.error('Failed to send error reply:', replyError);
@@ -127,11 +129,12 @@ client.on('interactionCreate', async (interaction) => {
             }
             else {
                 try {
+                    const joke = (0, badjokes_1.getPersonality)();
                     if (interaction.deferred) {
-                        await interaction.editReply({ content: 'There was an error while handling this button press! This is worse than a Monday morning.' });
+                        await interaction.editReply({ content: `There was an error while handling this button press! ${joke}` });
                     }
                     else {
-                        await interaction.followUp({ content: 'There was an error while handling this button press! I need a nap and some lasagna.', ephemeral: true });
+                        await interaction.followUp({ content: `There was an error while handling this button press! ${joke}`, ephemeral: true });
                     }
                 }
                 catch (followUpError) {

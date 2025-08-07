@@ -10,6 +10,7 @@ const SearchRequestSchema = z.object({
   text: z.string().min(1),
   srchIn: z.array(z.string()).optional(),
   searchType: z.enum(['all', 'active', 'inactive', 'fl', 'fl-VIP', 'VIP', 'nVIP', 'nMeta']).optional(),
+  searchIn: z.string().optional(),
   cat: z.array(z.string()).optional(),
   sortType: z.enum([
     'titleAsc', 'titleDesc', 'fileAsc', 'fileDesc', 'sizeAsc', 'sizeDesc',
@@ -19,7 +20,17 @@ const SearchRequestSchema = z.object({
   ]).optional(),
   startNumber: z.number().int().optional(),
   perpage: z.number().int().min(5).max(100).optional(),
-  filetype: z.string().optional()
+  filetype: z.string().optional(),
+  browseFlagsHideVsShow: z.number().int().optional(),
+  minSize: z.number().int().optional(),
+  maxSize: z.number().int().optional(),
+  unit: z.number().int().optional(),
+  minSeeders: z.number().int().optional(),
+  maxSeeders: z.number().int().optional(),
+  minLeechers: z.number().int().optional(),
+  maxLeechers: z.number().int().optional(),
+  minSnatched: z.number().int().optional(),
+  maxSnatched: z.number().int().optional()
 });
 
 const DownloadRequestSchema = z.object({
@@ -77,11 +88,22 @@ router.post('/search', async (req: Request, res: Response) => {
       text: validatedRequest.text,
       srchIn: validatedRequest.srchIn || ['title', 'author'],
       searchType: validatedRequest.searchType || 'all',
+      searchIn: validatedRequest.searchIn || 'torrents',
       cat: validatedRequest.cat || ['0'],
       sortType: validatedRequest.sortType || 'default',
       startNumber: validatedRequest.startNumber || 0,
       perpage: validatedRequest.perpage || 25,
-      filetype: validatedRequest.filetype
+      filetype: validatedRequest.filetype,
+      browseFlagsHideVsShow: validatedRequest.browseFlagsHideVsShow,
+      minSize: validatedRequest.minSize,
+      maxSize: validatedRequest.maxSize,
+      unit: validatedRequest.unit,
+      minSeeders: validatedRequest.minSeeders,
+      maxSeeders: validatedRequest.maxSeeders,
+      minLeechers: validatedRequest.minLeechers,
+      maxLeechers: validatedRequest.maxLeechers,
+      minSnatched: validatedRequest.minSnatched,
+      maxSnatched: validatedRequest.maxSnatched
     };
     
     const response = await mamClient.searchTorrents(searchParams);
@@ -160,31 +182,53 @@ router.post('/download', async (req: Request, res: Response) => {
     // Download the torrent
     const mamCookie = `mam_id=${MAM_ID}`;
     let torrentId: string;
-    let duplicateTorrentHash: string | undefined;
     
     try {
       torrentId = await delugeClient.downloadTorrentFromUrl(downloadUrl, mamCookie, torrentName);
-    } catch (error) {
-      // Check if this is a "Torrent already in session" error
-      if (error instanceof Error && error.message.includes('Torrent already in session')) {
-        // Extract torrent hash from error message
-        const hashMatch = error.message.match(/\(([a-f0-9]{40})\)/);
-        if (hashMatch) {
-          duplicateTorrentHash = hashMatch[1];
-        }
+    } catch (error: any) {
+      // Check if this is a "Torrent already exists in Deluge" error (from delugeClient)
+      if ((error instanceof Error && error.message.includes('Torrent already exists in Deluge')) || 
+          (error.code === 'DUPLICATE_TORRENT')) {
+        console.log(`Full error object:`, error);
+        console.log(`Error keys:`, Object.keys(error));
+        console.log(`Error.hash:`, (error as any).hash);
+        console.log(`Error.code:`, (error as any).code);
         
-        console.log(`Duplicate torrent detected: ${duplicateTorrentHash || 'unknown hash'}`);
+        const duplicateHash = (error as any).hash;
+        console.log(`Duplicate torrent detected: ${duplicateHash || 'unknown hash'}`);
         
         // Find the existing torrent in Deluge
         const existingTorrents = await delugeClient.getTorrents();
-        const existingTorrent = duplicateTorrentHash 
-          ? existingTorrents.find((t: any) => t.id === duplicateTorrentHash)
-          : existingTorrents.find((t: any) => torrentName && t.name && t.name.toLowerCase().includes(torrentName.toLowerCase().substring(0, 20)));
+        console.log(`Total torrents in Deluge: ${existingTorrents.length}`);
+        console.log(`Looking for torrent with hash: ${duplicateHash}`);
+        console.log(`Looking for torrent with name containing: ${torrentName}`);
+        
+        let existingTorrent = null;
+        
+        if (duplicateHash) {
+          existingTorrent = existingTorrents.find((t: any) => t.id === duplicateHash);
+          console.log(`Found by hash: ${existingTorrent ? existingTorrent.name : 'not found'}`);
+        }
+        
+        // If not found by hash, try to find by name
+        if (!existingTorrent && torrentName) {
+          existingTorrent = existingTorrents.find((t: any) => 
+            t.name && t.name.toLowerCase().includes(torrentName.toLowerCase().substring(0, 20))
+          );
+          console.log(`Found by name: ${existingTorrent ? existingTorrent.name : 'not found'}`);
+        }
+        
+        console.log(`Final existingTorrent: ${existingTorrent ? JSON.stringify({
+          id: existingTorrent.id,
+          name: existingTorrent.name,
+          state: existingTorrent.state,
+          progress: existingTorrent.progress
+        }) : 'null'}`);
         
         if (existingTorrent) {
           return res.json({
             isDuplicate: true,
-            isDuplicateError: true,
+            isDuplicateError: false,
             torrentId: existingTorrent.id,
             torrentInfo: {
               name: existingTorrent.name,
@@ -195,11 +239,15 @@ router.post('/download', async (req: Request, res: Response) => {
             message: `Torrent already exists in Deluge. ${existingTorrent.state === 'Seeding' || (existingTorrent.progress && existingTorrent.progress >= 100) ? 'Ready for Google Drive upload.' : 'Still downloading.'}`
           });
         } else {
-          return res.status(409).json({
-            error: 'Torrent already exists in Deluge but could not be found',
+          // Still return a proper response instead of error to let bot handle it
+          return res.json({
             isDuplicate: true,
             isDuplicateError: true,
-            duplicateHash: duplicateTorrentHash
+            torrentId: (error as any).hash || null,
+            torrentInfo: null,
+            canUploadToGDrive: false,
+            message: 'Torrent already exists in Deluge but could not be found',
+            error: 'Torrent already exists in Deluge but could not be found'
           });
         }
       } else {

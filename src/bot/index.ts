@@ -5,6 +5,7 @@ import * as getEbookCommand from './commands/getebook';
 import * as gdriveUploadCommand from './commands/gdrive-upload';
 import * as gdriveStatusCommand from './commands/gdrive-status';
 import * as helpCommand from './commands/help';
+import { getPersonality } from './badjokes';
 import { handleGDriveUploadInteraction } from './commands/gdrive-upload';
 import { handleAutoUploadInteraction, handleDuplicateUploadInteraction } from './utils';
 
@@ -66,10 +67,11 @@ client.on('interactionCreate', async (interaction: Interaction) => {
       await command.execute(interaction);
     } catch (error) {
       console.error(error);
+      const joke = getPersonality();
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+        await interaction.followUp({ content: `There was an error while executing this command! ${joke}`, flags: 64 });
       } else {
-        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+        await interaction.reply({ content: `There was an error while executing this command! ${joke}`, flags: 64 });
       }
     }
   } else if (interaction.isButton()) {
@@ -79,29 +81,30 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         await handleAutoUploadInteraction(interaction);
       } else if (interaction.customId.startsWith('duplicate_')) {
         await handleDuplicateUploadInteraction(interaction);
-      } else if (interaction.customId.startsWith('gdrive_upload_')) {
+      } else if (interaction.customId.startsWith('gdrive_upload:')) {
         await handleGDriveUploadInteraction(interaction);
       } else {
         // Fallback for any other button interactions
         console.log(`Unhandled button interaction: ${interaction.customId}`);
-        await interaction.reply({ content: 'I don\'t know what that button does. This is more confusing than trying to understand why Jon thinks he can cook.', ephemeral: true });
+        await interaction.reply({ content: `I don't know what that button does. ${getPersonality()}`, flags: 64 });
       }
     } catch (error) {
       console.error('Error handling button interaction:', error);
       // Only try to reply if the interaction hasn't been replied to or deferred
       if (!interaction.replied && !interaction.deferred) {
         try {
-          await interaction.reply({ content: 'There was an error while handling this button press! I blame Odie. It\'s always Odie\'s fault.', ephemeral: true });
+          await interaction.reply({ content: `There was an error while handling this button press! ${getPersonality()}`, flags: 64 });
         } catch (replyError) {
           console.error('Failed to send error reply:', replyError);
         }
       } else {
         // If already replied/deferred, try to follow up or edit
         try {
+          const joke = getPersonality();
           if (interaction.deferred) {
-            await interaction.editReply({ content: 'There was an error while handling this button press! This is worse than a Monday morning.' });
+            await interaction.editReply({ content: `There was an error while handling this button press! ${joke}` });
           } else {
-            await interaction.followUp({ content: 'There was an error while handling this button press! I need a nap and some lasagna.', ephemeral: true });
+            await interaction.followUp({ content: `There was an error while handling this button press! ${joke}`, flags: 64 });
           }
         } catch (followUpError) {
           console.error('Failed to send error follow-up:', followUpError);

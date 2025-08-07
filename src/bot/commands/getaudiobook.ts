@@ -6,17 +6,17 @@ export const data = new SlashCommandBuilder()
   .setDescription('Searches for and downloads an audiobook.')
   .addStringOption(option =>
     option.setName('query')
-      .setDescription('The title of the audiobook to search for.')
+      .setDescription('The search term (title, author, or narrator).')
       .setRequired(true))
-  .addStringOption(option =>
-    option.setName('author')
-      .setDescription('The author of the audiobook.'))
-  .addStringOption(option =>
-    option.setName('format')
-      .setDescription('The format of the audiobook (e.g., MP3, M4B).'))
   .addBooleanOption(option =>
-    option.setName('freeleech')
-      .setDescription('Whether to search for freeleech torrents only.'))
+    option.setName('search_title')
+      .setDescription('Search in title field (default: true).'))
+  .addBooleanOption(option =>
+    option.setName('search_author')
+      .setDescription('Search in author field (default: true).'))
+  .addBooleanOption(option =>
+    option.setName('search_narrator')
+      .setDescription('Search in narrator field (default: true).'))
   .addIntegerOption(option =>
     option.setName('limit')
       .setDescription('The maximum number of results to return (default: 10).'));

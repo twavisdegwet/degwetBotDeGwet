@@ -7,7 +7,7 @@ export const data = new SlashCommandBuilder()
     .setDescription('☁️ Check Google Drive authentication status');
 
 export async function execute(interaction: CommandInteraction) {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: 64 });
   
   try {
     const response = await axios.get('http://localhost:3000/api/uploads/status');

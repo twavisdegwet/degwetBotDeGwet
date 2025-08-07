@@ -31,7 +31,7 @@ async function convertMp3ToM4b(sourceDirectory, options = {}) {
         const command = `cd "${sourceDirectory}" && "${scriptPath}" ${args.join(' ')}`;
         logger_1.Logger.info(`Starting MP3 to M4B conversion in: ${sourceDirectory}`);
         logger_1.Logger.info(`Command: ${command}`);
-        const { stderr } = await execAsync(command, {
+        const { stdout, stderr } = await execAsync(command, {
             maxBuffer: 1024 * 1024 * 10,
             timeout: 30 * 60 * 1000,
         });
@@ -51,6 +51,9 @@ async function convertMp3ToM4b(sourceDirectory, options = {}) {
         logger_1.Logger.info(`Output file: ${outputPath}`);
         if (stderr) {
             logger_1.Logger.warn(`Conversion warnings: ${stderr}`);
+        }
+        if (stdout) {
+            logger_1.Logger.info(`Conversion output: ${stdout}`);
         }
         return {
             success: true,
@@ -72,6 +75,20 @@ async function convertMp3ToM4b(sourceDirectory, options = {}) {
 async function convertFromMamDownload(sourceDirectory, mamMetadata) {
     logger_1.Logger.info(`Converting MAM download: ${sourceDirectory}`);
     logger_1.Logger.info(`Metadata:`, mamMetadata);
+    try {
+        const hasFiles = await hasMP3Files(sourceDirectory);
+        if (!hasFiles) {
+            throw new Error('No MP3 files found in download directory');
+        }
+    }
+    catch (error) {
+        logger_1.Logger.error('MP3 validation failed:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'MP3 file validation failed',
+            duration: 0
+        };
+    }
     const options = {
         title: mamMetadata.title,
         author: mamMetadata.author,

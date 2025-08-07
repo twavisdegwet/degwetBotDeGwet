@@ -78,11 +78,22 @@ export class MamClient {
     text?: string;
     srchIn?: string[];
     searchType?: 'all' | 'active' | 'inactive' | 'fl' | 'fl-VIP' | 'VIP' | 'nVIP' | 'nMeta';
+    searchIn?: string;
     cat?: string[];
     sortType?: 'titleAsc' | 'titleDesc' | 'fileAsc' | 'fileDesc' | 'sizeAsc' | 'sizeDesc' | 'seedersAsc' | 'seedersDesc' | 'leechersAsc' | 'leechersDesc' | 'snatchedAsc' | 'snatchedDesc' | 'dateAsc' | 'dateDesc' | 'bmkaAsc' | 'bmkaDesc' | 'reseedAsc' | 'reseedDesc' | 'categoryAsc' | 'categoryDesc' | 'random' | 'default';
     startNumber?: number;
     perpage?: number;
     filetype?: string;
+    browseFlagsHideVsShow?: number;
+    minSize?: number;
+    maxSize?: number;
+    unit?: number;
+    minSeeders?: number;
+    maxSeeders?: number;
+    minLeechers?: number;
+    maxLeechers?: number;
+    minSnatched?: number;
+    maxSnatched?: number;
   }): Promise<MamSearchResponse> {
     try {
       // Build query parameters using URLSearchParams to handle arrays correctly
@@ -92,12 +103,19 @@ export class MamClient {
         searchPayload.append('tor[text]', params.text);
       }
 
+      // Handle srchIn as individual boolean fields to match MAM's expected format
       if (params.srchIn) {
-        params.srchIn.forEach(val => searchPayload.append('tor[srchIn][]', val));
+        params.srchIn.forEach(field => {
+          searchPayload.append(`tor[srchIn][${field}]`, 'true');
+        });
       }
 
       if (params.searchType) {
         searchPayload.append('tor[searchType]', params.searchType);
+      }
+
+      if (params.searchIn) {
+        searchPayload.append('tor[searchIn]', params.searchIn);
       }
 
       if (params.cat) {
@@ -114,6 +132,47 @@ export class MamClient {
 
       if (params.perpage !== undefined) {
         searchPayload.append('perpage', params.perpage.toString());
+      }
+
+      // Add additional search parameters to match MAM's browse.php format
+      if (params.browseFlagsHideVsShow !== undefined) {
+        searchPayload.append('tor[browseFlagsHideVsShow]', params.browseFlagsHideVsShow.toString());
+      }
+
+      if (params.minSize !== undefined) {
+        searchPayload.append('tor[minSize]', params.minSize.toString());
+      }
+
+      if (params.maxSize !== undefined) {
+        searchPayload.append('tor[maxSize]', params.maxSize.toString());
+      }
+
+      if (params.unit !== undefined) {
+        searchPayload.append('tor[unit]', params.unit.toString());
+      }
+
+      if (params.minSeeders !== undefined) {
+        searchPayload.append('tor[minSeeders]', params.minSeeders.toString());
+      }
+
+      if (params.maxSeeders !== undefined) {
+        searchPayload.append('tor[maxSeeders]', params.maxSeeders.toString());
+      }
+
+      if (params.minLeechers !== undefined) {
+        searchPayload.append('tor[minLeechers]', params.minLeechers.toString());
+      }
+
+      if (params.maxLeechers !== undefined) {
+        searchPayload.append('tor[maxLeechers]', params.maxLeechers.toString());
+      }
+
+      if (params.minSnatched !== undefined) {
+        searchPayload.append('tor[minSnatched]', params.minSnatched.toString());
+      }
+
+      if (params.maxSnatched !== undefined) {
+        searchPayload.append('tor[maxSnatched]', params.maxSnatched.toString());
       }
 
       // For the search endpoint, we make a POST request with form data.

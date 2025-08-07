@@ -61,7 +61,7 @@ export async function convertMp3ToM4b(
     Logger.info(`Command: ${command}`);
     
     // Execute the conversion
-    const { stderr } = await execAsync(command, {
+    const { stdout, stderr } = await execAsync(command, {
       maxBuffer: 1024 * 1024 * 10, // 10MB buffer for large outputs
       timeout: 30 * 60 * 1000, // 30 minute timeout
     });
@@ -85,6 +85,10 @@ export async function convertMp3ToM4b(
     
     if (stderr) {
       Logger.warn(`Conversion warnings: ${stderr}`);
+    }
+
+    if (stdout) {
+      Logger.info(`Conversion output: ${stdout}`);
     }
     
     return {
@@ -124,6 +128,21 @@ export async function convertFromMamDownload(
 ): Promise<ConversionResult> {
   Logger.info(`Converting MAM download: ${sourceDirectory}`);
   Logger.info(`Metadata:`, mamMetadata);
+
+  // Validate MP3 files exist first
+  try {
+    const hasFiles = await hasMP3Files(sourceDirectory);
+    if (!hasFiles) {
+      throw new Error('No MP3 files found in download directory');
+    }
+  } catch (error) {
+    Logger.error('MP3 validation failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'MP3 file validation failed',
+      duration: 0
+    };
+  }
   
   const options: ConversionOptions = {
     title: mamMetadata.title,

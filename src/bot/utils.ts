@@ -5,6 +5,7 @@ import { DownloadManager } from '../api/clients/downloadManagement';
 import { DelugeClient } from '../api/clients/delugeClient';
 import { env } from '../config/env';
 import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
+import { getPersonality } from './badjokes';
 
 const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
 
@@ -82,30 +83,34 @@ export function analyzeContentType(files: Array<{path: string, size: number}>): 
   };
 }
 
+
 // Shared function for book search logic
 export async function handleBookSearch(interaction: CommandInteraction, bookType: 'audiobook' | 'ebook') {
   if (!interaction.isChatInputCommand()) return;
   await interaction.deferReply();
   
   const query = interaction.options.getString('query', true);
-  const author = interaction.options.getString('author');
-  const format = interaction.options.getString('format');
-  const freeleech = interaction.options.getBoolean('freeleech') || false;
   const limit = interaction.options.getInteger('limit') || 10;
   
-  // Build search parameters
+  // Get search field options (default to true if not specified)
+  const searchTitle = interaction.options.getBoolean('search_title') ?? true;
+  const searchAuthor = interaction.options.getBoolean('search_author') ?? true;
+  const searchNarrator = bookType === 'audiobook' ? (interaction.options.getBoolean('search_narrator') ?? true) : false;
+  
+  // Build srchIn array based on selected search fields
+  const srchInFields: string[] = [];
+  if (searchTitle) srchInFields.push('title');
+  if (searchAuthor) srchInFields.push('author');
+  if (searchNarrator && bookType === 'audiobook') srchInFields.push('narrator');
+  
+  // Build search parameters matching the MAM URL structure
   const searchParams: any = {
     text: query,
     perpage: limit,
-    srchIn: ['title', 'author'], // Default to searching both title and author
-    searchType: 'all'
+    srchIn: srchInFields.length > 0 ? srchInFields : ['title', 'author'],
+    searchType: 'all',
+    searchIn: 'torrents'
   };
-  
-  // Add optional filters
-  if (author) {
-    // If author filter is specified, search only in author field
-    searchParams.srchIn = ['author'];
-  }
   
   // Set categories based on book type
   if (bookType === 'audiobook') {
@@ -125,13 +130,19 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
     ];
   }
   
-  if (format) {
-    searchParams.filetype = format;
-  }
-  
-  if (freeleech) {
-    searchParams.searchType = 'fl';
-  }
+  // Add additional MAM search parameters to match the URL structure
+  searchParams.browseFlagsHideVsShow = 0;
+  searchParams.minSize = 0;
+  searchParams.maxSize = 0;
+  searchParams.unit = 1;
+  searchParams.minSeeders = 0;
+  searchParams.maxSeeders = 0;
+  searchParams.minLeechers = 0;
+  searchParams.maxLeechers = 0;
+  searchParams.minSnatched = 0;
+  searchParams.maxSnatched = 0;
+  searchParams.sortType = 'default';
+  searchParams.startNumber = 0;
   
   // Call our API
   const response = await axios.post('http://localhost:3000/api/mam/search', searchParams);
@@ -142,23 +153,22 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
   results.sort((a: any, b: any) => b.seeders - a.seeders);
   
   if (results.length === 0) {
-    await interaction.editReply(`I found nothing. Zero. Zilch. Nada. This is a bigger disaster than running out of lasagna on a Monday. Try searching for something else, maybe something with more... lasagna?`);
+    await interaction.editReply(`I found nothing. Zero. Zilch. Nada. ${getPersonality()}`);
     return;
   }
   
   // Format results for Discord with numbered selections
-  const bookTypeName = bookType === 'audiobook' ? 'Audiobook' : 'E-Book';
-  let message = `Woah, a ${bookTypeName} search! That's more exciting than a Monday morning. NOT! Garfield and I would rather be eating lasagna. Speaking of which, did you know Andrew Garfield, the Spider-Man guy, has the same name as the cat? Coincidence? I think NOT. Spider-Man probably loves lasagna. Here are the results for "${query}":\n\n`;
+  let message = `${getPersonality()} Here are the results for "${query}":\n\n`;
   message += `Pick a book by typing its number. Don't take too long, or I'll eat all the lasagna.\n\n`;
   
-  // Add filter information if any were applied
-  const filters = [];
-  if (author) filters.push(`Author: ${author}`);
-  if (format) filters.push(`Format: ${format.toUpperCase()}`);
-  if (freeleech) filters.push('Freeleech only');
+  // Add search field information
+  const searchFields = [];
+  if (searchTitle) searchFields.push('Title');
+  if (searchAuthor) searchFields.push('Author');
+  if (searchNarrator && bookType === 'audiobook') searchFields.push('Narrator');
   
-  if (filters.length > 0) {
-    message += `*Filters: ${filters.join(', ')}*\n\n`;
+  if (searchFields.length > 0) {
+    message += `*Searching in: ${searchFields.join(', ')}*\n\n`;
   }
   
   results.slice(0, 5).forEach((torrent: any, index: number) => {
@@ -222,7 +232,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
     const selectedTorrent = results[selection];
     
     // Acknowledge selection
-    await m.reply(`You picked **${selectedTorrent.title}**! An excellent choice. I'd celebrate with a nap, but I have to download this for you. The things I do for my friends. Just don't tell Garfield I'm working on a Monday.`);
+    await m.reply(`You picked **${selectedTorrent.title}**! ${getPersonality()}`);
     
     // Check if torrent is VIP and not free, then set as freeleech
     if (selectedTorrent.isVip && !selectedTorrent.isFree) {
@@ -266,8 +276,12 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
         if (downloadResponse.data.canUploadToGDrive) {
           duplicateMessage += `\n\n🚀 This torrent is completed and ready for Google Drive upload!`;
           
-          await m.reply({
-            content: duplicateMessage,
+          // Send as a separate message instead of editing the original to avoid button interaction issues
+          await m.reply(duplicateMessage);
+          
+          // Send the button prompt as a follow-up message
+          await m.channel.send({
+            content: 'Would you like to upload this torrent to Google Drive?',
             components: [
               {
                 type: 1,
@@ -348,7 +362,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
         }
         
         // Start the upload process
-        await message.reply(`🎉 **${torrentName}** is downloaded! I'd say that calls for a victory lasagna, but we've got more work to do. Checking for MP3 files now. This is the exciting part! (It's not, I'd rather be napping).`);
+        await message.reply(`🎉 **${torrentName}** is downloaded! ${getPersonality()}`);
         
         // Use the new unified upload system
         const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
@@ -356,7 +370,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
         if (!hasMp3Files) {
           // If no MP3 files, proceed with upload
           const result = await uploadTorrentToGDrive(torrentId, false, 
-            `✅ **${torrentName}** is on Google Drive! I did it! I'm a hero! A true champion! Now, where's my lasagna? I was promised lasagna.\n\n`
+            `✅ **${torrentName}** is on Google Drive! ${getPersonality()}\n\n`
           );
           await message.reply(result.message);
         }
@@ -397,7 +411,7 @@ export async function handleAutoUploadInteraction(interaction: any) {
   await handleUploadButtonInteraction(interaction, 'auto_upload', async (torrentId: string, convert: boolean) => {
     // Custom upload logic for auto-upload (getebook/getaudiobook)
     const result = await uploadTorrentToGDrive(torrentId, convert, 
-      `✅ It's on Google Drive! I'm a genius! A coding prodigy! A... very tired bot who needs a nap. And a lasagna. Did I mention the lasagna?\n\n`
+      `✅ It's on Google Drive! ${getPersonality()}\n\n`
     );
     
     // Update the interaction with the result
@@ -424,24 +438,40 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
       await interaction.deferUpdate();
 
       try {
-        // Check for MP3 files using the unified system
-        const hasMp3Files = await checkForMp3AndPrompt(torrentId, interaction, 'duplicate');
+        // Instead of editing the original message, send a follow-up message
+        // This avoids issues with interaction tokens expiring or too many buttons
+        const downloadManager = new DownloadManager(delugeClient);
+        let selectedTorrent;
         
-        if (!hasMp3Files) {
-          // If no MP3 files, proceed with upload
-          const result = await uploadTorrentToGDrive(torrentId, false, 
-            `✅ The duplicate is on Google Drive! I'm so good at this, I should get a medal. Or a lifetime supply of lasagna. I'd prefer the lasagna.\n\n`
-          );
-          
-          try {
-            await interaction.editReply({ content: result.message, components: [] });
-          } catch (editError: any) {
-            if (editError.code === 50027) { // Invalid Webhook Token
-              await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
-            } else {
-              throw editError;
-            }
+        try {
+          const torrentInfo = await downloadManager.getTorrentInfo(torrentId);
+          if (torrentInfo && torrentInfo.name) {
+            selectedTorrent = { id: torrentId, name: torrentInfo.name };
           }
+        } catch (directError: any) {
+          const torrents = await downloadManager.listCompletedTorrents();
+          selectedTorrent = torrents.find((t: {id: string, name: string}) => t.id === torrentId);
+        }
+        
+        if (selectedTorrent) {
+          // Send a follow-up message with the MP3 conversion prompt
+          const hasMp3Files = await checkForMp3AndPrompt(torrentId, interaction, 'duplicate');
+          
+          await interaction.editReply({ content: '🔄 Checking files for MP3 conversion...', components: [] });
+          
+          if (!hasMp3Files) {
+            // If no MP3 files, proceed with upload and show progress
+            const statusMessage = `🚀 Now uploading **${selectedTorrent.name}** to Google Drive. ${getPersonality()}`;
+            await interaction.editReply({ content: statusMessage });
+            
+            // Upload with progress updates - no need to store result as it handles messaging internally
+            await uploadTorrentToGDrive(torrentId, false, undefined, interaction);
+          }
+        } else {
+          await interaction.editReply({ 
+            content: `Torrent not found. It probably ran away to find a more interesting bot. One with more lasagna.\n\nTorrent ID: ${torrentId}`, 
+            components: [] 
+          });
         }
 
       } catch (error: any) {
@@ -460,19 +490,8 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
     } else if (actionType === 'convert' || actionType === 'no') {
       // Use the unified upload button handler for conversion choices
       await handleUploadButtonInteraction(interaction, 'duplicate', async (torrentId: string, convert: boolean) => {
-        const result = await uploadTorrentToGDrive(torrentId, convert, 
-          `✅ The duplicate is on Google Drive! I'm so good at this, I should get a medal. Or a lifetime supply of lasagna. I'd prefer the lasagna.\n\n`
-        );
-        
-        try {
-          await interaction.editReply({ content: result.message, components: [] });
-        } catch (editError: any) {
-          if (editError.code === 50027) { // Invalid Webhook Token
-            await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
-          } else {
-            throw editError;
-          }
-        }
+        // Upload with progress updates - no need to store result as it handles messaging internally
+        await uploadTorrentToGDrive(torrentId, convert, undefined, interaction);
       });
     }
   }
