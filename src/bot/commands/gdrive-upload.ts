@@ -26,18 +26,18 @@ export async function execute(interaction: CommandInteraction) {
     const torrents = await downloadManager.searchTorrents(query);
 
     if (torrents.length === 0) {
-      await interaction.editReply(`No completed torrents found matching "${query}".`);
+      await interaction.editReply(`I searched far and wide, even checked under the couch cushions, but I couldn't find any completed torrents matching "${query}". This is a sadder day than the day the lasagna ran out.`);
       return;
     }
 
-    let message = `**Completed Torrents matching "${query}":**\n\n`;
+    let message = `**I found some torrents matching "${query}"! I was hoping for lasagna recipes, but this is good too, I guess.**\n\n`;
     message += torrents.slice(0, 10).map((t, i) => `${i + 1}. ${t.name}`).join('\n');
 
     if (torrents.length > 10) {
       message += `\n\n*Showing first 10 of ${torrents.length} torrents*`;
     }
 
-    message += `\n\nReply with a number to select a torrent for upload to Google Drive.`;
+    message += `\n\nPick a number to upload a torrent. Don't just sit there like you've eaten too much lasagna.`;
 
     await interaction.editReply(message);
 
@@ -75,7 +75,7 @@ export async function execute(interaction: CommandInteraction) {
       if (hasMp3Files) {
         const contentType = analysis.type === 'audiobook' ? 'audiobook' : 'content with MP3 files';
         await m.reply({
-          content: `🎵 This ${contentType} contains MP3 files. Would you like to convert them to M4B audiobook format before uploading?`,
+          content: `🎵 This ${contentType} is full of MP3s, like a lasagna is full of cheese. I can convert them to a single M4B file, but it'll take a while. You could probably take a nap, wake up, and it still wouldn't be done. So, what's the plan?`,
           components: [
             {
               type: 1,
@@ -104,7 +104,7 @@ export async function execute(interaction: CommandInteraction) {
     });
   } catch (error) {
     console.error('Error handling gdrive-upload command:', error);
-    await interaction.editReply('An error occurred while handling the gdrive-upload command.');
+    await interaction.editReply('I messed up. This is a disaster. A real Monday of an error. I bet Nermal is behind this.');
   }
 }
 
@@ -137,13 +137,13 @@ async function uploadToGDrive(replyTarget: any, torrent: { id: string, name: str
   if (isButtonInteraction) {
     // For button interactions that have been deferred, use editReply
     statusMessage = await replyTarget.editReply({ 
-      content: `🚀 Starting upload of **${torrent.name}** to Google Drive...${convert ? '\n🎵 MP3→M4B conversion enabled' : ''}`,
+      content: `🚀 Okay, I'm uploading **${torrent.name}** to Google Drive. This is hard work. I need a nap. And a lasagna. But mostly a nap.${convert ? '\n🎵 I\'m also converting MP3s to M4B, so this might take a while. Like, a really long while.' : ''}`,
       components: []
     });
   } else {
     // For regular message replies
     statusMessage = await replyTarget.reply({ 
-      content: `🚀 Starting upload of **${torrent.name}** to Google Drive...${convert ? '\n🎵 MP3→M4B conversion enabled' : ''}`,
+      content: `🚀 Okay, I'm uploading **${torrent.name}** to Google Drive. This is hard work. I need a nap. And a lasagna. But mostly a nap.${convert ? '\n🎵 I\'m also converting MP3s to M4B, so this might take a while. Like, a really long while.' : ''}`,
       fetchReply: true 
     });
   }
@@ -158,8 +158,8 @@ async function uploadToGDrive(replyTarget: any, torrent: { id: string, name: str
       const downloadManager = new DownloadManager(delugeClient);
       const files = await downloadManager.getTorrentFiles(torrent.id);
       const analysis = analyzeContentType(files);
-      let successMessage = `✅ Successfully uploaded ${analysis.emoji} **${torrent.name}** to Google Drive!\n\n`;
-      successMessage += `📁 Uploaded ${uploadResponse.data.uploadedFiles.length} files`;
+      let successMessage = `✅ Hooray! **${torrent.name}** is on Google Drive. That was almost as satisfying as a nap after a big meal. Almost.\n\n`;
+      successMessage += `📁 I uploaded ${uploadResponse.data.uploadedFiles.length} files`;
 
       if (analysis.totalSize > 0) {
         successMessage += ` (${formatFileSize(analysis.totalSize)})`;
@@ -192,10 +192,10 @@ async function uploadToGDrive(replyTarget: any, torrent: { id: string, name: str
 
       await statusMessage.edit({ content: successMessage, components: [] });
     } else {
-      await statusMessage.edit({ content: `❌ Upload failed: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`, components: [] });
+      await statusMessage.edit({ content: `❌ The upload failed. I'm so depressed. I think I'll go eat a whole pan of lasagna to feel better. \n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`, components: [] });
     }
   } catch (error: any) {
     console.error('Error uploading torrent:', error);
-    await statusMessage.edit({ content: `❌ Upload failed: ${error.response?.data?.error || error.message}`, components: [] });
+    await statusMessage.edit({ content: `❌ The upload failed. I blame Odie. It's always Odie's fault. \n\nError: ${error.response?.data?.error || error.message}`, components: [] });
   }
 }

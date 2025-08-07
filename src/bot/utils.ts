@@ -141,14 +141,14 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
   results.sort((a: any, b: any) => b.seeders - a.seeders);
   
   if (results.length === 0) {
-    await interaction.editReply(`No ${bookType === 'audiobook' ? 'audiobooks' : 'e-books'} found matching your criteria.`);
+    await interaction.editReply(`I found nothing. Zero. Zilch. Nada. This is a bigger disaster than running out of lasagna on a Monday. Try searching for something else, maybe something with more... lasagna?`);
     return;
   }
   
   // Format results for Discord with numbered selections
   const bookTypeName = bookType === 'audiobook' ? 'Audiobook' : 'E-Book';
-  let message = `Wow, a ${bookTypeName} search! Did you know Garfield the cat and Andrew Garfield share a name? I bet Spider-Man likes lasagna too. Anyway, here are your results for "${query}":\n\n`;
-  message += `Please select a book by typing its number:\n\n`;
+  let message = `Woah, a ${bookTypeName} search! That's more exciting than a Monday morning. NOT! Garfield and I would rather be eating lasagna. Speaking of which, did you know Andrew Garfield, the Spider-Man guy, has the same name as the cat? Coincidence? I think NOT. Spider-Man probably loves lasagna. Here are the results for "${query}":\n\n`;
+  message += `Pick a book by typing its number. Don't take too long, or I'll eat all the lasagna.\n\n`;
   
   // Add filter information if any were applied
   const filters = [];
@@ -221,7 +221,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
     const selectedTorrent = results[selection];
     
     // Acknowledge selection
-    await m.reply(`Great choice! You selected: **${selectedTorrent.title}**. That's a better choice than a Monday, am I right? Garfield would approve.`);
+    await m.reply(`You picked **${selectedTorrent.title}**! An excellent choice. I'd celebrate with a nap, but I have to download this for you. The things I do for my friends. Just don't tell Garfield I'm working on a Monday.`);
     
     // Check if torrent is VIP and not free, then set as freeleech
     if (selectedTorrent.isVip && !selectedTorrent.isFree) {
@@ -347,7 +347,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
         }
         
         // Start the upload process
-        await message.reply(`🎉 **${torrentName}** download completed! Checking for MP3 files...`);
+        await message.reply(`🎉 **${torrentName}** is downloaded! I'd say that calls for a victory lasagna, but we've got more work to do. Checking for MP3 files now. This is the exciting part! (It's not, I'd rather be napping).`);
         
         // Check if there are MP3 files and prompt user
         const downloadManager = new DownloadManager(delugeClient);
@@ -366,7 +366,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
           const contentType = analysis.type === 'audiobook' ? 'audiobook' : 'content with MP3 files';
           console.log(`DEBUG: Prompting user for MP3 conversion for torrent ${torrentId}`);
           await message.reply({
-            content: `🎵 This ${contentType} contains MP3 files. Would you like to convert them to M4B audiobook format before uploading? **WARNING: This is like, a super long process. We're talking maybe 30 minutes or more. Garfield hates waiting, and so will you. But it'll be worth it. Probably.**`,
+            content: `🎵 Hey, so, this ${contentType} has MP3 files. We can convert them to a single M4B file, which is pretty neat for audiobooks. But, uh, it takes a while. Like, a really long while. You could probably watch a whole Garfield movie in the time it takes. And eat a whole lasagna. So, what do you say?`,
             components: [
               {
                 type: 1,
@@ -398,8 +398,8 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
           });
 
           if (uploadResponse.data.success) {
-            let successMessage = `✅ **${torrentName}** automatically uploaded to Google Drive!\n\n`;
-            successMessage += `📁 Uploaded ${uploadResponse.data.uploadedFiles.length} files\n`;
+            let successMessage = `✅ **${torrentName}** is on Google Drive! I did it! I'm a hero! A true champion! Now, where's my lasagna? I was promised lasagna.\n\n`;
+            successMessage += `📁 I uploaded ${uploadResponse.data.uploadedFiles.length} files.\n`;
             
             if (uploadResponse.data.convertedFile) {
               successMessage += `🎵 Converted to: ${uploadResponse.data.convertedFile}\n`;
@@ -412,11 +412,11 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
 
             await message.reply(successMessage);
           } else {
-            await message.reply(`❌ Auto-upload failed for **${torrentName}**: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`);
+            await message.reply(`❌ The auto-upload failed. This is a catastrophe. A disaster. A real Monday of a problem. I'm going to go lie down and think about what went wrong. And also about lasagna. Mostly lasagna.\n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`);
           }
         } catch (error: any) {
           console.error('Error in auto-upload:', error);
-          await message.reply(`❌ Auto-upload failed for **${torrentName}**: ${error.response?.data?.error || error.message}`);
+          await message.reply(`❌ The auto-upload failed. I blame Nermal. That cat is just too cute and distracting. It's not my fault.\n\nError: ${error.response?.data?.error || error.message}`);
         }
         
       } else {
@@ -467,8 +467,8 @@ export async function handleAutoUploadInteraction(interaction: any) {
       });
 
       if (uploadResponse.data.success) {
-        let successMessage = `✅ Successfully uploaded to Google Drive!\n\n`;
-        successMessage += `📁 Uploaded ${uploadResponse.data.uploadedFiles.length} files`;
+        let successMessage = `✅ It's on Google Drive! I'm a genius! A coding prodigy! A... very tired bot who needs a nap. And a lasagna. Did I mention the lasagna?\n\n`;
+        successMessage += `📁 I uploaded ${uploadResponse.data.uploadedFiles.length} files`;
         
         if (convert && uploadResponse.data.convertedFile) {
           successMessage += `\n🎵 Converted to: ${uploadResponse.data.convertedFile}`;
@@ -482,14 +482,14 @@ export async function handleAutoUploadInteraction(interaction: any) {
         await interaction.editReply({ content: successMessage, components: [] });
       } else {
         await interaction.editReply({ 
-          content: `❌ Upload failed: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`, 
+          content: `❌ The upload failed. I'm starting to think this whole 'work' thing is a bad idea. I should have just stayed in bed and dreamed of lasagna.\n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`, 
           components: [] 
         });
       }
     } catch (error: any) {
       console.error('Error uploading torrent:', error);
       await interaction.editReply({ 
-        content: `❌ Upload failed: ${error.response?.data?.error || error.message}`, 
+        content: `❌ The upload failed. This is all Odie's fault. I just know it. That dog is always causing trouble.\n\nError: ${error.response?.data?.error || error.message}`, 
         components: [] 
       });
     }
@@ -516,7 +516,7 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
         if (hasMp3Files) {
           const contentType = analysis.type === 'audiobook' ? 'audiobook' : 'content with MP3 files';
           await interaction.editReply({
-            content: `🎵 This ${contentType} contains MP3 files. Would you like to convert them to M4B audiobook format before uploading? **WARNING: This is like, a super long process. We're talking maybe 30 minutes or more. Garfield hates waiting, and so will you. But it'll be worth it. Probably.**`,
+            content: `🎵 Hey, so, this ${contentType} has MP3 files. We can convert them to a single M4B file, which is pretty neat for audiobooks. But, uh, it takes a while. Like, a really long while. You could probably watch a whole Garfield movie in the time it takes. And eat a whole lasagna. So, what do you say?`,
             components: [
               {
                 type: 1,
@@ -583,9 +583,9 @@ async function uploadDuplicateTorrent(interaction: any, torrentId: string, conve
       convertMp3ToM4b: convert
     });
 
-    if (uploadResponse.data.success) {
-      let successMessage = `✅ Successfully uploaded duplicate torrent to Google Drive!\n\n`;
-      successMessage += `📁 Uploaded ${uploadResponse.data.uploadedFiles.length} files`;
+      if (uploadResponse.data.success) {
+        let successMessage = `✅ The duplicate is on Google Drive! I'm so good at this, I should get a medal. Or a lifetime supply of lasagna. I'd prefer the lasagna.\n\n`;
+        successMessage += `📁 I uploaded ${uploadResponse.data.uploadedFiles.length} files`;
       
       if (convert && uploadResponse.data.convertedFile) {
         successMessage += `\n🎵 Converted to: ${uploadResponse.data.convertedFile}`;
@@ -608,7 +608,7 @@ async function uploadDuplicateTorrent(interaction: any, torrentId: string, conve
         }
       }
     } else {
-      const errorMessage = `❌ Upload failed: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`;
+      const errorMessage = `❌ The duplicate upload failed. This is a dark day. A day without sunshine. A day without lasagna. The horror.\n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`;
       
       try {
         await interaction.editReply({ 
@@ -625,7 +625,7 @@ async function uploadDuplicateTorrent(interaction: any, torrentId: string, conve
     }
   } catch (error: any) {
     console.error('Error uploading duplicate torrent:', error);
-    const errorMessage = `❌ Upload failed: ${error.response?.data?.error || error.message}`;
+    const errorMessage = `❌ The duplicate upload failed. I'm not saying it was aliens, but it was aliens. Or Nermal. Probably Nermal.\n\nError: ${error.response?.data?.error || error.message}`;
     
     try {
       await interaction.editReply({ 

@@ -34,8 +34,8 @@ export async function execute(interaction: CommandInteraction) {
         
         await interaction.editReply({
           embeds: [{
-            title: '☁️ Google Drive Status',
-            description: '✅ Service account connected to Google Drive',
+            title: '☁️ Google Drive Status - As Exciting as Lasagna!',
+            description: '✅ Everything is connected! Even Garfield would be impressed. And he hates everything except lasagna.',
             fields: [
               {
                 name: '👤 Service Account',
@@ -59,8 +59,8 @@ export async function execute(interaction: CommandInteraction) {
       } else {
         await interaction.editReply({
           embeds: [{
-            title: '☁️ Google Drive Status',
-            description: '❌ Service account not connected',
+            title: '☁️ Google Drive Status - Oh No, a Monday!',
+            description: '❌ Houston, we have a problem. And it\'s not that we\'re out of lasagna. The service account isn\'t connected.',
             fields: [
               {
                 name: 'Service Account File',
@@ -78,10 +78,10 @@ export async function execute(interaction: CommandInteraction) {
         });
       }
     } else {
-      await interaction.editReply('❌ Failed to check Google Drive status.');
+      await interaction.editReply('❌ Failed to check Google Drive status. This is worse than a Monday without coffee. Or lasagna.');
     }
   } catch (error: any) {
     console.error('Error checking gdrive status:', error);
-    await interaction.editReply('❌ An error occurred while checking Google Drive status.');
+    await interaction.editReply('❌ An error occurred. I bet that pesky dog Odie unplugged something. Or maybe it was Nermal.');
   }
 }

@@ -7,8 +7,8 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: CommandInteraction) {
   await interaction.reply({
     embeds: [{
-      title: '📚 Book Download Bot Features',
-      description: 'MyAnonaMouse book download bot with Google Drive integration',
+      title: '📚 Book Download Bot Help - Now with More Lasagna!',
+      description: 'This bot helps you download books. It\'s almost as good as a nap. Almost.',
       fields: [
         {
           name: '🎧 Audiobook Search & Download',
@@ -33,7 +33,7 @@ export async function execute(interaction: CommandInteraction) {
       ],
       color: 0x00AE86,
       footer: {
-        text: 'Made for MyAnonaMouse book lovers 📖'
+        text: 'This bot was made with love, and a deep appreciation for lasagna. 📖'
       }
     }]
   });
