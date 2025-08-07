@@ -50,10 +50,13 @@ class UploadManagementClient {
             }
         }
     }
-    async isAuthenticated() {
+    async isAuthenticated(progressCallback) {
         try {
             await this.drive.about.get({ fields: 'user' });
-            console.log('✅ Google Drive authentication successful! I\'m more connected than Jon is to reality.');
+            const message = '✅ Google Drive authentication successful! I\'m more connected than Jon is to reality.';
+            console.log(message);
+            if (progressCallback)
+                progressCallback(message);
             return true;
         }
         catch (error) {
@@ -61,9 +64,12 @@ class UploadManagementClient {
             return false;
         }
     }
-    async createFolder(name, parentId) {
+    async createFolder(name, parentId, progressCallback) {
         try {
-            console.log(`📁 Creating folder "${name}" - This is more organized than Jon's sock drawer.`);
+            const createMessage = `📁 Creating folder "${name}" - This is more organized than Jon's sock drawer.`;
+            console.log(createMessage);
+            if (progressCallback)
+                progressCallback(createMessage);
             const fileMetadata = {
                 name: name,
                 mimeType: 'application/vnd.google-apps.folder'
@@ -77,7 +83,10 @@ class UploadManagementClient {
                 fields: 'id',
                 supportsAllDrives: true
             });
-            console.log(`✅ Folder created successfully! I'm more productive than Odie on his best day.`);
+            const successMessage = `✅ Folder created successfully! I'm more productive than Odie on his best day.`;
+            console.log(successMessage);
+            if (progressCallback)
+                progressCallback(successMessage);
             return response.data.id;
         }
         catch (error) {
@@ -111,10 +120,13 @@ class UploadManagementClient {
             throw new Error(`Failed to upload file: ${fileName}`);
         }
     }
-    async copyFilesToTemp(files, basePath) {
+    async copyFilesToTemp(files, basePath, progressCallback) {
         const tempSessionDir = path_1.default.join(this.tempDir, `session_${Date.now()}`);
         fs_1.default.mkdirSync(tempSessionDir, { recursive: true });
-        console.log(`📋 Copying ${files.length} files to temp directory. This is harder work than avoiding Mondays.`);
+        const startMessage = `📋 Copying ${files.length} files to temp directory. This is harder work than avoiding Mondays.`;
+        console.log(startMessage);
+        if (progressCallback)
+            progressCallback(startMessage);
         const copiedFiles = [];
         for (const file of files) {
             const sourcePath = path_1.default.join(basePath, file.path);
@@ -123,13 +135,19 @@ class UploadManagementClient {
             try {
                 await execAsync(`cp "${sourcePath}" "${destPath}"`);
                 copiedFiles.push(destPath);
-                console.log(`✅ Copied: ${fileName} - One step closer to my lasagna break.`);
+                const copyMessage = `✅ Copied: ${fileName} - One step closer to my lasagna break.`;
+                console.log(copyMessage);
+                if (progressCallback)
+                    progressCallback(copyMessage);
             }
             catch (error) {
                 console.error(`❌ Failed to copy ${fileName}. This is more frustrating than Odie's existence:`, error);
             }
         }
-        console.log(`🎉 Finished copying files! I deserve a nap and a whole pan of lasagna.`);
+        const finishMessage = `🎉 Finished copying files! I deserve a nap and a whole pan of lasagna.`;
+        console.log(finishMessage);
+        if (progressCallback)
+            progressCallback(finishMessage);
         return copiedFiles;
     }
     extractMetadataFromName(torrentName) {
@@ -263,12 +281,16 @@ class UploadManagementClient {
         const uploadedFiles = [];
         let folderId;
         let convertedFile;
+        const { progressCallback } = options;
         try {
-            if (!(await this.isAuthenticated())) {
+            if (!(await this.isAuthenticated(progressCallback))) {
                 throw new Error('Cannot authenticate with Google Drive');
             }
             const contentAnalysis = this.analyzeContentType(torrentObject.files);
-            console.log(`Content analysis: ${contentAnalysis.type} (${contentAnalysis.audioFiles.length} audio, ${contentAnalysis.ebookFiles.length} ebook, ${contentAnalysis.otherFiles.length} other files)`);
+            const analysisMessage = `Content analysis: ${contentAnalysis.type} (${contentAnalysis.audioFiles.length} audio, ${contentAnalysis.ebookFiles.length} ebook, ${contentAnalysis.otherFiles.length} other files)`;
+            console.log(analysisMessage);
+            if (progressCallback)
+                progressCallback(analysisMessage);
             const basePath = torrentObject.savePath || '/mnt/nas/nzbget/nzb/completed/torrent';
             if (options.createSubfolder !== false) {
                 let folderPrefix = '';
@@ -286,11 +308,17 @@ class UploadManagementClient {
                         folderPrefix = '';
                 }
                 const folderName = folderPrefix + torrentObject.name;
-                folderId = await this.createFolder(folderName, options.parentFolderId);
-                console.log(`Created folder: ${folderName} (ID: ${folderId})`);
+                folderId = await this.createFolder(folderName, options.parentFolderId, progressCallback);
+                const folderMessage = `Created folder: ${folderName} (ID: ${folderId})`;
+                console.log(folderMessage);
+                if (progressCallback)
+                    progressCallback(folderMessage);
             }
-            console.log('Copying files to temporary directory...');
-            const copiedFiles = await this.copyFilesToTemp(torrentObject.files, basePath);
+            const copyStartMessage = 'Copying files to temporary directory...';
+            console.log(copyStartMessage);
+            if (progressCallback)
+                progressCallback(copyStartMessage);
+            const copiedFiles = await this.copyFilesToTemp(torrentObject.files, basePath, progressCallback);
             if (copiedFiles.length === 0) {
                 throw new Error('No files were successfully copied to temp directory');
             }
@@ -298,7 +326,10 @@ class UploadManagementClient {
             const mp3Files = copiedFiles.filter(file => file.endsWith('.mp3'));
             let filesToUpload = copiedFiles;
             if (options.convertMp3ToM4b && mp3Files.length > 0) {
-                console.log('Converting MP3 files to M4B...');
+                const conversionStartMessage = 'Converting MP3 files to M4B...';
+                console.log(conversionStartMessage);
+                if (progressCallback)
+                    progressCallback(conversionStartMessage);
                 const m4bFile = await this.convertMp3ToM4bImproved(tempSessionDir, torrentObject.name);
                 if (m4bFile) {
                     filesToUpload = copiedFiles.filter(file => !file.endsWith('.mp3'));
@@ -306,13 +337,19 @@ class UploadManagementClient {
                     convertedFile = path_1.default.basename(m4bFile);
                 }
             }
-            console.log(`Uploading ${filesToUpload.length} files to Google Drive...`);
+            const uploadStartMessage = `Uploading ${filesToUpload.length} files to Google Drive...`;
+            console.log(uploadStartMessage);
+            if (progressCallback)
+                progressCallback(uploadStartMessage);
             for (const filePath of filesToUpload) {
                 const fileName = path_1.default.basename(filePath);
                 try {
                     const fileId = await this.uploadFile(filePath, fileName, folderId);
                     uploadedFiles.push(fileName);
-                    console.log(`Uploaded: ${fileName} (ID: ${fileId})`);
+                    const uploadMessage = `Uploaded: ${fileName} (ID: ${fileId})`;
+                    console.log(uploadMessage);
+                    if (progressCallback)
+                        progressCallback(uploadMessage);
                 }
                 catch (error) {
                     console.error(`Failed to upload ${fileName}:`, error);

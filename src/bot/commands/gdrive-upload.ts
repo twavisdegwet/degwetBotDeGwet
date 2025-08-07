@@ -82,8 +82,8 @@ export async function execute(interaction: CommandInteraction) {
 export async function handleGDriveUploadInteraction(interaction: any) {
   // Use the new unified upload button handler
   await handleUploadButtonInteraction(interaction, 'gdrive_upload', async (torrentId: string, convert: boolean) => {
-    // Custom upload logic for gdrive-upload command
-    const result = await uploadTorrentToGDrive(torrentId, convert);
+    // Custom upload logic for gdrive-upload command with progress updates
+    const result = await uploadTorrentToGDrive(torrentId, convert, undefined, interaction);
     
     // Update the interaction with the result
     try {
@@ -99,8 +99,8 @@ export async function handleGDriveUploadInteraction(interaction: any) {
 }
 
 async function uploadToGDrive(replyTarget: any, torrent: { id: string, name: string }, convert: boolean, isButtonInteraction: boolean = false) {
-  // Use the new unified upload system
-  const result = await uploadTorrentToGDrive(torrent.id, convert);
+  // Use the new unified upload system with progress updates
+  const result = await uploadTorrentToGDrive(torrent.id, convert, undefined, replyTarget);
   
   if (isButtonInteraction) {
     // For button interactions that have been deferred, use editReply
