@@ -124,9 +124,10 @@ export async function handleGDriveUploadInteraction(interaction: any) {
     const selectedTorrent = torrents.find(t => t.id === torrentId);
 
     if (selectedTorrent) {
+      await interaction.editReply({ content: `You clicked a button! That's more effort than I've put in all day. And I'm a robot. Now I'm going to upload **${selectedTorrent.name}**. Don't rush me, I'm thinking about lasagna.`, components: [] });
       await uploadToGDrive(interaction, selectedTorrent, convert, true);
     } else {
-      await interaction.editReply({ content: 'Could not find the selected torrent.', components: [] });
+      await interaction.editReply({ content: 'I couldn\'t find the torrent. It probably ran away to find a more interesting bot. One with more lasagna.', components: [] });
     }
   }
 }
