@@ -5,6 +5,8 @@ import * as getEbookCommand from './commands/getebook';
 import * as gdriveUploadCommand from './commands/gdrive-upload';
 import * as gdriveStatusCommand from './commands/gdrive-status';
 import * as helpCommand from './commands/help';
+import * as makeFunnyJokeCommand from './commands/makefunnyjoke';
+import * as makeBadJokeCommand from './commands/makebadjoke';
 import { getPersonality } from './badjokes';
 import { handleGDriveUploadInteraction } from './commands/gdrive-upload';
 import { handleAutoUploadInteraction, handleDuplicateUploadInteraction } from './utils';
@@ -27,13 +29,17 @@ client.commands.set(getEbookCommand.data.name, getEbookCommand);
 client.commands.set(gdriveUploadCommand.data.name, gdriveUploadCommand);
 client.commands.set(gdriveStatusCommand.data.name, gdriveStatusCommand);
 client.commands.set(helpCommand.data.name, helpCommand);
+client.commands.set(makeFunnyJokeCommand.data.name, makeFunnyJokeCommand);
+client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 
 const commands = [
   getAudiobookCommand.data,
   getEbookCommand.data,
   gdriveUploadCommand.data,
   gdriveStatusCommand.data,
-  helpCommand.data
+  helpCommand.data,
+  makeFunnyJokeCommand.data,
+  makeBadJokeCommand.data
 ];
 
 const rest = new REST({ version: '10' }).setToken(env.DISCORD_TOKEN);

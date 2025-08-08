@@ -35,6 +35,10 @@ const envSchema = z.object({
   // Google Drive Configuration (Service Account)
   GOOGLE_SERVICE_ACCOUNT_PATH: z.string().min(1),
   GOOGLE_DRIVE_FOLDER_ID: z.string().min(1),
+  
+  // Ollama Configuration
+  OLLAMA_HOST: z.string().min(1),
+  OLLAMA_MODEL: z.string().min(1),
 });
 
 // Define the type for our environment variables
