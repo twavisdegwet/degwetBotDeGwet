@@ -232,7 +232,6 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
     const selectedTorrent = results[selection];
     
     // Acknowledge selection
-    await m.reply(`You picked **${selectedTorrent.title}**! ${getPersonality()}`);
     
     // Check if torrent is VIP and not free, then set as freeleech
     if (selectedTorrent.isVip && !selectedTorrent.isFree) {
@@ -241,7 +240,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
           id: selectedTorrent.id,
           wedges: 1
         });
-        await m.reply(`✅ Successfully set torrent ${selectedTorrent.id} as freeleech!`);
+        await m.reply(`You picked **${selectedTorrent.title}**! ${getPersonality()} \n ✅ Successfully set torrent ${selectedTorrent.id} as freeleech!`);
       } catch (error: any) {
         await m.reply(`❌ Failed to set freeleech: ${error.response?.data?.error || error.message}`);
       }
