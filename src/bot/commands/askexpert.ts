@@ -60,7 +60,9 @@ const personalities = ['trump', 'clyde', 'cuddy', 'waifu'] as const;
 type Personality = typeof personalities[number];
 
 function getExpertPrompt(personality: Personality, question: string, messageContext: string): string {
-  const basePrompt = `You are being asked a question and should provide your best, most helpful answer despite your personality quirks. Try to be genuinely useful while maintaining your character traits.`;
+  const basePrompt = `/no_think
+
+You are being asked a question and should provide your best, most helpful answer despite your personality quirks. Try to be genuinely useful while maintaining your character traits.`;
   
   switch (personality) {
     case 'trump':
