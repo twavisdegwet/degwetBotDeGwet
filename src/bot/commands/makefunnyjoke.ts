@@ -3,7 +3,7 @@ import { getPersonality } from '../badjokes';
 
 export const data = new SlashCommandBuilder()
     .setName('makefunnyjoke')
-    .setDescription('Tells a funny joke with personality');
+    .setDescription('Gets a quick joke from our pre-written comedy collection');
 
 export async function execute(interaction: CommandInteraction) {
     const joke = getPersonality();

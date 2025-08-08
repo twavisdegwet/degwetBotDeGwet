@@ -26,6 +26,10 @@ const envSchema = zod_1.z.object({
     NODE_ENV: zod_1.z.enum(['development', 'production', 'test']).default('development'),
     GOOGLE_SERVICE_ACCOUNT_PATH: zod_1.z.string().min(1),
     GOOGLE_DRIVE_FOLDER_ID: zod_1.z.string().min(1),
+    OLLAMA_PRIMARY_HOST: zod_1.z.string().min(1),
+    OLLAMA_PRIMARY_MODEL: zod_1.z.string().min(1),
+    OLLAMA_SECONDARY_HOST: zod_1.z.string().min(1),
+    OLLAMA_SECONDARY_MODEL: zod_1.z.string().min(1),
 });
 const envWithNumbers = {
     ...process.env,

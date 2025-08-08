@@ -37,8 +37,10 @@ const envSchema = z.object({
   GOOGLE_DRIVE_FOLDER_ID: z.string().min(1),
   
   // Ollama Configuration
-  OLLAMA_HOST: z.string().min(1),
-  OLLAMA_MODEL: z.string().min(1),
+  OLLAMA_PRIMARY_HOST: z.string().min(1),
+  OLLAMA_PRIMARY_MODEL: z.string().min(1),
+  OLLAMA_SECONDARY_HOST: z.string().min(1),
+  OLLAMA_SECONDARY_MODEL: z.string().min(1),
 });
 
 // Define the type for our environment variables

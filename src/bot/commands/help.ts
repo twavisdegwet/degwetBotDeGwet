@@ -29,6 +29,16 @@ export async function execute(interaction: CommandInteraction) {
           name: '🔄 MP3 to M4B Conversion',
           value: 'Automatic conversion for audiobook files\n• Triggered automatically for all audiobooks\n• Manual conversion with `convert_mp3` flag\n• Creates M4B with proper metadata',
           inline: false
+        },
+        {
+          name: '😂 Personal Joke Requests',
+          value: 'Get custom jokes from our comedy contacts\n• `/makebadjoke` - Email requests to comedians with different personalities (Trump, Clyde, Cuddy, Waifu)\n• `/makefunnyjoke` - Quick jokes from our pre-written collection\n• Comedians craft responses based on your recent chat context\n• Fast email responses from our comedy network\n• All jokes guaranteed to end with lasagna puns!',
+          inline: false
+        },
+        {
+          name: '🧠 Expert Consultation Panel',
+          value: 'Get advice from our diverse panel of experts\n• `/askexpert` - Submit questions to all four consultants simultaneously\n• Receive responses from Trump, Clyde, Cuddy, and Waifu\n• Each expert provides their unique perspective on your question\n• Experts do their best to be helpful despite their quirks\n• Perfect for getting multiple viewpoints on any topic',
+          inline: false
         }
       ],
       color: 0x00AE86,

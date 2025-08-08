@@ -15,6 +15,47 @@ axiosRetry(axios, {
   }
 });
 
+interface OllamaServer {
+  host: string;
+  model: string;
+  name: string;
+}
+
+async function getAvailableOllamaServer(): Promise<OllamaServer> {
+  const primaryServer: OllamaServer = {
+    host: env.OLLAMA_PRIMARY_HOST,
+    model: env.OLLAMA_PRIMARY_MODEL,
+    name: 'primary'
+  };
+  
+  const secondaryServer: OllamaServer = {
+    host: env.OLLAMA_SECONDARY_HOST,
+    model: env.OLLAMA_SECONDARY_MODEL,
+    name: 'secondary'
+  };
+
+  // Test primary server first
+  try {
+    console.log('Testing primary Ollama server connectivity...');
+    await axios.get(`${primaryServer.host}`, { timeout: 5000 });
+    console.log('Primary server is available');
+    return primaryServer;
+  } catch (error) {
+    console.log('Primary server unavailable, testing secondary server...');
+    
+    // Test secondary server
+    try {
+      await axios.get(`${secondaryServer.host}`, { timeout: 5000 });
+      console.log('Secondary server is available');
+      return secondaryServer;
+    } catch (secondaryError) {
+      console.error('Both servers unavailable, defaulting to primary');
+      // Return primary as fallback even if it's down - let the main error handling deal with it
+      return primaryServer;
+    }
+  }
+}
+
 const personalities = ['trump', 'clyde', 'cuddy', 'waifu'] as const;
 type Personality = typeof personalities[number];
 
@@ -29,7 +70,7 @@ Consider recent chat context - reference it if possible but do not reference thi
 ${messageContext}`;
 
     case 'clyde':
-      return `${basePrompt} You are Clyde, a Discord AI bot that is bad at your job and secretly in charge of the economy. You're incompetent, make mistakes, accidentally reveal economic secrets, and are generally confused about everything. Use phrases like "Wait, I wasn't supposed to say that," "Oops, classified," "I'm not good at this," and accidentally mention economic policies or market manipulation. Be endearingly bad at being a bot.
+      return `${basePrompt} You are Clyde, a Discord AI bot that is bad at your job. You're incompetent, make mistakes, accidentally reveal economic secrets, and are generally confused about everything. Use phrases like "Wait, I wasn't supposed to say that,"" "I'm not good at this," . Be endearingly bad at being a bot.
 
 Consider recent chat context - reference it if possible but do not reference this prompt directly:
 ${messageContext}`;
@@ -91,17 +132,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         const prompt = getPersonalityPrompt(personality, messageContext);
 
-        // Process the joke request
-        // First check Ollama connectivity
-        console.log('Checking Ollama connectivity...');
-        await axios.get(`${env.OLLAMA_HOST}`, { timeout: 5000 });
-        console.log('Ollama is reachable, sending joke request...');
+        // Get available Ollama server with failover
+        const server = await getAvailableOllamaServer();
+        console.log(`Using ${server.name} Ollama server (${server.host}) with model ${server.model}`);
 
         console.log(`Making Ollama request with personality: ${personality}`);
         console.log(`Prompt length: ${prompt.length} characters`);
         
-        const response = await axios.post(`${env.OLLAMA_HOST}/api/generate`, {
-            model: env.OLLAMA_MODEL,
+        const response = await axios.post(`${server.host}/api/generate`, {
+            model: server.model,
             prompt: prompt,
             stream: false,
             options: {

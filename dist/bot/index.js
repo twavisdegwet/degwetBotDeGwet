@@ -41,6 +41,8 @@ const getEbookCommand = __importStar(require("./commands/getebook"));
 const gdriveUploadCommand = __importStar(require("./commands/gdrive-upload"));
 const gdriveStatusCommand = __importStar(require("./commands/gdrive-status"));
 const helpCommand = __importStar(require("./commands/help"));
+const makeFunnyJokeCommand = __importStar(require("./commands/makefunnyjoke"));
+const makeBadJokeCommand = __importStar(require("./commands/makebadjoke"));
 const badjokes_1 = require("./badjokes");
 const gdrive_upload_1 = require("./commands/gdrive-upload");
 const utils_1 = require("./utils");
@@ -58,12 +60,16 @@ client.commands.set(getEbookCommand.data.name, getEbookCommand);
 client.commands.set(gdriveUploadCommand.data.name, gdriveUploadCommand);
 client.commands.set(gdriveStatusCommand.data.name, gdriveStatusCommand);
 client.commands.set(helpCommand.data.name, helpCommand);
+client.commands.set(makeFunnyJokeCommand.data.name, makeFunnyJokeCommand);
+client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 const commands = [
     getAudiobookCommand.data,
     getEbookCommand.data,
     gdriveUploadCommand.data,
     gdriveStatusCommand.data,
-    helpCommand.data
+    helpCommand.data,
+    makeFunnyJokeCommand.data,
+    makeBadJokeCommand.data
 ];
 const rest = new discord_js_1.REST({ version: '10' }).setToken(env_1.env.DISCORD_TOKEN);
 async function registerCommands() {
@@ -103,7 +109,7 @@ client.on('interactionCreate', async (interaction) => {
     }
     else if (interaction.isButton()) {
         try {
-            if (interaction.customId.startsWith('auto_upload_')) {
+            if (interaction.customId.startsWith('auto_upload:')) {
                 await (0, utils_1.handleAutoUploadInteraction)(interaction);
             }
             else if (interaction.customId.startsWith('duplicate_')) {
