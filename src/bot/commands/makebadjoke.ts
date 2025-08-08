@@ -108,7 +108,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 reasoning: false
             }
         }, {
-            timeout: 120000 // 2 minute timeout for complex prompts
+            timeout: 420000 // 5 minute timeout for complex prompts
         });
 
         console.log('Ollama response received, processing joke...');
