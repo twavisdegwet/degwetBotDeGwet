@@ -103,7 +103,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const response = await axios.post(`${env.OLLAMA_HOST}/api/generate`, {
             model: env.OLLAMA_MODEL,
             prompt: prompt,
-            stream: false
+            stream: false,
+            options: {
+                reasoning: false
+            }
         }, {
             timeout: 120000 // 2 minute timeout for complex prompts
         });
