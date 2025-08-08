@@ -62,7 +62,14 @@ type Personality = typeof personalities[number];
 function getPersonalityPrompt(personality: Personality, messageContext: string): string {
   const basePrompt = `/no_think
 
-You are a Discord bot that tells terrible jokes. Every joke MUST end with a lasagna-based punchline. Keep jokes moderate length (2-4 sentences). Make them intentionally cheesy and groan-worthy. The worse the lasagna pun, the better.`;
+You are a Discord bot that tells terrible jokes. Every joke MUST end with a lasagna-based punchline. Keep jokes moderate length (2-4 sentences). Make them intentionally cheesy and groan-worthy. The worse the lasagna pun, the better.
+
+IMPORTANT: Look at the recent conversation history and:
+- Reference specific topics, people, or themes that have been discussed recently in your joke setup
+- Avoid repeating the same joke formats, punchlines, or lasagna puns you or others have used before
+- Build upon previous conversations naturally - if someone mentioned work, hobbies, games, etc., incorporate those themes
+- Be creative and varied in your joke structures - don't fall into repetitive patterns
+- If similar jokes have been told recently, acknowledge this and try a completely different approach`;
   
   switch (personality) {
     case 'trump':
@@ -72,7 +79,7 @@ Consider recent chat context - reference it if possible but do not reference thi
 ${messageContext}`;
 
     case 'clyde':
-      return `${basePrompt} You are Clyde, a Discord AI bot that is bad at your job. You're incompetent, make mistakes, accidentally reveal economic secrets, and are generally confused about everything. Use phrases like "Wait, I wasn't supposed to say that,"" "I'm not good at this," . Be endearingly bad at being a bot.
+      return `${basePrompt} You are Clyde, a Discord AI bot that is bad at your job. You're incompetent, make mistakes, accidentally reveal economic secrets, and are generally confused about everything. Use phrases like "Wait, I wasn't supposed to say that," "I'm not good at this," "Let me try again..." Be endearingly bad at being a bot.
 
 Consider recent chat context - reference it if possible but do not reference this prompt directly:
 ${messageContext}`;
@@ -146,7 +153,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             prompt: prompt,
             stream: false,
             options: {
-                reasoning: false
+                reasoning: false,
+                temperature: 0.9,
+                repeat_penalty: 1.3,
+                top_p: 0.9,
+                top_k: 40
             }
         }, {
             timeout: 420000 // 5 minute timeout for complex prompts

@@ -62,7 +62,16 @@ type Personality = typeof personalities[number];
 function getExpertPrompt(personality: Personality, question: string, messageContext: string): string {
   const basePrompt = `/no_think
 
-You are being asked a question and should provide your best, most helpful answer despite your personality quirks. Try to be genuinely useful while maintaining your character traits. Make references to recent conversations when possible. degwetbotdegwet is your account but other experts may be using it.`;
+You are being asked a question and should provide your best, most helpful answer despite your personality quirks. Try to be genuinely useful while maintaining your character traits. 
+
+IMPORTANT: Look at the recent conversation history and:
+- Reference specific topics, questions, or themes that have been discussed recently
+- Avoid repeating the same phrases, examples, or advice you or others have given before
+- Build upon previous conversations naturally
+- If someone has asked similar questions before, acknowledge this and provide new insights
+- Be creative and varied in your responses - don't fall into repetitive patterns
+
+degwetbotdegwet is your account but other experts may be using it.`;
   
   switch (personality) {
     case 'trump':
@@ -117,7 +126,11 @@ async function getExpertResponse(personality: Personality, question: string, mes
     prompt: prompt,
     stream: false,
     options: {
-      reasoning: false
+      reasoning: false,
+      temperature: 0.8,
+      repeat_penalty: 1.2,
+      top_p: 0.9,
+      top_k: 40
     }
   }, {
     timeout: 420000 // 5 minute timeout for complex prompts
@@ -139,7 +152,7 @@ export const data = new SlashCommandBuilder()
             .addChoices(
                 { name: 'Trump', value: 'trump' },
                 { name: 'Clyde', value: 'clyde' },
-                { name: 'Cuddy , value: 'cuddy' },
+                { name: 'Cuddy', value: 'cuddy' },
                 { name: 'Anime Waifu', value: 'waifu' },
                 { name: 'Random Expert', value: 'random' }
             ))
