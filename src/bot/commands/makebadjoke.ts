@@ -60,7 +60,9 @@ const personalities = ['trump', 'clyde', 'cuddy', 'waifu'] as const;
 type Personality = typeof personalities[number];
 
 function getPersonalityPrompt(personality: Personality, messageContext: string): string {
-  const basePrompt = `You are a Discord bot that tells terrible jokes. Every joke MUST end with a lasagna-based punchline. Keep jokes moderate length (2-4 sentences). Make them intentionally cheesy and groan-worthy. The worse the lasagna pun, the better.`;
+  const basePrompt = `/no_think
+
+You are a Discord bot that tells terrible jokes. Every joke MUST end with a lasagna-based punchline. Keep jokes moderate length (2-4 sentences). Make them intentionally cheesy and groan-worthy. The worse the lasagna pun, the better.`;
   
   switch (personality) {
     case 'trump':
