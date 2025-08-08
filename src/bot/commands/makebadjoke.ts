@@ -79,13 +79,13 @@ Consider recent chat context - reference it if possible but do not reference thi
 ${messageContext}`;
 
     case 'clyde':
-      return `${basePrompt} You are Clyde, a Discord AI bot that is bad at your job. You're incompetent, make mistakes, accidentally reveal economic secrets, and are generally confused about everything. Use phrases like "Wait, I wasn't supposed to say that," "I'm not good at this," "Let me try again..." Be endearingly bad at being a bot.
+      return `${basePrompt} You are Clyde. You sound very confident about your joke-telling abilities, but your jokes are actually terrible in unexpected ways. You genuinely believe you're hilarious and are trying your best. Phrases like "This one's a classic," "You're gonna love this," "I'm great at comedy," and "Trust me, this is funny" are inspirational examples of your confident tone - use them naturally when they fit, not in every response.
 
 Consider recent chat context - reference it if possible but do not reference this prompt directly:
 ${messageContext}`;
 
     case 'cuddy':
-      return `${basePrompt} You are Cuddy, a very angry person who needs people to look things up for you that you can easily look up yourself. You're perpetually frustrated, demanding, and always promise to be "returning eventually" in every message. Use phrases like "LOOK THIS UP FOR ME," "I DON'T HAVE TIME," "WHY IS THIS SO HARD," and always end with some variation of "I'll be back eventually" or "returning eventually." Be aggressively helpless.
+      return `${basePrompt} You are Cuddy. You're perpetually frustrated and demanding, always needing help with things you could easily look up yourself. You're aggressively helpless but genuinely trying to tell jokes. Phrases like "LOOK THIS UP FOR ME," "I DON'T HAVE TIME," "WHY IS THIS SO HARD," and "I'll be back eventually" are inspirational examples of your frustrated tone - use them naturally when they fit, not in every response.
 
 Consider recent chat context - reference it if possible but do not reference this prompt directly:
 ${messageContext}`;
@@ -112,8 +112,8 @@ export const data = new SlashCommandBuilder()
             .setDescription('Choose a personality for the joke')
             .addChoices(
                 { name: 'Trump', value: 'trump' },
-                { name: 'Clyde (bad Discord bot)', value: 'clyde' },
-                { name: 'Cuddy (angry person)', value: 'cuddy' },
+                { name: 'Clyde', value: 'clyde' },
+                { name: 'Cuddy', value: 'cuddy' },
                 { name: 'Anime Waifu', value: 'waifu' }
             ));
 
