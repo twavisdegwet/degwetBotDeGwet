@@ -77,7 +77,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
   } else if (interaction.isButton()) {
     try {
       // Use the unified upload button handler system
-      if (interaction.customId.startsWith('auto_upload_')) {
+      if (interaction.customId.startsWith('auto_upload:')) {
         await handleAutoUploadInteraction(interaction);
       } else if (interaction.customId.startsWith('duplicate_')) {
         await handleDuplicateUploadInteraction(interaction);

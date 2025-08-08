@@ -299,7 +299,7 @@ export function createUploadStatusMessage(torrentName: string, convert: boolean)
   const baseMessage = `🎉 ${getRandomUploadJoke()} Successfully added **${torrentName}** to Deluge! I'll automatically upload it to Google Drive faster than Odie chases squirrels.`;
   
   if (convert) {
-    return `${baseMessage}\n\n🎵 Converting MP3s to M4B... This will take longer than Jon's attempts at cooking. Grab some lasagna and wait.`;
+    return `${baseMessage}\n\n🎵 Converting MP3s to M4B... This will take about 30 minutes. ${getRandomConversionJoke()}`;
   }
   
   return `${baseMessage}\n\n🔄 Upload will start automatically when download completes...`;

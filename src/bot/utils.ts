@@ -302,11 +302,11 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
             ]
           });
         } else {
-          duplicateMessage += `\n\n⏳ Torrent is still downloading. You can upload to Google Drive once it completes using \`/gdrive-upload\`. \nn 🔄 Will automatically upload to Google Drive once download completes...`;
+          duplicateMessage += `\n\n⏳ Torrent is still downloading. You can upload to Google Drive once it completes using \`/gdrive-upload\`. \n \n 🔄 Will automatically upload to Google Drive once download completes...`;
           await m.reply(duplicateMessage);
         }
       } else {
-        await m.reply(`✅ Successfully added torrent to Deluge!\nID: ${downloadResponse.data.torrentId}\nName: ${downloadResponse.data.torrentInfo?.name || selectedTorrent.title} \nn 🔄 Will automatically upload to Google Drive once download completes...`);
+        await m.reply(`✅ Successfully added torrent to Deluge!\nID: ${downloadResponse.data.torrentId}\nName: ${downloadResponse.data.torrentInfo?.name || selectedTorrent.title} \n \n 🔄 Will automatically upload to Google Drive once download completes...`);
         
 
         

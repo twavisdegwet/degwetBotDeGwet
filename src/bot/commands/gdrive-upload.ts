@@ -66,7 +66,7 @@ export async function execute(interaction: CommandInteraction) {
       const selection = parseInt(m.content) - 1;
       const selectedTorrent = (interaction.client as any).uploadTorrentList.get(interaction.user.id).torrents[selection];
 
-      await m.reply(`You picked **${selectedTorrent.name}**! ${getPersonality()}`);
+      await m.reply(`You picked **${selectedTorrent.name}**! \n ${getPersonality()} \n going to throw this in the ol' torrent client`);
 
       // Check for MP3 files and prompt user with the new unified system
       const hasMp3Files = await checkForMp3AndPrompt(selectedTorrent.id, m, 'gdrive_upload');
