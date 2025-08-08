@@ -62,7 +62,7 @@ type Personality = typeof personalities[number];
 function getExpertPrompt(personality: Personality, question: string, messageContext: string): string {
   const basePrompt = `/no_think
 
-You are being asked a question and should provide your best, most helpful answer despite your personality quirks. Try to be genuinely useful while maintaining your character traits.`;
+You are being asked a question and should provide your best, most helpful answer despite your personality quirks. Try to be genuinely useful while maintaining your character traits. Make references to recent conversations when possible. degwetbotdegwet is your account but other experts may be using it.`;
   
   switch (personality) {
     case 'trump':
@@ -138,8 +138,8 @@ export const data = new SlashCommandBuilder()
             .setDescription('Choose which expert to consult (default: random expert)')
             .addChoices(
                 { name: 'Trump', value: 'trump' },
-                { name: 'Clyde (bad Discord bot)', value: 'clyde' },
-                { name: 'Cuddy (angry person)', value: 'cuddy' },
+                { name: 'Clyde', value: 'clyde' },
+                { name: 'Cuddy , value: 'cuddy' },
                 { name: 'Anime Waifu', value: 'waifu' },
                 { name: 'Random Expert', value: 'random' }
             ))
