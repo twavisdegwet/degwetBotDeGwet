@@ -126,27 +126,44 @@ async function getExpertResponse(personality: Personality, question: string, mes
 
 export const data = new SlashCommandBuilder()
     .setName('askexpert')
-    .setDescription('Ask a question to all four of our expert consultants')
+    .setDescription('Ask a question to one of our expert consultants')
     .addStringOption(option =>
         option.setName('question')
-            .setDescription('The question you want to ask our experts')
-            .setRequired(true));
+            .setDescription('The question you want to ask our expert')
+            .setRequired(true))
+    .addStringOption(option =>
+        option.setName('expert')
+            .setDescription('Choose which expert to consult (default: random expert)')
+            .addChoices(
+                { name: 'Trump', value: 'trump' },
+                { name: 'Clyde (bad Discord bot)', value: 'clyde' },
+                { name: 'Cuddy (angry person)', value: 'cuddy' },
+                { name: 'Anime Waifu', value: 'waifu' },
+                { name: 'Random Expert', value: 'random' }
+            ))
+    .addIntegerOption(option =>
+        option.setName('context')
+            .setDescription('Number of recent messages to include as context (default: 10)')
+            .setMinValue(0)
+            .setMaxValue(50));
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
     try {
         const question = interaction.options.getString('question', true);
+        const expertChoice = interaction.options.getString('expert') || 'random';
+        const contextLimit = interaction.options.getInteger('context') || 10;
 
-        // Get the last 10 messages from the channel for context
+        // Get the specified number of messages from the channel for context
         let messages: Collection<string, Message<true>> | undefined;
-        if (interaction.channel?.type === ChannelType.GuildText) {
-            messages = await interaction.channel.messages.fetch({ limit: 10 });
+        if (interaction.channel?.type === ChannelType.GuildText && contextLimit > 0) {
+            messages = await interaction.channel.messages.fetch({ limit: contextLimit });
         }
 
         // Prepare message context
         let messageContext = '';
-        if (messages) {
+        if (messages && contextLimit > 0) {
             const messageArray = Array.from(messages.values());
             messageContext = messageArray.map(msg => `${msg.author.username}: ${msg.content}`).reverse().join('\n');
         }
@@ -155,53 +172,42 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const server = await getAvailableOllamaServer();
         console.log(`Using ${server.name} Ollama server (${server.host}) with model ${server.model}`);
 
-        console.log(`Getting expert responses for question: ${question}`);
+        // Determine which expert to consult
+        let selectedExpert: Personality;
+        
+        if (expertChoice === 'random') {
+            selectedExpert = personalities[Math.floor(Math.random() * personalities.length)];
+        } else if (personalities.includes(expertChoice as Personality)) {
+            selectedExpert = expertChoice as Personality;
+        } else {
+            // Default to random if invalid choice
+            selectedExpert = personalities[Math.floor(Math.random() * personalities.length)];
+        }
 
-        // Get responses from all four personalities
-        const responses = await Promise.all([
-            getExpertResponse('trump', question, messageContext, server),
-            getExpertResponse('clyde', question, messageContext, server),
-            getExpertResponse('cuddy', question, messageContext, server),
-            getExpertResponse('waifu', question, messageContext, server)
-        ]);
+        console.log(`Getting expert response for question: ${question} from ${selectedExpert}`);
 
-        // Format the response with all four expert opinions
-        const formattedResponse = `**Question:** ${question}
+        // Get response from selected personality
+        const response = await getExpertResponse(selectedExpert, question, messageContext, server);
 
-**🇺🇸 Trump's Take:**
-${responses[0]}
+        // Format the response for single expert
+        const emoji = selectedExpert === 'trump' ? '🇺🇸' : 
+                     selectedExpert === 'clyde' ? '🤖' : 
+                     selectedExpert === 'cuddy' ? '😡' : '🌸';
+        const name = selectedExpert === 'trump' ? 'Trump' : 
+                    selectedExpert === 'clyde' ? 'Clyde' : 
+                    selectedExpert === 'cuddy' ? 'Cuddy' : 'Waifu';
+        
+        let formattedResponse = `**Question:** ${question}
 
-**🤖 Clyde's Response:**
-${responses[1]}
-
-**😡 Cuddy's Answer:**
-${responses[2]}
-
-**🌸 Waifu's Advice:**
-${responses[3]}`;
+**${emoji} ${name}'s Response:**
+${response}`;
 
         // Check if response is too long for Discord (2000 character limit)
         if (formattedResponse.length > 2000) {
-            // Split into multiple messages if too long
-            const parts = [
-                `**Question:** ${question}\n\n**🇺🇸 Trump's Take:**\n${responses[0]}`,
-                `**🤖 Clyde's Response:**\n${responses[1]}`,
-                `**😡 Cuddy's Answer:**\n${responses[2]}`,
-                `**🌸 Waifu's Advice:**\n${responses[3]}`
-            ];
-
-            await interaction.editReply({ content: parts[0] });
-            
-            for (let i = 1; i < parts.length; i++) {
-                if (parts[i].length > 2000) {
-                    // If individual response is still too long, truncate it
-                    parts[i] = parts[i].substring(0, 1997) + '...';
-                }
-                await interaction.followUp({ content: parts[i] });
-            }
-        } else {
-            await interaction.editReply({ content: formattedResponse });
+            formattedResponse = formattedResponse.substring(0, 1997) + '...';
         }
+        
+        await interaction.editReply({ content: formattedResponse });
 
     } catch (err) {
         let errorMessage = 'Our expert panel is currently in a meeting - try again soon!';
