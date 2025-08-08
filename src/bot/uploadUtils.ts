@@ -71,8 +71,8 @@ export async function uploadTorrentToGDrive(
       }
 
       if (uploadResponse.data.folderId) {
-        successMessage += `📂 [View Folder](https://drive.google.com/drive/folders/${uploadResponse.data.folderId})\n`;
-        successMessage += `📂 Folder ID: ${uploadResponse.data.folderId}`;
+        successMessage += `📂 [View Folder](https://drive.google.com/drive/folders/${uploadResponse.data.folderId})\n\n`;
+        successMessage += `📂 Folder ID: ${uploadResponse.data.folderId}\n\n`;
       }
 
       return {
@@ -244,7 +244,10 @@ export async function checkForMp3AndPrompt(
     const downloadManager = new DownloadManager(delugeClient);
     const files = await downloadManager.getTorrentFiles(torrentId);
     const analysis = analyzeContentType(files);
-    const hasMp3Files = analysis.audioFiles.some(file => file.toLowerCase().endsWith('.mp3'));
+    const hasMp3Files = analysis.audioFiles.some(file => {
+      const lowerFile = file.toLowerCase();
+      return lowerFile.endsWith('.mp3') && !lowerFile.endsWith('.m4b');
+    });
     
     if (hasMp3Files) {
       // Create a dedicated status message that will be updated
@@ -293,13 +296,13 @@ export async function checkForMp3AndPrompt(
  * Create a status message for upload operations
  */
 export function createUploadStatusMessage(torrentName: string, convert: boolean): string {
-  const baseMessage = `🚀 ${getRandomUploadJoke()} Now uploading **${torrentName}** to Google Drive.`;
+  const baseMessage = `🎉 ${getRandomUploadJoke()} Successfully added **${torrentName}** to Deluge! I'll automatically upload it to Google Drive faster than Odie chases squirrels.`;
   
   if (convert) {
     return `${baseMessage}\n\n🎵 Converting MP3s to M4B... This will take longer than Jon's attempts at cooking. Grab some lasagna and wait.`;
   }
   
-  return baseMessage;
+  return `${baseMessage}\n\n🔄 Upload will start automatically when download completes...`;
 }
 
 /**

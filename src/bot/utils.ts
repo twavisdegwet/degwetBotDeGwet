@@ -303,7 +303,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
             ]
           });
         } else {
-          duplicateMessage += `\n\n⏳ Torrent is still downloading. You can upload to Google Drive once it completes using \`/gdrive-upload\`.`;
+          duplicateMessage += `\n\n⏳ Torrent is still downloading. You can upload to Google Drive once it completes using \`/gdrive-upload\`. \nn 🔄 Will automatically upload to Google Drive once download completes...`;
           await m.reply(duplicateMessage);
         }
       } else {
@@ -332,7 +332,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
       // Send timeout message if no selection was made
       const channel = interaction.channel;
       if (channel) {
-        await (channel as any).send(`⏰ ${bookType === 'audiobook' ? 'Audiobook' : 'E-book'} selection timed out for "${query}". Please try the command again.`);
+        await (channel as any).send(`⏰ ${bookType === 'audiobook' ? 'Audiobook' : 'E-book'} selection timed out for "${query}". Please try the command again. I NEED TO GET MORE LASAGNA!`);
       }
     }
   });
@@ -362,7 +362,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
         }
         
         // Start the upload process
-        await message.reply(`🎉 **${torrentName}** is downloaded! ${getPersonality()}`);
+        await message.reply(`🎉 **${torrentName}** is downloaded! ${getPersonality()} Checking for MP3 then uploading to drive`);
         
         // Use the new unified upload system
         const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
