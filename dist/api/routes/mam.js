@@ -153,10 +153,12 @@ router.post('/download', async (req, res) => {
         if (validatedRequest.id) {
             const torrentId = Number(validatedRequest.id);
             try {
-                const torrentDetails = await mamClient.getTorrentDetails(torrentId.toString());
-                if (!mamClient.isTorrentFree(torrentDetails)) {
-                    await mamClient.setFreeleech(torrentId);
-                    console.log(`✅ Set torrent ${torrentId} as freeleech`);
+                const result = await mamClient.setFreeleech(torrentId);
+                if (result.success) {
+                    console.log(`✅ Set torrent ${torrentId} as freeleech (forced)`);
+                }
+                else {
+                    console.log(`⚠️ Could not set freeleech: ${result.error}`);
                 }
             }
             catch (error) {
@@ -165,25 +167,41 @@ router.post('/download', async (req, res) => {
         }
         const mamCookie = `mam_id=${MAM_ID}`;
         let torrentId;
-        let duplicateTorrentHash;
         try {
             torrentId = await delugeClient.downloadTorrentFromUrl(downloadUrl, mamCookie, torrentName);
         }
         catch (error) {
-            if (error instanceof Error && error.message.includes('Torrent already in session')) {
-                const hashMatch = error.message.match(/\(([a-f0-9]{40})\)/);
-                if (hashMatch) {
-                    duplicateTorrentHash = hashMatch[1];
-                }
-                console.log(`Duplicate torrent detected: ${duplicateTorrentHash || 'unknown hash'}`);
+            if ((error instanceof Error && error.message.includes('Torrent already exists in Deluge')) ||
+                (error.code === 'DUPLICATE_TORRENT')) {
+                console.log(`Full error object:`, error);
+                console.log(`Error keys:`, Object.keys(error));
+                console.log(`Error.hash:`, error.hash);
+                console.log(`Error.code:`, error.code);
+                const duplicateHash = error.hash;
+                console.log(`Duplicate torrent detected: ${duplicateHash || 'unknown hash'}`);
                 const existingTorrents = await delugeClient.getTorrents();
-                const existingTorrent = duplicateTorrentHash
-                    ? existingTorrents.find((t) => t.id === duplicateTorrentHash)
-                    : existingTorrents.find((t) => torrentName && t.name && t.name.toLowerCase().includes(torrentName.toLowerCase().substring(0, 20)));
+                console.log(`Total torrents in Deluge: ${existingTorrents.length}`);
+                console.log(`Looking for torrent with hash: ${duplicateHash}`);
+                console.log(`Looking for torrent with name containing: ${torrentName}`);
+                let existingTorrent = null;
+                if (duplicateHash) {
+                    existingTorrent = existingTorrents.find((t) => t.id === duplicateHash);
+                    console.log(`Found by hash: ${existingTorrent ? existingTorrent.name : 'not found'}`);
+                }
+                if (!existingTorrent && torrentName) {
+                    existingTorrent = existingTorrents.find((t) => t.name && t.name.toLowerCase().includes(torrentName.toLowerCase().substring(0, 20)));
+                    console.log(`Found by name: ${existingTorrent ? existingTorrent.name : 'not found'}`);
+                }
+                console.log(`Final existingTorrent: ${existingTorrent ? JSON.stringify({
+                    id: existingTorrent.id,
+                    name: existingTorrent.name,
+                    state: existingTorrent.state,
+                    progress: existingTorrent.progress
+                }) : 'null'}`);
                 if (existingTorrent) {
                     return res.json({
                         isDuplicate: true,
-                        isDuplicateError: true,
+                        isDuplicateError: false,
                         torrentId: existingTorrent.id,
                         torrentInfo: {
                             name: existingTorrent.name,
@@ -195,11 +213,14 @@ router.post('/download', async (req, res) => {
                     });
                 }
                 else {
-                    return res.status(409).json({
-                        error: 'Torrent already exists in Deluge but could not be found',
+                    return res.json({
                         isDuplicate: true,
                         isDuplicateError: true,
-                        duplicateHash: duplicateTorrentHash
+                        torrentId: error.hash || null,
+                        torrentInfo: null,
+                        canUploadToGDrive: false,
+                        message: 'Torrent already exists in Deluge but could not be found',
+                        error: 'Torrent already exists in Deluge but could not be found'
                     });
                 }
             }

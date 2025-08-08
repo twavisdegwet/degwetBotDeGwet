@@ -12,7 +12,7 @@ export async function execute(interaction: CommandInteraction) {
       fields: [
         {
           name: '🎧 Audiobook Search & Download',
-          value: 'Search for audiobooks with VIP/freeleech handling\n• Multiple audio formats: MP3, FLAC, M4A, M4B\n• Automatic duplicate detection\n• Freeleech for VIP torrents\n• Author and format filtering',
+          value: 'Search for audiobooks with VIP/freeleech handling\n• Multiple audio formats: MP3, FLAC, M4A, M4B\n• Automatic duplicate detection\n• Freeleech for VIP torrents\n• Author and format filtering\n• Command description: "Searches for and downloads an audiobook."',
           inline: false
         },
         {

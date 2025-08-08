@@ -454,19 +454,28 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
         }
         
         if (selectedTorrent) {
-          // Send a follow-up message with the MP3 conversion prompt
-          const hasMp3Files = await checkForMp3AndPrompt(torrentId, interaction, 'duplicate');
+        // Send a follow-up message with the MP3 conversion prompt
+        const hasMp3Files = await checkForMp3AndPrompt(torrentId, interaction, 'duplicate');
+        
+        await interaction.editReply({ content: '🔄 Checking files for MP3 conversion...', components: [] });
+        
+        if (!hasMp3Files) {
+          // If no MP3 files, proceed with upload and show progress
+          const statusMessage = `🚀 Now uploading **${selectedTorrent.name}** to Google Drive. ${getPersonality()}`;
+          await interaction.editReply({ content: statusMessage });
           
-          await interaction.editReply({ content: '🔄 Checking files for MP3 conversion...', components: [] });
+          // Upload with progress updates
+          const result = await uploadTorrentToGDrive(torrentId, false, undefined, interaction);
           
-          if (!hasMp3Files) {
-            // If no MP3 files, proceed with upload and show progress
-            const statusMessage = `🚀 Now uploading **${selectedTorrent.name}** to Google Drive. ${getPersonality()}`;
-            await interaction.editReply({ content: statusMessage });
-            
-            // Upload with progress updates - no need to store result as it handles messaging internally
-            await uploadTorrentToGDrive(torrentId, false, undefined, interaction);
+          // If the result message wasn't sent through the progressTarget, send it now
+          if (result.success && result.message) {
+            try {
+              await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+            } catch (error) {
+              console.error('Error sending final upload message:', error);
+            }
           }
+        }
         } else {
           await interaction.editReply({ 
             content: `Torrent not found. It probably ran away to find a more interesting bot. One with more lasagna.\n\nTorrent ID: ${torrentId}`, 
@@ -487,11 +496,20 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
         content: `❌ Upload cancelled.`, 
         components: [] 
       });
-    } else if (actionType === 'convert' || actionType === 'no') {
+    } else if (actionType === 'convert' || actionType === 'no-convert') {
       // Use the unified upload button handler for conversion choices
       await handleUploadButtonInteraction(interaction, 'duplicate', async (torrentId: string, convert: boolean) => {
-        // Upload with progress updates - no need to store result as it handles messaging internally
-        await uploadTorrentToGDrive(torrentId, convert, undefined, interaction);
+        // Upload with progress updates
+        const result = await uploadTorrentToGDrive(torrentId, convert, undefined, interaction);
+        
+        // If the result message wasn't sent through the progressTarget, send it now
+        if (result.success && result.message) {
+          try {
+            await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+          } catch (error) {
+            console.error('Error sending final upload message:', error);
+          }
+        }
       });
     }
   }

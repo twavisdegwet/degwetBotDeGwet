@@ -165,14 +165,16 @@ router.post('/download', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Either id or dlHash must be provided' });
     }
     
-    // Try to set as freeleech before downloading
+    // Always try to set as freeleech before downloading
     if (validatedRequest.id) {
       const torrentId = Number(validatedRequest.id);
       try {
-        const torrentDetails = await mamClient.getTorrentDetails(torrentId.toString());
-        if (!mamClient.isTorrentFree(torrentDetails)) {
-          await mamClient.setFreeleech(torrentId);
-          console.log(`✅ Set torrent ${torrentId} as freeleech`);
+        // Always attempt to set as freeleech, regardless of current state
+        const result = await mamClient.setFreeleech(torrentId);
+        if (result.success) {
+          console.log(`✅ Set torrent ${torrentId} as freeleech (forced)`);
+        } else {
+          console.log(`⚠️ Could not set freeleech: ${result.error}`);
         }
       } catch (error) {
         console.log(`⚠️ Could not set freeleech: ${error}`);

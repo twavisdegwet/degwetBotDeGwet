@@ -179,7 +179,9 @@ class DelugeClient {
                         if (error instanceof Error && error.message.includes('Torrent already in session')) {
                             const err = new Error('Torrent already exists in Deluge');
                             err.code = 'DUPLICATE_TORRENT';
-                            err.hash = error.message.match(/\(([a-f0-9]+)\)/)?.[1];
+                            const hashMatch = error.message.match(/\(([a-f0-9]{40})\)/);
+                            err.hash = hashMatch ? hashMatch[1] : null;
+                            console.log(`Extracted torrent hash: ${err.hash}`);
                             throw err;
                         }
                         throw error;
@@ -223,7 +225,7 @@ class DelugeClient {
         }
         catch (error) {
             console.error('Error downloading torrent from URL:', error);
-            throw new Error(`Failed to download torrent: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw error;
         }
     }
     async addTorrentFromData(torrentData, options) {
