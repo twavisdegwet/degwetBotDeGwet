@@ -306,10 +306,9 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
           await m.reply(duplicateMessage);
         }
       } else {
-        await m.reply(`✅ Successfully added torrent to Deluge!\nID: ${downloadResponse.data.torrentId}\nName: ${downloadResponse.data.torrentInfo?.name || selectedTorrent.title}`);
+        await m.reply(`✅ Successfully added torrent to Deluge!\nID: ${downloadResponse.data.torrentId}\nName: ${downloadResponse.data.torrentInfo?.name || selectedTorrent.title} \nn 🔄 Will automatically upload to Google Drive once download completes...`);
         
-        // Auto-upload to Google Drive after download completes
-        await m.reply(`🔄 Will automatically upload to Google Drive once download completes...`);
+
         
         // Start monitoring for completion and auto-upload
         setTimeout(async () => {
