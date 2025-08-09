@@ -65,7 +65,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         console.log(`Getting expert response for question: ${question} from ${selectedExpert}`);
 
         // Define the expert task for this command
-        const expertTask = `You are being asked a question and should provide your best, most helpful answer despite your personality quirks. Try to be genuinely useful while maintaining your character traits.
+        const expertTask = `You are being asked a question and should answer the question in a way that reflects your personality. Address chat participants directly. Keep responses around 100-200 words.
 
 Question: ${question}`;
         

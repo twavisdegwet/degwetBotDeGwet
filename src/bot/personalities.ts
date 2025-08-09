@@ -39,13 +39,42 @@ export function formatExpertResponse(personality: Personality, question: string,
 }
 
 /**
+ * Gets current date/time information
+ */
+export function getCurrentDateTimeInfo(): string {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short'
+  };
+  
+  const dateTimeString = now.toLocaleDateString('en-US', options);
+  const timeString = now.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short'
+  });
+  
+  return `Current date/time: ${dateTimeString}\nCurrent time: ${timeString}`;
+}
+
+/**
  * Builds a prompt with personality applied to a given task/command
  */
 export function buildPersonalityPrompt(personality: Personality, task: string, messageContext: string): string {
   const basePrompt = `/no_think
 
 Recent conversation for context:
-${messageContext}`;
+${messageContext}
+
+${getCurrentDateTimeInfo()}`;
 
   let personalityPrompt: string;
 

@@ -120,6 +120,21 @@ Manually upload completed torrents to Google Drive.
 #### `/gdrive-status`
 Check Google Drive upload status and storage information.
 
+#### `/askexpert`
+Consult with one of our expert consultants for advice on any topic.
+
+**Parameters:**
+- `question` (required) - The question you want to ask our expert
+- `expert` (optional) - Choose which expert to consult (default: random expert)
+  - Available experts: Trump, Clyde, Cuddy, Waifu
+  - "Random Expert" - Get a random expert for your question
+- `context` (optional) - Number of recent messages to include as context (default: 10, max: 50)
+
+**Example:**
+```
+/askexpert question:What's the best way to organize my audiobook collection?
+```
+
 #### `/help`
 Display comprehensive help information.
 

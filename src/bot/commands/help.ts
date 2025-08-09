@@ -37,7 +37,7 @@ export async function execute(interaction: CommandInteraction) {
         },
         {
           name: '🧠 Expert Consultation Service',
-          value: 'Get advice from one of our expert consultants\n• `/askexpert` - Submit questions to our expert consultants\n• Choose specific experts (Trump, Clyde, Cuddy, Waifu) or get a random expert\n• Customize chat context (0-50 recent messages, default: 10)\n• Each expert provides their unique perspective on your question\n• Experts do their best to be helpful despite their quirks\n• Perfect for getting targeted advice on any topic',
+          value: 'Get advice from one of our real-life expert consultants\n• `/askexpert` - Submit questions to our expert consultants\n• Choose specific experts (Trump, Clyde, Cuddy, Waifu) or get a random expert\n• Customize chat context (0-50 recent messages, default: 10)\n• Each expert provides their unique perspective on your question\n• Our experts do their best to be helpful despite their quirks\n• Perfect for getting targeted advice on any topic',
           inline: false
         }
       ],
