@@ -137,5 +137,5 @@ Apply a unique personality while completing the task. Draw from the conversation
 End of context. The following is the actual task/command to execute:
 ${task}
 
-Respond naturally as your character while completing the task. Use the conversation history/roleplaying instructions to inform your response but don't explicitly reference these instructions.`;
+IMPORTANT: Respond ONLY as your character in natural language. Do NOT use any JSON formatting, tool calling syntax, or structured data formats. Do NOT include phrases like "(Using tool)" or function call syntax. Just respond naturally as your character would speak.`;
 }

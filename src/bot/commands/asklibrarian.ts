@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandBuilder, Message } from 'discord.js';
 import { getLibrarianResponse } from '../personalities/librarian';
 import { getPersonality } from '../badjokes';
 
@@ -35,7 +35,47 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         const response = await getLibrarianResponse(query, format, limit);
         
-        await interaction.editReply({ content: response });
+        // Check if this is a clarification request
+        if (response.includes('📚') && (response.includes('Could you please specify') || 
+            response.includes('need some clarification') || response.includes('more context'))) {
+            
+            await interaction.editReply({ content: response + '\n\n*Please reply with your clarification, and I\'ll help you find what you\'re looking for!*' });
+            
+            // Wait for a follow-up message from the user
+            try {
+                const filter = (msg: Message) => msg.author.id === interaction.user.id;
+                const channel = interaction.channel;
+                
+                if (!channel || !('awaitMessages' in channel)) {
+                    throw new Error('Channel does not support message collection');
+                }
+                
+                const collected = await channel.awaitMessages({ 
+                    filter, 
+                    max: 1, 
+                    time: 300000, // 5 minutes
+                    errors: ['time'] 
+                });
+                
+                if (collected && collected.size > 0) {
+                    const followUpMessage = collected.first();
+                    if (followUpMessage) {
+                        console.log(`Librarian follow-up from ${interaction.user.username}: ${followUpMessage.content}`);
+                        
+                        // Get response to the follow-up
+                        const followUpResponse = await getLibrarianResponse(followUpMessage.content, format, limit);
+                        await interaction.followUp({ content: followUpResponse });
+                    }
+                }
+            } catch (timeoutError) {
+                console.log('Librarian clarification timed out');
+                await interaction.followUp({ 
+                    content: '📚 I\'ll be here when you\'re ready to continue your book search! Just use `/asklibrarian` again.' 
+                });
+            }
+        } else {
+            await interaction.editReply({ content: response });
+        }
 
     } catch (err) {
         console.error('Librarian consultation failure:', err);
