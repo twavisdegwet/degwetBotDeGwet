@@ -62,8 +62,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                     if (followUpMessage) {
                         console.log(`Librarian follow-up from ${interaction.user.username}: ${followUpMessage.content}`);
                         
-                        // Get response to the follow-up
-                        const followUpResponse = await getLibrarianResponse(followUpMessage.content, format, limit);
+                        // Combine the original query with the follow-up for better context
+                        const combinedQuery = `Original request: "${query}". Follow-up: "${followUpMessage.content}"`;
+                        const followUpResponse = await getLibrarianResponse(combinedQuery, format, limit);
                         await interaction.followUp({ content: followUpResponse });
                     }
                 }

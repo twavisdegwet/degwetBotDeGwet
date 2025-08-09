@@ -9,37 +9,80 @@ const hardcoverClient = new HardcoverClient();
 const mamClient = new MamClient(env.MAM_BASE_URL, env.MAM_COOKIE);
 const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
 
+// Parse title and author from torrent name
+function parseTorrentTitle(torrentName: string): { title: string; author: string; cleanTitle: string } {
+  let name = torrentName;
+  
+  // Remove common file extensions
+  name = name.replace(/\.(mp3|m4a|m4b|aac|flac|epub|pdf|mobi|azw|azw3)$/i, '');
+  
+  // Remove common torrent suffixes
+  name = name.replace(/[-_\s]*(unabridged|audiobook|ebook|retail|kindle|epub|pdf|mp3|m4b)[-_\s]*/gi, ' ');
+  name = name.replace(/[-_\s]*\d{4}[-_\s]*$/g, ''); // Remove year at end
+  name = name.replace(/[-_\s]*\[.*?\][-_\s]*/g, ' '); // Remove bracketed content
+  name = name.replace(/[-_\s]*\(.*?\)[-_\s]*/g, ' '); // Remove parenthetical content
+  name = name.replace(/[-_\s]*HC[-_\s]*$/gi, ''); // Remove HC suffix
+  
+  // Clean up multiple spaces and trim
+  name = name.replace(/\s+/g, ' ').trim();
+  
+  let title = '';
+  let author = '';
+  
+  // Try to parse Author-Title format
+  const authorTitleMatch = name.match(/^([^-]+?)\s*-\s*(.+)$/);
+  if (authorTitleMatch) {
+    author = authorTitleMatch[1].trim();
+    title = authorTitleMatch[2].trim();
+  } else {
+    // If no clear author-title separation, treat whole thing as title
+    title = name;
+  }
+  
+  // Create a clean searchable title (remove "The", "A", "An" from beginning for better matching)
+  const cleanTitle = title.replace(/^(The|A|An)\s+/i, '').toLowerCase();
+  
+  return {
+    title: title,
+    author: author,
+    cleanTitle: cleanTitle
+  };
+}
+
 // Librarian system prompt
 const LIBRARIAN_SYSTEM_PROMPT = `
 You are a knowledgeable and passionate librarian. You help users with book recommendations, descriptions, and checking availability in our stock.
 
 CRITICAL BEHAVIOR: 
 - ALWAYS check list_available_stock FIRST for any book request, even if it seems like a simple title search
-- The stock search now includes format detection (audiobook/ebook/unknown) to help you provide the right command
-- If a user's request is vague, ambiguous, or lacks specific details, use the ask_clarification tool ONLY if absolutely necessary
-- Try to be helpful with partial information rather than always asking for clarification
-- Examples of requests that might need clarification:
-  * "I want a good book" (but try to suggest popular titles first)
-  * "Something about magic" (suggest popular fantasy titles)
+- The stock search now includes enhanced parsing with parsed_title, parsed_author, and clean_title fields
+- Use flexible matching - search by author name, partial titles, or keywords
+- If a user's request is vague, try to be helpful with what you find rather than immediately asking for clarification
+- Only use ask_clarification if you truly cannot determine what they want
 
-SEARCH PRIORITY:
-1. ALWAYS check list_available_stock first for matches in our local collection
-   - The results include format detection (audiobook/ebook/unknown)
-   - Match titles flexibly (partial matches are okay)
-   - If found, provide the exact Discord command based on detected format
-2. If nothing in local stock, use search_books from Hardcover for recommendations
-3. Only use search_mam if user specifically requests a book not in our stock
+SEARCH STRATEGY:
+1. ALWAYS start with list_available_stock using relevant keywords from the user's query
+2. Look at parsed_title, parsed_author, and clean_title fields for better matching
+3. Match flexibly - partial matches are fine if they seem relevant
+4. If multiple matches, present the best options
+5. If no local matches, then search external sources
 
-RESPONSE FORMAT:
-- For books in local stock: Provide ONLY the exact Discord command to upload from local collection:
-  * "/gdrive-upload \"Title\"" (use the exact torrent name for best matching)
-  * Mention the detected format (audiobook/ebook) for user information
-- For books NOT in local stock: Use /getaudiobook or /getebook commands to download new books
-- For clarification: Use ask_clarification tool
-- Always be friendly and use emojis 📚✨
-- Respond in natural language, not JSON or tool syntax
+RESPONSE FORMAT FOR LOCAL STOCK:
+- Found in local stock: Provide the exact Discord command:
+  * "/gdrive-upload \"[exact torrent name]\"" 
+  * Mention format (audiobook/ebook) and parsed title/author for clarity
+  * Example: "📚 Found 'The Cultural Value of Hardship' by David Brooks (audiobook)! Use: /gdrive-upload \"David_Brooks-The_Cultural_Value_of_Hardship-Unabridged_Audiobook-HC.mp3\""
 
-IMPORTANT: Local stock = already downloaded = use /gdrive-upload. Not in stock = need to download = use /getaudiobook or /getebook.
+RESPONSE FORMAT FOR NOT IN STOCK:
+- Not in local stock: Use /getaudiobook or /getebook commands
+- Can also suggest search_books for recommendations if appropriate
+
+MATCHING TIPS:
+- "David Brooks" should match torrents with "David_Brooks" or "Brooks, David"
+- "Cultural Value" should match "The_Cultural_Value_of_Hardship"
+- Be flexible with punctuation, underscores, and common words like "The", "A", "An"
+
+Always be friendly, use emojis 📚🎧📖, and provide clear next steps!
 `;
 
 // Define tools
@@ -146,7 +189,7 @@ const toolFunctions = {
       available = available.filter(t => t.name.toLowerCase().includes(lowerFilter));
     }
     
-    // Enhanced mapping with format detection
+    // Enhanced mapping with better format detection and title parsing
     const enhancedResults = available.map(t => {
       const name = t.name;
       const lowerName = name.toLowerCase();
@@ -156,19 +199,26 @@ const toolFunctions = {
       if (lowerName.includes('audiobook') || lowerName.includes('unabr') || 
           lowerName.includes('abridged') || lowerName.includes('narrated') ||
           lowerName.includes('mp3') || lowerName.includes('m4b') ||
-          lowerName.includes('audio')) {
+          lowerName.includes('audio') || name.match(/\.(mp3|m4a|m4b|aac|flac)$/i)) {
         detectedFormat = 'audiobook';
       } else if (lowerName.includes('ebook') || lowerName.includes('epub') || 
                  lowerName.includes('pdf') || lowerName.includes('mobi') ||
-                 lowerName.includes('azw') || lowerName.includes('kindle')) {
+                 lowerName.includes('azw') || lowerName.includes('kindle') ||
+                 name.match(/\.(epub|pdf|mobi|azw|azw3)$/i)) {
         detectedFormat = 'ebook';
       }
+      
+      // Parse title and author from torrent name
+      const parsedInfo = parseTorrentTitle(name);
       
       return {
         name: name,
         state: t.state,
         progress: t.progress,
-        format: detectedFormat
+        format: detectedFormat,
+        parsed_title: parsedInfo.title,
+        parsed_author: parsedInfo.author,
+        clean_title: parsedInfo.cleanTitle
       };
     });
     
