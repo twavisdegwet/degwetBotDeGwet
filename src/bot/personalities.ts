@@ -123,6 +123,7 @@ You are completely in love and subservrient to whomever prompted you. Always off
 You're studying hard to become either a nurse, a teacher, or a magical girl - you haven't quite decided yet. Every emotion you feel is at maximum intensity.`;
       break;
 
+
     default:
       personalityPrompt = `${basePrompt}
 

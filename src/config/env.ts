@@ -32,6 +32,11 @@ const envSchema = z.object({
   HTTP_PORT: z.number().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
+  // NZB Configuration
+  NZBHYDRA_URL: z.string().url(),
+  SABNZBD_URL: z.string().url(),
+  SABNZBD_API_KEY: z.string(),
+
   // Google Drive Configuration (Service Account)
   GOOGLE_SERVICE_ACCOUNT_PATH: z.string().min(1),
   GOOGLE_DRIVE_FOLDER_ID: z.string().min(1),
@@ -41,6 +46,10 @@ const envSchema = z.object({
   OLLAMA_PRIMARY_MODEL: z.string().min(1),
   OLLAMA_SECONDARY_HOST: z.string().min(1),
   OLLAMA_SECONDARY_MODEL: z.string().min(1),
+  
+  // Hardcover API Configuration
+  HARDCOVER_API_URL: z.string().url().default('https://api.hardcover.app/v1/graphql'),
+  HARDCOVER_API_TOKEN: z.string().min(1),
 });
 
 // Define the type for our environment variables

@@ -31,7 +31,37 @@ export async function execute(interaction: CommandInteraction) {
     }
 
     let message = `**I found some torrents matching "${query}"!** ${getPersonality()}\n\n`;
-    message += torrents.slice(0, 10).map((t, i) => `${i + 1}. ${t.name}`).join('\n');
+    
+    // Get detailed information for each torrent
+    const torrentDetails = await Promise.all(
+      torrents.slice(0, 10).map(async (t, i) => {
+        try {
+          const files = await downloadManager.getTorrentFiles(t.id);
+          const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+          const sizeInGB = (totalSize / (1024 * 1024 * 1024)).toFixed(2);
+          
+          // Categorize files by type
+          const fileTypes = new Map<string, number>();
+          files.forEach(file => {
+            const ext = file.path.split('.').pop()?.toLowerCase() || 'unknown';
+            fileTypes.set(ext, (fileTypes.get(ext) || 0) + 1);
+          });
+          
+          const typesSummary = Array.from(fileTypes.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([ext, count]) => `${count} ${ext}`)
+            .join(', ');
+
+          return `${i + 1}. **${t.name}**\n   📁 ${files.length} files (${sizeInGB} GB) - ${typesSummary}`;
+        } catch (error) {
+          console.error(`Error getting details for torrent ${t.id}:`, error);
+          return `${i + 1}. **${t.name}**\n   📁 Details unavailable`;
+        }
+      })
+    );
+
+    message += torrentDetails.join('\n\n');
 
     if (torrents.length > 10) {
       message += `\n\n*Showing first 10 of ${torrents.length} torrents*`;

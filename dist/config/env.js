@@ -24,12 +24,17 @@ const envSchema = zod_1.z.object({
     DOWNLOADS_DIRECTORY: zod_1.z.string().min(1).default('/mnt/nas/nzbget/nzb/completed/torrent'),
     HTTP_PORT: zod_1.z.number().default(3000),
     NODE_ENV: zod_1.z.enum(['development', 'production', 'test']).default('development'),
+    NZBHYDRA_URL: zod_1.z.string().url(),
+    SABNZBD_URL: zod_1.z.string().url(),
+    SABNZBD_API_KEY: zod_1.z.string(),
     GOOGLE_SERVICE_ACCOUNT_PATH: zod_1.z.string().min(1),
     GOOGLE_DRIVE_FOLDER_ID: zod_1.z.string().min(1),
     OLLAMA_PRIMARY_HOST: zod_1.z.string().min(1),
     OLLAMA_PRIMARY_MODEL: zod_1.z.string().min(1),
     OLLAMA_SECONDARY_HOST: zod_1.z.string().min(1),
     OLLAMA_SECONDARY_MODEL: zod_1.z.string().min(1),
+    HARDCOVER_API_URL: zod_1.z.string().url().default('https://api.hardcover.app/v1/graphql'),
+    HARDCOVER_API_TOKEN: zod_1.z.string().min(1),
 });
 const envWithNumbers = {
     ...process.env,
