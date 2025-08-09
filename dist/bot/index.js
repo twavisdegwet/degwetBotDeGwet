@@ -43,6 +43,7 @@ const gdriveStatusCommand = __importStar(require("./commands/gdrive-status"));
 const helpCommand = __importStar(require("./commands/help"));
 const makeFunnyJokeCommand = __importStar(require("./commands/makefunnyjoke"));
 const makeBadJokeCommand = __importStar(require("./commands/makebadjoke"));
+const askExpertCommand = __importStar(require("./commands/askexpert"));
 const badjokes_1 = require("./badjokes");
 const gdrive_upload_1 = require("./commands/gdrive-upload");
 const utils_1 = require("./utils");
@@ -62,6 +63,7 @@ client.commands.set(gdriveStatusCommand.data.name, gdriveStatusCommand);
 client.commands.set(helpCommand.data.name, helpCommand);
 client.commands.set(makeFunnyJokeCommand.data.name, makeFunnyJokeCommand);
 client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
+client.commands.set(askExpertCommand.data.name, askExpertCommand);
 const commands = [
     getAudiobookCommand.data,
     getEbookCommand.data,
@@ -69,7 +71,8 @@ const commands = [
     gdriveStatusCommand.data,
     helpCommand.data,
     makeFunnyJokeCommand.data,
-    makeBadJokeCommand.data
+    makeBadJokeCommand.data,
+    askExpertCommand.data
 ];
 const rest = new discord_js_1.REST({ version: '10' }).setToken(env_1.env.DISCORD_TOKEN);
 async function registerCommands() {
