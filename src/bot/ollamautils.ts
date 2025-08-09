@@ -103,6 +103,9 @@ export async function makeOllamaRequest(
   console.log(`Making Ollama request to ${server.name} server (${server.host}) with model ${server.model}`);
   console.log(`Prompt length: ${prompt.length} characters`);
   
+  // Log the complete prompt right before making the API call
+  console.log('Final Ollama prompt being sent to ollamautils:', prompt);
+  
   const startTime = Date.now();
   const startDate = new Date(startTime).toLocaleString();
   console.log(`Prompt processing started at ${startDate} (epoch ${startTime}) - Length: ${prompt.length} characters`);

@@ -68,10 +68,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const expertTask = `You are being asked a question and should provide your best, most helpful answer despite your personality quirks. Try to be genuinely useful while maintaining your character traits.
 
 Question: ${question}`;
-
+        
+    
         // Get prompt and make Ollama request
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);
         const response = await makeOllamaRequest(prompt, server);
+        
 
         // Format the response using centralized formatting
         const formattedResponse = formatExpertResponse(selectedExpert, question, response.response);
