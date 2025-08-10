@@ -132,13 +132,21 @@ async function uploadTorrentWithProgress(
     
     const torrentFiles = await downloadManager.getTorrentFiles(torrentId);
     
-    // Create progress callback that sends messages to Discord
+      // Create progress callback that sends only important messages to Discord
     const progressCallback = async (message: string) => {
       try {
-        // Send all progress messages to Discord
-        await progressTarget.channel?.send(`<@${progressTarget.user.id}> ${message}`);
         // Log all messages to console for debugging
         console.log(`Progress: ${message}`);
+        
+        // Only send key messages to Discord, not every progress update
+        const shouldNotify = message.includes('Content analysis:') || 
+                           message.includes('Converting MP3') || 
+                           message.includes('Uploaded') || 
+                           message.includes('Cleaned up temp directory');
+        
+        if (shouldNotify) {
+          await progressTarget.channel?.send(`<@${progressTarget.user.id}> ${message}`);
+        }
       } catch (error) {
         console.error('Error sending progress message:', error);
       }

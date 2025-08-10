@@ -338,56 +338,82 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
 
 // Function to monitor torrent completion and auto-upload to Google Drive
 async function monitorAndAutoUpload(message: any, torrentId: string, torrentName: string) {
-  const maxAttempts = 60; // Monitor for up to 30 minutes (60 attempts * 30 seconds)
+  console.log(`Starting auto-upload monitoring for torrent: ${torrentId} (${torrentName})`);
+  
+  const maxAttempts = 120; // Monitor for up to 60 minutes (120 attempts * 30 seconds)
   let intervalId: NodeJS.Timeout | null = null;
   
   // Create a closure to capture the attempts variable
   const state = {
-    attempts: 0
+    attempts: 0,
+    lastProgress: 0,
+    hasNotifiedCompletion: false
   };
   
   const checkTorrent = async () => {
     try {
-      // Check if torrent is completed
-      const downloadManager = new DownloadManager(delugeClient);
-      const completedTorrents = await downloadManager.listCompletedTorrents();
-      const isCompleted = completedTorrents.some(t => t.id === torrentId);
+      console.log(`Auto-upload check attempt ${state.attempts + 1}/${maxAttempts} for torrent: ${torrentId}`);
       
-      if (isCompleted) {
+      // Get torrent status first for better monitoring
+      const torrentStatus = await delugeClient.getTorrentStatus(torrentId);
+      console.log(`Torrent ${torrentId} status: ${torrentStatus.state}, progress: ${torrentStatus.progress}%`);
+      
+      // If progress changed significantly, log it
+      if (Math.abs(torrentStatus.progress - state.lastProgress) > 10) {
+        console.log(`Progress update for ${torrentName}: ${torrentStatus.progress}%`);
+        state.lastProgress = torrentStatus.progress;
+      }
+      
+      // Check if torrent is completed (progress 100% AND state is Seeding or Paused)
+      const isCompleted = torrentStatus.progress === 100 && 
+                         (torrentStatus.state === 'Seeding' || torrentStatus.state === 'Paused');
+      
+      if (isCompleted && !state.hasNotifiedCompletion) {
+        console.log(`Torrent ${torrentId} completed! Starting upload process.`);
+        state.hasNotifiedCompletion = true;
+        
         if (intervalId) {
           clearInterval(intervalId);
           intervalId = null;
         }
         
-        // Start the upload process
-        await message.reply(`🎉 **${torrentName}** is downloaded! ${getPersonality()} Checking for MP3 then uploading to drive`);
+        // Start the upload process - send alert as new message
+        await message.channel.send(`<@${message.author.id}> 🎉 **${torrentName}** is downloaded! ${getPersonality()} Checking for MP3 then uploading to drive`);
         
         // Use the new unified upload system
         const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
         
         if (!hasMp3Files) {
-          // If no MP3 files, proceed with upload
-          const result = await uploadTorrentToGDrive(torrentId, false, 
-            `✅ **${torrentName}** is on Google Drive! ${getPersonality()}\n\n`
-          );
-          await message.reply(result.message);
+          // If no MP3 files, proceed with upload immediately with progress updates
+          await uploadTorrentToGDrive(torrentId, false, undefined, message);
         }
         
-      } else {
-        // Increment attempts only if torrent is not completed
-        state.attempts++;
+        return; // Exit the monitoring loop
         
-        if (state.attempts >= maxAttempts) {
-          if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
-          }
-          await message.reply(`⏰ Auto-upload timeout for **${torrentName}**. The download may still be in progress. You can manually upload using \`/gdrive-upload\` once it completes.`);
+      } else if (torrentStatus.state === 'Error') {
+        console.error(`Torrent ${torrentId} is in Error state`);
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
         }
+        await message.channel.send(`<@${message.author.id}> ❌ **${torrentName}** failed to download. Check Deluge for errors.`);
+        return;
+      }
+      
+      // Increment attempts
+      state.attempts++;
+      
+      if (state.attempts >= maxAttempts) {
+        console.log(`Auto-upload monitoring timeout for torrent: ${torrentId}`);
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+        await message.channel.send(`<@${message.author.id}> ⏰ Auto-upload timeout for **${torrentName}**. The download may still be in progress. You can manually upload using \`/gdrive-upload\` once it completes.`);
       }
       
     } catch (error) {
-      console.error('Error checking torrent completion:', error);
+      console.error(`Error checking torrent completion for ${torrentId}:`, error);
       state.attempts++;
       
       if (state.attempts >= maxAttempts) {
@@ -395,12 +421,14 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
           clearInterval(intervalId);
           intervalId = null;
         }
-        await message.reply(`❌ Error monitoring **${torrentName}** for completion. You can manually upload using \`/gdrive-upload\` once it completes.`);
+        await message.channel.send(`<@${message.author.id}> ❌ Error monitoring **${torrentName}** for completion. You can manually upload using \`/gdrive-upload\` once it completes.`);
       }
     }
   };
   
-  intervalId = setInterval(checkTorrent, 30000); // Check every 30 seconds
+  // Start monitoring immediately, then every 30 seconds
+  await checkTorrent();
+  intervalId = setInterval(checkTorrent, 30000);
 }
 
 // Function to handle auto-upload button interactions
