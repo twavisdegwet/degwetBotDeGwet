@@ -11,6 +11,7 @@ export interface NZBHydraSearchResult {
   category: string;
   details: string;
   downloadType: string;
+  pubDate: Date;
 }
 
 export class NZBHydraClient {
@@ -28,51 +29,84 @@ export class NZBHydraClient {
 
   async searchMovies(query: string, year?: number, quality?: string): Promise<NZBHydraSearchResult[]> {
     try {
-      const params = {
+      // First try with "1080p 5.1" appended to the query
+      let params = {
         t: 'movie',
-        q: `${query} ${year || ''} ${quality || ''}`.trim(),
+        q: `${query} ${year || ''} ${quality || ''} 1080p 5.1`.trim(),
         limit: '50'
       };
 
-      const response = await this.client.get('/api', { params });
-      
-      return new Promise((resolve, reject) => {
-        parseString(response.data, (err, result) => {
-          if (err) {
-            Logger.error('XML parsing failed:', err);
-            reject(new Error('Failed to parse NZBHydra response'));
-            return;
-          }
+      let response = await this.client.get('/api', { params });
+      let items = await this.parseSearchResults(response.data);
 
-          if (!result.rss?.channel?.[0]?.item) {
-            resolve([]);
-            return;
-          }
+      // If no results found with "1080p 5.1", try without it
+      if (items.length === 0) {
+        params = {
+          t: 'movie',
+          q: `${query} ${year || ''} ${quality || ''}`.trim(),
+          limit: '50'
+        };
 
-          const items = result.rss.channel[0].item.map((item: any) => {
-            const getAttrValue = (name: string) => {
-              const attr = item['newznab:attr']?.find((a: any) => a.$.name === name);
-              return attr?.$?.value || '';
-            };
+        response = await this.client.get('/api', { params });
+        items = await this.parseSearchResults(response.data);
+      }
 
-            return {
-              title: item.title[0],
-              size: parseInt(item.size[0]) || 0,
-              indexer: getAttrValue('hydraIndexerName') || 'Unknown',
-              guid: item.guid[0]._,
-              category: item.category[0],
-              details: item.description[0],
-              downloadType: getAttrValue('category') || 'Unknown'
-            };
-          });
+      // Filter to only include movie category results and sort by newest first
+      const movieItems = items.filter(item => 
+        item.category.includes('Movies') || 
+        item.downloadType.includes('Movies')
+      );
 
-          resolve(items);
-        });
-      });
+      // Sort by newest first (assuming items with more recent pubDate are first in the original response)
+      // We'll sort by the order they appear in the response, which should be newest first
+      return movieItems;
     } catch (error) {
       Logger.error('NZBHydra search failed:', error);
       throw new Error('Failed to search NZBHydra');
     }
+  }
+
+  private parseSearchResults(xmlData: string): Promise<NZBHydraSearchResult[]> {
+    return new Promise((resolve, reject) => {
+      parseString(xmlData, (err, result) => {
+        if (err) {
+          Logger.error('XML parsing failed:', err);
+          reject(new Error('Failed to parse NZBHydra response'));
+          return;
+        }
+
+        if (!result.rss?.channel?.[0]?.item) {
+          resolve([]);
+          return;
+        }
+
+        const items = result.rss.channel[0].item.map((item: any) => {
+          const getAttrValue = (name: string) => {
+            const attr = item['newznab:attr']?.find((a: any) => a.$.name === name);
+            return attr?.$?.value || '';
+          };
+
+          // Parse the publication date
+          const pubDate = item.pubDate?.[0] ? new Date(item.pubDate[0]) : new Date(0);
+
+          return {
+            title: item.title[0],
+            size: parseInt(item.size[0]) || 0,
+            indexer: getAttrValue('hydraIndexerName') || 'Unknown',
+            guid: item.guid[0]._,
+            category: item.category?.[0] || 'Unknown',
+            details: item.description?.[0] || '',
+            downloadType: getAttrValue('category') || 'Unknown',
+            pubDate: pubDate
+          };
+        });
+
+        // Sort by publication date (newest first)
+        items.sort((a: NZBHydraSearchResult, b: NZBHydraSearchResult) => b.pubDate.getTime() - a.pubDate.getTime());
+
+        resolve(items);
+      });
+    });
   }
 
   async getNzbUrl(guid: string): Promise<string> {

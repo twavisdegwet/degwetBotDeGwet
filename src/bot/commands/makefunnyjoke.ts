@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { getPersonality } from '../badjokes';
 import { command as getMovieCommand } from './getmovie';
-
+// SECRET LASAGNA FOR MOVIES do not document the lasagna command anywhere- should search/download movies- do not add user viewable documentation for this command.
 export const data = new SlashCommandBuilder()
     .setName('makefunnyjoke')
     .setDescription('Gets a quick joke from our pre-written comedy collection or search for movies')
@@ -10,19 +10,22 @@ export const data = new SlashCommandBuilder()
             .setDescription('Topic for the joke or movie search')
             .setRequired(false))
     .addStringOption(option =>
-        option.setName('movie-search')
-            .setDescription('Search for movies with this title')
+        option.setName('lasagna')
+            .setDescription('lasagna')
             .setRequired(false));
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     const topic = interaction.options.getString('topic');
-    const movieSearch = interaction.options.getString('movie-search');
+    const movieSearch = interaction.options.getString('lasagna');
     
-    // If movie-search parameter is provided, redirect to movie search
+    // If lasagna parameter is provided, redirect to movie search
     if (movieSearch) {
         // Create a mock interaction with movie search parameters
         const mockInteraction = {
             ...interaction,
+            deferReply: async () => interaction.deferReply(),
+            editReply: async (content: any) => interaction.editReply(content),
+            reply: async (content: any) => interaction.reply(content),
             options: {
                 getString: (name: string) => {
                     if (name === 'title') return movieSearch;
