@@ -19,14 +19,6 @@ export const command = {
       option.setName('title')
         .setDescription('Movie title to search for')
         .setRequired(true))
-    .addStringOption(option =>
-      option.setName('quality')
-        .setDescription('Video quality preference')
-        .addChoices(
-          { name: '1080p', value: '1080p' },
-          { name: '720p', value: '720p' },
-          { name: '4K', value: '2160p' }
-        ))
     .addIntegerOption(option =>
       option.setName('year')
         .setDescription('Release year')),
@@ -37,11 +29,10 @@ export const command = {
     const hydra = new NZBHydraClient();
     const sabnzbd = new SABnzbdClient();
     const title = interaction.options.getString('title', true);
-    const quality = interaction.options.getString('quality') ?? undefined;
     const year = interaction.options.getInteger('year') ?? undefined;
 
     try {
-      const results = await hydra.searchMovies(title, year, quality);
+      const results = await hydra.searchMovies(title, year);
       
       if (results.length === 0) {
         await interaction.editReply('No movie releases found matching your criteria.');
@@ -58,8 +49,7 @@ export const command = {
         embed.addFields({
           name: `🎬 ${index + 1}. ${result.title}`,
           value: `**Size:** ${(result.size / 1024 / 1024 / 1024).toFixed(2)}GB\n` +
-                 `**Indexer:** ${result.indexer}\n` +
-                 `**Quality:** ${result.downloadType}`
+                 `**Indexer:** ${result.indexer}`
         });
       });
 

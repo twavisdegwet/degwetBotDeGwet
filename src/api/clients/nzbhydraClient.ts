@@ -29,10 +29,21 @@ export class NZBHydraClient {
 
   async searchMovies(query: string, year?: number, quality?: string): Promise<NZBHydraSearchResult[]> {
     try {
-      // First try with "1080p 5.1" appended to the query
+      // Build query with quality preference and 1080p 5.1 filter
+      let searchQuery = `${query} ${year || ''}`.trim();
+      
+      // Add quality preference if provided
+      if (quality) {
+        searchQuery += ` ${quality}`;
+      }
+      
+      // Always add 1080p 5.1 filter for movies
+      searchQuery += ' 1080p 5.1';
+      
+      // First try with "1080p 5.1" filter
       let params = {
         t: 'movie',
-        q: `${query} ${year || ''} ${quality || ''} 1080p 5.1`.trim(),
+        q: searchQuery.trim(),
         limit: '50'
       };
 
@@ -41,9 +52,11 @@ export class NZBHydraClient {
 
       // If no results found with "1080p 5.1", try without it
       if (items.length === 0) {
+        // Remove the 1080p 5.1 filter but keep quality preference
+        searchQuery = `${query} ${year || ''} ${quality || ''}`.trim();
         params = {
           t: 'movie',
-          q: `${query} ${year || ''} ${quality || ''}`.trim(),
+          q: searchQuery.trim(),
           limit: '50'
         };
 
@@ -51,14 +64,12 @@ export class NZBHydraClient {
         items = await this.parseSearchResults(response.data);
       }
 
-      // Filter to only include movie category results and sort by newest first
+      // Filter to only include movie category results
       const movieItems = items.filter(item => 
         item.category.includes('Movies') || 
         item.downloadType.includes('Movies')
       );
 
-      // Sort by newest first (assuming items with more recent pubDate are first in the original response)
-      // We'll sort by the order they appear in the response, which should be newest first
       return movieItems;
     } catch (error) {
       Logger.error('NZBHydra search failed:', error);
