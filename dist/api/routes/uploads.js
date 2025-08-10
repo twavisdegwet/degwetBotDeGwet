@@ -1,12 +1,43 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const uploadManagement_1 = require("../clients/uploadManagement");
-const delugeClient_1 = require("../clients/delugeClient");
-const env_1 = require("../../config/env");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const router = (0, express_1.Router)();
@@ -46,37 +77,19 @@ router.get('/status', async (_req, res) => {
 });
 router.post('/torrent', async (req, res) => {
     try {
-        const { torrentId, convertMp3ToM4b = false, parentFolderId } = req.body;
+        const { torrentId, convertMp3ToM4b = false } = req.body;
         if (!torrentId) {
             return res.status(400).json({
                 success: false,
                 error: 'Torrent ID is required'
             });
         }
-        const delugeClient = new delugeClient_1.DelugeClient(process.env.DELUGE_URL || 'http://localhost:8112', process.env.DELUGE_PASSWORD || 'deluge');
-        const torrentStatus = await delugeClient.getTorrentStatus(torrentId);
-        const torrentFiles = await delugeClient.getTorrentFiles(torrentId);
-        if (torrentFiles.length === 0) {
-            return res.status(404).json({
-                success: false,
-                error: 'No files found for this torrent'
-            });
-        }
-        const torrentObject = {
-            id: torrentId,
-            name: torrentStatus.name,
-            files: torrentFiles,
-            savePath: env_1.env.DOWNLOADS_DIRECTORY
-        };
-        const result = await uploadClient.uploadTorrent(torrentObject, {
-            convertMp3ToM4b,
-            parentFolderId,
-            createSubfolder: true
-        });
+        const { uploadTorrentToGDrive } = await Promise.resolve().then(() => __importStar(require('../../bot/uploadUtils')));
+        const result = await uploadTorrentToGDrive(torrentId, convertMp3ToM4b);
         if (result.success) {
             return res.json({
                 success: true,
-                message: `Successfully uploaded ${result.uploadedFiles.length} files to Google Drive`,
+                message: result.message,
                 folderId: result.folderId,
                 uploadedFiles: result.uploadedFiles,
                 convertedFile: result.convertedFile

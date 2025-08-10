@@ -7,10 +7,10 @@ A comprehensive Discord bot that integrates with MyAnonaMouse (MAM) private trac
 ### Core Functionality
 - 🔍 **Smart Search**: Search MyAnonaMouse for audiobooks and ebooks with advanced filtering
 - 📥 **Automatic Downloads**: Seamless torrent downloading to Deluge with duplicate detection
-- ☁️ **Google Drive Integration**: Automatic upload to Google Drive with intelligent folder organization
+- ☁️ **Google Drive Integration**: Automatic upload to Google Drive with intelligent folder organization (unified upload system for all pathways)
 - 🎵 **MP3→M4B Conversion**: Automatic audiobook format conversion for better compatibility
 - 💎 **VIP/Freeleech Management**: Automatic freeleech setting for VIP torrents
-- 🔄 **Duplicate Handling**: Smart duplicate detection with upload options for completed torrents
+- 🔄 **Duplicate Handling**: Smart duplicate detection with upload options for completed torrents (uses unified upload system)
 - 🤖 **Discord Bot**: Intuitive slash commands with interactive button interfaces
 
 ### Advanced Features
@@ -111,11 +111,10 @@ Search and download ebooks from MyAnonaMouse.
 **Parameters:** Same as `/getaudiobook` but for ebook categories
 
 #### `/gdrive-upload`
-Manually upload completed torrents to Google Drive.
+Manually upload completed torrents to Google Drive (uses the same unified upload system as automatic uploads).
 
 **Parameters:**
-- `torrent_id` (required) - Deluge torrent ID
-- `convert_mp3` (optional) - Convert MP3 files to M4B format
+- `query` (required) - Search term to find the torrent to upload
 
 #### `/gdrive-status`
 Check Google Drive upload status and storage information.
@@ -158,13 +157,13 @@ After using `/gdrive-status` to list downloads:
    - Monitors download progress
 5. **Upload**: When download completes:
    - Analyzes content type (audiobook/ebook/mixed)
-   - Prompts for MP3→M4B conversion if applicable
-   - Uploads to Google Drive with proper organization
+   - Prompts for MP3→M4B conversion if applicable (uses unified upload system)
+   - Uploads to Google Drive with proper organization (uses unified upload system)
    - Provides clickable folder links
 
 ### Duplicate Handling
 When a torrent already exists in Deluge:
-- **If completed**: Offers immediate Google Drive upload with interactive buttons
+- **If completed**: Offers immediate Google Drive upload with interactive buttons (uses unified upload system)
 - **If downloading**: Informs user to wait and provides manual upload option
 - **Smart detection**: Extracts torrent hash from error messages for precise matching
 
@@ -204,7 +203,7 @@ The bot automatically detects audiobooks with MP3 files and offers conversion:
 - `POST /api/mam/check-duplicate` - Check for existing torrents
 
 ### Upload Management
-- `POST /api/uploads/torrent` - Upload torrent to Google Drive
+- `POST /api/uploads/torrent` - Upload torrent to Google Drive (uses the same unified upload system as Discord commands)
 - `GET /api/uploads/status` - Check upload status
 
 ## 🧪 Testing
@@ -283,7 +282,7 @@ npm test
 
 ### Manual Upload with Conversion
 ```
-/gdrive-upload torrent_id:abc123def456 convert_mp3:true
+/gdrive-upload query:"exact torrent name"
 ```
 
 ### Quick Upload from List

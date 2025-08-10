@@ -1,7 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { UploadManagementClient, TorrentObject } from '../clients/uploadManagement';
-import { DelugeClient } from '../clients/delugeClient';
-import { env } from '../../config/env';
+import { UploadManagementClient } from '../clients/uploadManagement';
 import fs from 'fs';
 import path from 'path';
 
@@ -60,7 +58,7 @@ router.get('/status', async (_req: Request, res: Response) => {
  */
 router.post('/torrent', async (req: Request, res: Response) => {
   try {
-    const { torrentId, convertMp3ToM4b = false, parentFolderId } = req.body;
+    const { torrentId, convertMp3ToM4b = false } = req.body;
     
     if (!torrentId) {
       return res.status(400).json({ 
@@ -69,42 +67,17 @@ router.post('/torrent', async (req: Request, res: Response) => {
       });
     }
 
-    // Initialize Deluge client to get torrent info
-    const delugeClient = new DelugeClient(
-      process.env.DELUGE_URL || 'http://localhost:8112',
-      process.env.DELUGE_PASSWORD || 'deluge'
-    );
+    // Use the unified upload function to ensure consistency across all upload pathways
+    // Import the unified upload function dynamically to avoid circular dependencies
+    const { uploadTorrentToGDrive } = await import('../../bot/uploadUtils');
 
-    // Get torrent details
-    const torrentStatus = await delugeClient.getTorrentStatus(torrentId);
-    const torrentFiles = await delugeClient.getTorrentFiles(torrentId);
-
-    if (torrentFiles.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'No files found for this torrent' 
-      });
-    }
-
-    // Create torrent object for upload
-    const torrentObject: TorrentObject = {
-      id: torrentId,
-      name: torrentStatus.name,
-      files: torrentFiles,
-      savePath: env.DOWNLOADS_DIRECTORY
-    };
-
-    // Upload to Google Drive
-    const result = await uploadClient.uploadTorrent(torrentObject, {
-      convertMp3ToM4b,
-      parentFolderId,
-      createSubfolder: true
-    });
+    // Upload to Google Drive using the unified function (without progress target for API calls)
+    const result = await uploadTorrentToGDrive(torrentId, convertMp3ToM4b);
 
     if (result.success) {
       return res.json({
         success: true,
-        message: `Successfully uploaded ${result.uploadedFiles.length} files to Google Drive`,
+        message: result.message,
         folderId: result.folderId,
         uploadedFiles: result.uploadedFiles,
         convertedFile: result.convertedFile
