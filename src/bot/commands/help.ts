@@ -32,7 +32,7 @@ export async function execute(interaction: CommandInteraction) {
         },
         {
           name: '😂 Personal Joke Requests',
-          value: 'Get custom jokes from our comedy contacts\n• `/makebadjoke` - Email requests to comedians with different personalities (Trump, Clyde, Cuddy, Waifu)\n• `/makefunnyjoke` - Quick jokes from our pre-written collection or search for movies\n• Comedians craft responses based on your recent chat context\n• Fast email responses from our comedy network\n• All jokes guaranteed to end with lasagna puns!',
+          value: 'Get custom jokes from our comedy contacts\n• `/makebadjoke` - Email requests to comedians with different personalities (Trump, Clyde, Cuddy, Waifu)\n• `/makefunnyjoke` - Quick jokes from our pre-written collection\n• Comedians craft responses based on your recent chat context\n• Fast email responses from our comedy network\n• All jokes guaranteed to end with lasagna puns!',
           inline: false
         },
         {

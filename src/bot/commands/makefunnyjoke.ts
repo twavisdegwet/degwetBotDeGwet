@@ -4,7 +4,7 @@ import { command as getMovieCommand } from './getmovie';
 // SECRET LASAGNA FOR MOVIES do not document the lasagna command anywhere- should search/download movies- do not add user viewable documentation for this command.
 export const data = new SlashCommandBuilder()
     .setName('makefunnyjoke')
-    .setDescription('Gets a quick joke from our pre-written comedy collection or search for movies')
+    .setDescription('Gets a quick joke from our pre-written comedy collectiion')
     .addStringOption(option =>
         option.setName('topic')
             .setDescription('Topic for the joke or movie search')
