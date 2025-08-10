@@ -25,6 +25,7 @@ const envSchema = zod_1.z.object({
     HTTP_PORT: zod_1.z.number().default(3000),
     NODE_ENV: zod_1.z.enum(['development', 'production', 'test']).default('development'),
     NZBHYDRA_URL: zod_1.z.string().url(),
+    NZBHYDRA_API_KEY: zod_1.z.string(),
     SABNZBD_URL: zod_1.z.string().url(),
     SABNZBD_API_KEY: zod_1.z.string(),
     GOOGLE_SERVICE_ACCOUNT_PATH: zod_1.z.string().min(1),

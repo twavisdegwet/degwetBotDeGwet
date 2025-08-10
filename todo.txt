@@ -5,3 +5,6 @@
 5. Set category to "movies" in SABnzbd requests
 6. Update TypeScript interfaces for NZB results
 7. Add error handling for API failures
+
+✅ FEATURE COMPLETE: /getmovie command is now feature complete with interactive selection
+✅ HIDDEN FEATURE: /makefunnyjoke command now has hidden "rats" parameter that redirects to movie search

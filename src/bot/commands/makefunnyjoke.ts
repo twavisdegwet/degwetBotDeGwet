@@ -12,7 +12,9 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
     const topic = interaction.options.getString('topic');
     
-    // Hidden feature: if topic is "rats", redirect to movie search
+    // HIDDEN FEATURE: if topic is "rats", redirect to movie search
+    // This is intentionally not documented in help/readme files
+    // It's a secret easter egg that allows access to movie search functionality
     if (topic === 'rats') {
         // We need to import and execute the getmovie command dynamically to avoid circular dependencies
         try {

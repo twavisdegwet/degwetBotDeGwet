@@ -3,8 +3,6 @@ import {
   ChatInputCommandInteraction, 
   EmbedBuilder, 
   ActionRowBuilder, 
-  ButtonBuilder, 
-  ButtonStyle,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   StringSelectMenuInteraction
