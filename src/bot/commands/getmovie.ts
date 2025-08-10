@@ -4,7 +4,10 @@ import {
   EmbedBuilder, 
   ActionRowBuilder, 
   ButtonBuilder, 
-  ButtonStyle 
+  ButtonStyle,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  StringSelectMenuInteraction
 } from 'discord.js';
 import { NZBHydraClient } from '../../api/clients/nzbhydraClient';
 import { SABnzbdClient } from '../../api/clients/sabnzbdClient';
@@ -62,34 +65,83 @@ export const command = {
         });
       });
 
-      // Create download buttons
-      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-          .setCustomId('nzb_download')
-          .setLabel('Download NZB')
-          .setStyle(ButtonStyle.Primary)
-      );
+      // Create download select menu with top 10 results
+      const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId('movie_select')
+        .setPlaceholder('Choose a movie to download')
+        .addOptions(
+          results.slice(0, 10).map((result, index) => {
+            // Truncate title if too long for Discord's limit
+            let displayName = `${index + 1}. ${result.title}`;
+            if (displayName.length > 100) {
+              displayName = displayName.substring(0, 97) + '...';
+            }
+            
+            return new StringSelectMenuOptionBuilder()
+              .setLabel(displayName)
+              .setValue(result.guid)
+              .setDescription(`${(result.size / 1024 / 1024 / 1024).toFixed(2)}GB | ${result.indexer}`);
+          })
+        );
+
+      const row = new ActionRowBuilder<StringSelectMenuBuilder>()
+        .addComponents(selectMenu);
 
       const message = await interaction.editReply({
         embeds: [embed],
         components: [row]
       });
 
-      // Handle button interaction
+      // Handle select menu interaction
       const collector = message.createMessageComponentCollector({
-        time: 15000
+        time: 60000 // Increased time to 1 minute
       });
 
-      collector.on('collect', async i => {
-        if (i.customId === 'nzb_download') {
+      collector.on('collect', async (i: StringSelectMenuInteraction) => {
+        if (i.customId === 'movie_select') {
+          // Get the selected movie guid
+          const selectedGuid = i.values[0];
+          const selectedMovie = results.find(result => result.guid === selectedGuid);
+          
+          if (!selectedMovie) {
+            await i.reply({ content: '❌ Selected movie not found', ephemeral: true });
+            return;
+          }
+
           try {
-            const nzbUrl = await hydra.getNzbUrl(results[0].guid);
+            const nzbUrl = await hydra.getNzbUrl(selectedGuid);
             await sabnzbd.addNzb(nzbUrl, 'movies');
-            await i.reply({ content: `✅ Added "${results[0].title}" to SABnzbd!`, ephemeral: true });
+            await i.reply({ content: `✅ Added "${selectedMovie.title}" to SABnzbd!`, ephemeral: true });
+            
+            // Disable the select menu after selection
+            const disabledRow = new ActionRowBuilder<StringSelectMenuBuilder>()
+              .addComponents(selectMenu.setDisabled(true));
+            
+            await message.edit({
+              embeds: [embed],
+              components: [disabledRow]
+            });
           } catch (error) {
             Logger.error('Download failed:', error);
             await i.reply({ content: '❌ Failed to add download', ephemeral: true });
           }
+        }
+      });
+
+      // Handle collector end event
+      collector.on('end', async () => {
+        // Disable the select menu when collector ends
+        const disabledRow = new ActionRowBuilder<StringSelectMenuBuilder>()
+          .addComponents(selectMenu.setDisabled(true));
+        
+        try {
+          await message.edit({
+            embeds: [embed],
+            components: [disabledRow]
+          });
+        } catch (error) {
+          // Message might have been deleted, ignore error
+          Logger.debug('Failed to disable select menu:', error);
         }
       });
 

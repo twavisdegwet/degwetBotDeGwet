@@ -34,6 +34,7 @@ const envSchema = z.object({
 
   // NZB Configuration
   NZBHYDRA_URL: z.string().url(),
+  NZBHYDRA_API_KEY: z.string(),
   SABNZBD_URL: z.string().url(),
   SABNZBD_API_KEY: z.string(),
 
