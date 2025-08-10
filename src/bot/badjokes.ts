@@ -247,7 +247,14 @@ const allJokes = [
   ...spiderManJokes
 ];
 
-export function getPersonality(): string {
+export function getPersonality(topic?: string): string {
+  // If a topic is provided, we could filter jokes based on the topic
+  // For now, we'll just return a random joke regardless of topic
+  // (but we're acknowledging the parameter to avoid TypeScript warnings)
+  if (topic) {
+    // In the future we could filter jokes by topic
+    // For now we just acknowledge the parameter
+  }
   const randomIndex = Math.floor(Math.random() * allJokes.length);
   return allJokes[randomIndex];
 }
