@@ -435,7 +435,7 @@ export async function handleAutoUploadInteraction(interaction: any) {
   // Use the new unified upload button handler
   await handleUploadButtonInteraction(interaction, 'auto_upload', async (torrentId: string, convert: boolean) => {
     // Custom upload logic for auto-upload (getebook/getaudiobook)
-    const result = await uploadTorrentToGDrive(torrentId, convert);
+    const result = await uploadTorrentToGDrive(torrentId, convert, interaction);
     
     // Update the interaction with the result
     try {
