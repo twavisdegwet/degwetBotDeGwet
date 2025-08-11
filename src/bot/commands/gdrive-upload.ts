@@ -107,7 +107,16 @@ export async function execute(interaction: CommandInteraction) {
         await m.reply(statusMessage);
         
         // Upload with progress updates
-        await uploadTorrentToGDrive(selectedTorrent.id, false, undefined);
+        const result = await uploadTorrentToGDrive(selectedTorrent.id, false, m);
+        
+        // Send the final result message if it wasn't sent through the progressTarget
+        if (result.success && result.message) {
+          try {
+            await m.channel.send(`<@${m.author.id}> ${result.message}`);
+          } catch (error) {
+            console.error('Error sending final upload message:', error);
+          }
+        }
       }
     });
   } catch (error) {

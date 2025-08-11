@@ -384,7 +384,16 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
         
         if (!hasMp3Files) {
           // If no MP3 files, proceed with upload immediately with progress updates
-          await uploadTorrentToGDrive(torrentId, false, message);
+          const result = await uploadTorrentToGDrive(torrentId, false, message);
+          
+          // Send the final result message if it wasn't sent through the progressTarget
+          if (result.success && result.message) {
+            try {
+              await message.channel.send(`<@${message.author.id}> ${result.message}`);
+            } catch (error) {
+              console.error('Error sending final upload message:', error);
+            }
+          }
         }
         
         return; // Exit the monitoring loop
