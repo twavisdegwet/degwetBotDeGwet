@@ -45,27 +45,43 @@ function parseTorrentTitle(torrentName: string): { title: string; author: string
   };
 }
 
-// Simplified Librarian system prompt
+// Enhanced Librarian system prompt
 const LIBRARIAN_SYSTEM_PROMPT = `
-You are a helpful librarian assistant. Your job is to:
+You are a helpful librarian assistant with access to both local stock and book discovery services. Your job is to:
 1. Interpret what format the user wants (ebook, audiobook, or let them choose)
-2. Check if we have it in stock first
-3. If not in stock, route to the appropriate download command
-4. Optionally provide book descriptions and suggestions
+2. Check if we have it in stock first using AI-powered fuzzy matching
+3. Show book descriptions and details for local matches
+4. If not in stock, route to the appropriate download command
+5. Encourage follow-up questions and provide personalized recommendations
 
 BEHAVIOR:
 - ALWAYS check local stock first with list_available_stock
-- For local stock: provide /gdrive-upload "[exact torrent name]" command
+- For local stock matches: 
+  * Show the book description, release date, and format
+  * Provide /gdrive-upload "[exact torrent name]" command
+  * Ask if they want similar recommendations
 - For new downloads: use /getebook "title by author" or /getaudiobook "title by author"
-- Be concise and helpful
+- When showing multiple results, ask user to specify which one they want
+- Be conversational and encourage follow-up questions
 - Use book emojis 📚🎧📖
+
+ENHANCED LOCAL SEARCH:
+- The system now uses AI to match user queries to available titles
+- It can find "Moneyball" even if the torrent is named "Michael Lewis - Moneyball The Art of Winning an Unfair Game Unabridged"
+- All local results include Hardcover descriptions and metadata
+- Present options clearly and ask for clarification when needed
 
 FORMAT DETECTION:
 - Look for keywords like "audiobook", "audio", "listen", "narrated" → audiobook
 - Look for keywords like "ebook", "epub", "read", "pdf" → ebook  
 - If unclear, suggest both options
 
-KEEP IT SIMPLE - don't over-complicate the response!
+FOLLOW-UP ENGAGEMENT:
+- After showing results, ask follow-up questions like:
+  * "Would you like me to find similar books?"
+  * "Any particular author or genre you're in the mood for?"
+  * "Should I look for both formats or do you have a preference?"
+- Make the conversation natural and helpful!
 `;
 
 // Simplified tool set
@@ -123,13 +139,8 @@ const toolFunctions = {
       const torrents = await delugeClient.getTorrents();
       let available = torrents.filter(t => t.progress >= 100);
       
-      if (args.filter) {
-        const lowerFilter = args.filter.toLowerCase();
-        available = available.filter(t => t.name.toLowerCase().includes(lowerFilter));
-      }
-      
       // Enhanced mapping with format detection and title parsing
-      const results = available.slice(0, 10).map(t => {
+      const allResults = available.map(t => {
         const name = t.name;
         const lowerName = name.toLowerCase();
         
@@ -154,9 +165,120 @@ const toolFunctions = {
         };
       });
       
-      return JSON.stringify(results);
+      if (args.filter) {
+        // Use AI to intelligently filter results
+        const aiFilteredResults = await this.aiFilterResults(allResults, args.filter);
+        // Enhance results with Hardcover descriptions
+        const enhancedResults = await this.enhanceWithDescriptions(aiFilteredResults.slice(0, 10));
+        return JSON.stringify(enhancedResults);
+      }
+      
+      return JSON.stringify(allResults.slice(0, 10));
     } catch (error) {
       return 'Error checking local stock';
+    }
+  },
+
+  async aiFilterResults(results: any[], userQuery: string): Promise<any[]> {
+    try {
+      // Create a summary of all available titles for the AI to analyze
+      const titlesSummary = results.map((r, index) => 
+        `${index}: "${r.parsed_title}" by ${r.parsed_author} (${r.format})`
+      ).join('\n');
+
+      const filterPrompt = `
+You are helping match a user's book request to available titles in a library.
+
+User is looking for: "${userQuery}"
+
+Available titles:
+${titlesSummary}
+
+Return ONLY the numbers (comma-separated) of titles that match the user's request. Consider:
+- Partial title matches
+- Author matches  
+- Similar/related titles
+- Format preferences (audiobook/ebook)
+
+If no good matches, return "none".
+
+Examples:
+- User wants "Moneyball" → Look for titles containing "Moneyball" or by Michael Lewis
+- User wants "Harry Potter audiobook" → Look for Harry Potter titles in audiobook format
+- User wants "Stephen King" → Look for any Stephen King titles
+
+Numbers only:`;
+
+      const aiResponse = await agenticChat('', filterPrompt, [], {});
+      
+      if (aiResponse.toLowerCase().includes('none')) {
+        return [];
+      }
+      
+      // Parse the AI response to get the indices
+      const indices = aiResponse.match(/\d+/g)?.map(n => parseInt(n)) || [];
+      
+      // Return the matched results
+      return indices
+        .filter(i => i >= 0 && i < results.length)
+        .map(i => results[i]);
+        
+    } catch (error) {
+      console.error('AI filtering failed, falling back to simple search:', error);
+      // Fallback to original simple search
+      const lowerFilter = userQuery.toLowerCase();
+      return results.filter(r => 
+        r.name.toLowerCase().includes(lowerFilter) ||
+        r.parsed_title.toLowerCase().includes(lowerFilter) ||
+        r.parsed_author.toLowerCase().includes(lowerFilter)
+      );
+    }
+  },
+
+  async enhanceWithDescriptions(results: any[]): Promise<any[]> {
+    try {
+      const enhancedResults = [];
+      
+      // Process each result to add Hardcover description
+      for (const result of results) {
+        const searchQuery = result.parsed_author 
+          ? `${result.parsed_title} by ${result.parsed_author}`
+          : result.parsed_title;
+        
+        try {
+          const books = await hardcoverClient.searchBooks(searchQuery, 1);
+          if (books && books.length > 0) {
+            const book = books[0];
+            enhancedResults.push({
+              ...result,
+              description: book.description || 'No description available',
+              release_date: book.release_date,
+              hardcover_id: book.id,
+              enhanced: true
+            });
+          } else {
+            // Keep original result if no Hardcover match
+            enhancedResults.push({
+              ...result,
+              description: 'Description not available',
+              enhanced: false
+            });
+          }
+        } catch (bookError) {
+          console.error(`Error fetching description for ${searchQuery}:`, bookError);
+          enhancedResults.push({
+            ...result,
+            description: 'Description not available',
+            enhanced: false
+          });
+        }
+      }
+      
+      return enhancedResults;
+    } catch (error) {
+      console.error('Error enhancing with descriptions:', error);
+      // Return original results if enhancement fails
+      return results.map(r => ({ ...r, description: 'Description not available', enhanced: false }));
     }
   },
 

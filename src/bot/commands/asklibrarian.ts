@@ -35,11 +35,21 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         const response = await getLibrarianResponse(query, format);
         
-        // Check if this is a clarification request
-        if (response.includes('📚') && (response.includes('Could you please specify') || 
-            response.includes('need some clarification') || response.includes('more context'))) {
-            
-            await interaction.editReply({ content: response + '\n\n*Please reply with your clarification, and I\'ll help you find what you\'re looking for!*' });
+        // Check if this needs follow-up (broader criteria for engagement)
+        const needsFollowUp = response.includes('📚') && (
+            response.includes('Could you please specify') || 
+            response.includes('need some clarification') || 
+            response.includes('more context') ||
+            response.includes('Would you like') ||
+            response.includes('Any particular') ||
+            response.includes('Should I look for') ||
+            response.includes('similar books') ||
+            response.includes('multiple results') ||
+            response.includes('which one')
+        );
+        
+        if (needsFollowUp) {
+            await interaction.editReply({ content: response + '\n\n*💬 Feel free to reply with follow-up questions - I\'m here to help you find the perfect book!*' });
             
             // Wait for a follow-up message from the user
             try {
@@ -53,7 +63,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 const collected = await channel.awaitMessages({ 
                     filter, 
                     max: 1, 
-                    time: 300000, // 5 minutes
+                    time: 600000, // 10 minutes (extended)
                     errors: ['time'] 
                 });
                 
@@ -62,20 +72,55 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                     if (followUpMessage) {
                         console.log(`Librarian follow-up from ${interaction.user.username}: ${followUpMessage.content}`);
                         
+                        // Add reaction to show we're processing
+                        await followUpMessage.react('📚');
+                        
                         // Combine the original query with the follow-up for better context
-                        const combinedQuery = `Original request: "${query}". Follow-up: "${followUpMessage.content}"`;
+                        const combinedQuery = `Previous conversation context: Original request was "${query}" (format: ${format}). My previous response: "${response}". User's follow-up: "${followUpMessage.content}"`;
                         const followUpResponse = await getLibrarianResponse(combinedQuery, format);
                         await interaction.followUp({ content: followUpResponse });
                     }
                 }
             } catch (timeoutError) {
-                console.log('Librarian clarification timed out');
+                console.log('Librarian follow-up timed out');
                 await interaction.followUp({ 
-                    content: '📚 I\'ll be here when you\'re ready to continue your book search! Just use `/asklibrarian` again.' 
+                    content: '📚 I\'m always here to help with your book searches! Just use `/asklibrarian` again anytime.' 
                 });
             }
         } else {
-            await interaction.editReply({ content: response });
+            // Even for simple responses, offer follow-up capability
+            const finalResponse = response + '\n\n*📖 Need more book recommendations? Just reply and I\'ll keep helping!*';
+            await interaction.editReply({ content: finalResponse });
+            
+            // Brief follow-up window for simple responses too
+            try {
+                const filter = (msg: Message) => msg.author.id === interaction.user.id;
+                const channel = interaction.channel;
+                
+                if (channel && 'awaitMessages' in channel) {
+                    const collected = await channel.awaitMessages({ 
+                        filter, 
+                        max: 1, 
+                        time: 300000, // 5 minutes
+                        errors: ['time'] 
+                    });
+                    
+                    if (collected && collected.size > 0) {
+                        const followUpMessage = collected.first();
+                        if (followUpMessage) {
+                            console.log(`Librarian follow-up from ${interaction.user.username}: ${followUpMessage.content}`);
+                            await followUpMessage.react('📚');
+                            
+                            const combinedQuery = `Previous conversation: I helped with "${query}" and gave this response: "${response}". User's new question: "${followUpMessage.content}"`;
+                            const followUpResponse = await getLibrarianResponse(combinedQuery, format);
+                            await interaction.followUp({ content: followUpResponse });
+                        }
+                    }
+                }
+            } catch (timeoutError) {
+                // Silent timeout for simple responses
+                console.log('Librarian brief follow-up timed out');
+            }
         }
 
     } catch (err) {
