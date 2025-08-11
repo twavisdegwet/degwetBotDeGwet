@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { DownloadManager } from '../api/clients/downloadManagement';
 import DelugeClientManager from '../api/clients/delugeClientManager';
 import { env } from '../config/env';
@@ -20,7 +19,6 @@ export interface UploadResult {
 export async function uploadTorrentToGDrive(
   torrentId: string, 
   convert: boolean = false,
-  customMessage?: string,
   progressTarget?: any
 ): Promise<UploadResult> {
   return await uploadTorrentWithProgress(torrentId, convert, progressTarget);

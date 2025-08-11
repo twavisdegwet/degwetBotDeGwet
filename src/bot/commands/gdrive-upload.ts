@@ -107,7 +107,7 @@ export async function execute(interaction: CommandInteraction) {
         await m.reply(statusMessage);
         
         // Upload with progress updates
-        await uploadTorrentToGDrive(selectedTorrent.id, false, undefined, m);
+        await uploadTorrentToGDrive(selectedTorrent.id, false, undefined);
       }
     });
   } catch (error) {
@@ -120,6 +120,6 @@ export async function handleGDriveUploadInteraction(interaction: any) {
   // Use the new unified upload button handler
   await handleUploadButtonInteraction(interaction, 'gdrive_upload', async (torrentId: string, convert: boolean) => {
     // Upload with progress updates - no need to store result as it handles messaging internally
-    await uploadTorrentToGDrive(torrentId, convert, undefined, interaction);
+    await uploadTorrentToGDrive(torrentId, convert, interaction);
   });
 }

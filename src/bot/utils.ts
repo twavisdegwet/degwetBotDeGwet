@@ -2,12 +2,9 @@
 import axios from 'axios';
 import { CommandInteraction } from 'discord.js';
 import { DownloadManager } from '../api/clients/downloadManagement';
-import { DelugeClient } from '../api/clients/delugeClient';
-import { env } from '../config/env';
+import DelugeClientManager from '../api/clients/delugeClientManager';
 import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
 import { getPersonality } from './badjokes';
-
-const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
 
 // Helper function to format file size
 export function formatFileSize(bytes: number): string {
@@ -355,6 +352,8 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
       console.log(`Auto-upload check attempt ${state.attempts + 1}/${maxAttempts} for torrent: ${torrentId}`);
       
       // Get torrent status first for better monitoring
+      const clientManager = DelugeClientManager.getInstance();
+      const delugeClient = await clientManager.getClient();
       const torrentStatus = await delugeClient.getTorrentStatus(torrentId);
       console.log(`Torrent ${torrentId} status: ${torrentStatus.state}, progress: ${torrentStatus.progress}%`);
       
@@ -385,7 +384,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
         
         if (!hasMp3Files) {
           // If no MP3 files, proceed with upload immediately with progress updates
-          await uploadTorrentToGDrive(torrentId, false, undefined, message);
+          await uploadTorrentToGDrive(torrentId, false, message);
         }
         
         return; // Exit the monitoring loop
@@ -436,9 +435,7 @@ export async function handleAutoUploadInteraction(interaction: any) {
   // Use the new unified upload button handler
   await handleUploadButtonInteraction(interaction, 'auto_upload', async (torrentId: string, convert: boolean) => {
     // Custom upload logic for auto-upload (getebook/getaudiobook)
-    const result = await uploadTorrentToGDrive(torrentId, convert, 
-      `✅ It's on Google Drive! ${getPersonality()}\n\n`
-    );
+    const result = await uploadTorrentToGDrive(torrentId, convert);
     
     // Update the interaction with the result
     try {
@@ -466,6 +463,8 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
       try {
         // Instead of editing the original message, send a follow-up message
         // This avoids issues with interaction tokens expiring or too many buttons
+        const clientManager = DelugeClientManager.getInstance();
+        const delugeClient = await clientManager.getClient();
         const downloadManager = new DownloadManager(delugeClient);
         let selectedTorrent;
         
@@ -491,7 +490,7 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
           await interaction.editReply({ content: statusMessage });
           
           // Upload with progress updates
-          const result = await uploadTorrentToGDrive(torrentId, false, undefined, interaction);
+          const result = await uploadTorrentToGDrive(torrentId, false, interaction);
           
           // If the result message wasn't sent through the progressTarget, send it now
           if (result.success && result.message) {
@@ -526,7 +525,7 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
       // Use the unified upload button handler for conversion choices
       await handleUploadButtonInteraction(interaction, 'duplicate', async (torrentId: string, convert: boolean) => {
         // Upload with progress updates
-        const result = await uploadTorrentToGDrive(torrentId, convert, undefined, interaction);
+        const result = await uploadTorrentToGDrive(torrentId, convert, interaction);
         
         // If the result message wasn't sent through the progressTarget, send it now
         if (result.success && result.message) {
