@@ -48,8 +48,7 @@ export const command = {
       results.slice(0, 10).forEach((result, index) => {
         embed.addFields({
           name: `🎬 ${index + 1}. ${result.title}`,
-          value: `**Size:** ${(result.size / 1024 / 1024 / 1024).toFixed(2)}GB\n` +
-                 `**Indexer:** ${result.indexer}`
+          value: `**Size:** ${(result.size / 1024 / 1024 / 1024).toFixed(2)}GB`
         });
       });
 
@@ -68,7 +67,7 @@ export const command = {
             return new StringSelectMenuOptionBuilder()
               .setLabel(displayName)
               .setValue(result.guid)
-              .setDescription(`${(result.size / 1024 / 1024 / 1024).toFixed(2)}GB | ${result.indexer}`);
+              .setDescription(`${(result.size / 1024 / 1024 / 1024).toFixed(2)}GB`);
           })
         );
 
