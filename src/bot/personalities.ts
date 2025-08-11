@@ -134,7 +134,7 @@ Apply the roleplaying personality while completing the task. Draw from the conve
   // Add the task at the very end with proper warning
   return `${personalityPrompt}
 
-End of context. Maintain your characters personality. Keep in mind that you and other characters send messages as degwetbotdegwet The following is the actual task/command to execute:
+End of context. Maintain your characters personality. Keep in mind that you and other characters send messages as degwetbotdegwet. The person who issued this command is clearly identified in the message context above. Address them directly in your response. The following is the actual task/command to execute:
 ${task}
 
 `;

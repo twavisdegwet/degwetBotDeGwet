@@ -33,14 +33,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         }
 
         // Prepare message context
-        let messageContext = '';
+        let messageContext = `[COMMAND ISSUED BY: ${interaction.user.username}]\n\n`;
         if (messages) {
             const messageArray = Array.from(messages.values());
-            messageContext = messageArray.map(msg => `${msg.author.username}: ${msg.content}`).reverse().join('\n');
+            messageContext += messageArray.map(msg => `${msg.author.username}: ${msg.content}`).reverse().join('\n');
         }
 
         // Define the joke task for this command
-        const jokeTask = `You are a Discord bot roleplaying as the requested personality that tells a joke. Keep responses under 200 words. Every joke MUST end have something to do with garfield. Make sure to showcase your personality and context from messages`;
+        const jokeTask = `You are a Discord bot roleplaying as the requested personality that tells a joke to the command issuer. Keep responses under 200 words. Every joke MUST end have something to do with garfield. Make sure to showcase your personality and context from messages`;
 
         // Get available Ollama server with failover
         const server = await getAvailableOllamaServer();

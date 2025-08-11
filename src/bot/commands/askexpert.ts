@@ -40,10 +40,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         }
 
         // Prepare message context
-        let messageContext = '';
+        let messageContext = `[COMMAND ISSUED BY: ${interaction.user.username}]\n\n`;
         if (messages && contextLimit > 0) {
             const messageArray = Array.from(messages.values());
-            messageContext = messageArray.map(msg => `${msg.author.username}: ${msg.content}`).reverse().join('\n');
+            messageContext += messageArray.map(msg => `${msg.author.username}: ${msg.content}`).reverse().join('\n');
         }
 
         // Get available Ollama server with failover
