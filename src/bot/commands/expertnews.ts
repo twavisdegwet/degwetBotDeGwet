@@ -93,6 +93,39 @@ function formatNewsForPrompt(articles: NewsArticle[]): string {
     }).join('\n\n');
 }
 
+function splitMessageAtSentence(text: string, maxLength: number = 1800): string[] {
+    if (text.length <= maxLength) {
+        return [text];
+    }
+    
+    const messages: string[] = [];
+    let currentMessage = '';
+    
+    // Split by sentences (looking for . ! ? followed by space or end of string)
+    const sentences = text.split(/([.!?]\s+|[.!?]$)/);
+    
+    for (let i = 0; i < sentences.length; i += 2) {
+        const sentence = sentences[i];
+        const punctuation = sentences[i + 1] || '';
+        const fullSentence = sentence + punctuation;
+        
+        if (currentMessage.length + fullSentence.length <= maxLength) {
+            currentMessage += fullSentence;
+        } else {
+            if (currentMessage.trim()) {
+                messages.push(currentMessage.trim());
+            }
+            currentMessage = fullSentence;
+        }
+    }
+    
+    if (currentMessage.trim()) {
+        messages.push(currentMessage.trim());
+    }
+    
+    return messages;
+}
+
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
@@ -150,18 +183,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const expertTask = `You are hosting your own nightly news show! You must present today's top news stories as if you're a news anchor delivering the evening news broadcast. You should:
 
 1. Open with a greeting appropriate to your personality
-2. Present each major story with context and your unique perspective
-3. Connect stories together when possible, showing relationships between events
-4. Add context, background, or implications that help viewers understand why these stories matter
-5. If you need to fabricate reasonable context or background details to make the stories more engaging and understandable, do so confidently
-6. Close with your signature sign-off
+2. Select and focus on the 3 most important/interesting stories from the headlines (choose ones most relevant to the chat context, or your personal favorites if none apply)
+3. Present each story with context and your unique perspective
+4. Connect stories together when possible, showing relationships between events
+5. Add context, background, or implications that help viewers understand why these stories matter
+6. If you need to fabricate reasonable context or background details to make the stories more engaging and understandable, do so confidently
+7. Close with your signature sign-off
 
-Your news broadcast should be around 500 words and written in a flowing, natural speaking style as if you're actually on TV. Address your audience directly. Make it engaging, informative, and distinctly in your character's voice.
+CRITICAL: Your entire news broadcast must be under 1800 characters total. Write in a flowing, natural speaking style as if you're on TV. Address your audience directly. Make it engaging, informative, and distinctly in your character's voice, but keep it concise.
 
 TODAY'S TOP HEADLINES${category && category !== 'general' ? ` (${category.toUpperCase()} FOCUS)` : ''}:
 ${newsContent}
 
-Now deliver your nightly news broadcast!`;
+Now deliver your concise nightly news broadcast focusing on your top 3 story picks!`;
         
         // Get prompt and make Ollama request
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);
@@ -171,7 +205,16 @@ Now deliver your nightly news broadcast!`;
         const questionText = `Tonight's News Broadcast${category && category !== 'general' ? ` (${category.charAt(0).toUpperCase() + category.slice(1)})` : ''}`;
         const formattedResponse = formatExpertResponse(selectedExpert, questionText, response.response);
         
-        await interaction.editReply({ content: formattedResponse });
+        // Split the message if it's too long
+        const messageParts = splitMessageAtSentence(formattedResponse);
+        
+        // Send the first part as the reply
+        await interaction.editReply({ content: messageParts[0] });
+        
+        // Send additional parts as follow-ups if needed
+        for (let i = 1; i < messageParts.length; i++) {
+            await interaction.followUp({ content: messageParts[i] });
+        }
 
     } catch (err) {
         const errorMessages: ErrorMessages = {
