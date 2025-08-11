@@ -70,7 +70,8 @@ async function uploadTorrentWithProgress(
                            message.includes('Cleaned up temp directory');
         
         if (shouldNotify) {
-          await progressTarget.channel?.send(`<@${progressTarget.user.id}> ${message}`);
+          const userId = progressTarget.user?.id || progressTarget.author?.id;
+          await progressTarget.channel?.send(`<@${userId}> ${message}`);
         }
       } catch (error) {
         console.error('Error sending progress message:', error);
@@ -126,7 +127,8 @@ async function uploadTorrentWithProgress(
       if (result.folderId && progressTarget) {
         try {
           const linkMessage = `📂 [View Folder](https://drive.google.com/drive/folders/${result.folderId})\n📂 Folder ID: ${result.folderId}`;
-          await progressTarget.channel?.send(`<@${progressTarget.user.id}> ${linkMessage}`);
+          const userId = progressTarget.user?.id || progressTarget.author?.id;
+          await progressTarget.channel?.send(`<@${userId}> ${linkMessage}`);
         } catch (error) {
           console.error('Error sending Google Drive link message:', error);
           // If we can't send a separate message, include it in the main message
