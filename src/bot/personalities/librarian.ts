@@ -130,6 +130,110 @@ const tools: OllamaTool[] = [
   }
 ];
 
+// Helper functions for AI filtering and enhancement
+async function aiFilterResults(results: any[], userQuery: string): Promise<any[]> {
+  try {
+    // Create a summary of all available titles for the AI to analyze
+    const titlesSummary = results.map((r, index) => 
+      `${index}: "${r.parsed_title}" by ${r.parsed_author} (${r.format})`
+    ).join('\n');
+
+    const filterPrompt = `
+You are helping match a user's book request to available titles in a library.
+
+User is looking for: "${userQuery}"
+
+Available titles:
+${titlesSummary}
+
+Return ONLY the numbers (comma-separated) of titles that match the user's request. Consider:
+- Partial title matches
+- Author matches  
+- Similar/related titles
+- Format preferences (audiobook/ebook)
+
+If no good matches, return "none".
+
+Examples:
+- User wants "Moneyball" → Look for titles containing "Moneyball" or by Michael Lewis
+- User wants "Harry Potter audiobook" → Look for Harry Potter titles in audiobook format
+- User wants "Stephen King" → Look for any Stephen King titles
+
+Numbers only:`;
+
+    const aiResponse = await agenticChat('', filterPrompt, [], {});
+    
+    if (aiResponse.toLowerCase().includes('none')) {
+      return [];
+    }
+    
+    // Parse the AI response to get the indices
+    const indices = aiResponse.match(/\d+/g)?.map(n => parseInt(n)) || [];
+    
+    // Return the matched results
+    return indices
+      .filter(i => i >= 0 && i < results.length)
+      .map(i => results[i]);
+      
+  } catch (error) {
+    console.error('AI filtering failed, falling back to simple search:', error);
+    // Fallback to original simple search
+    const lowerFilter = userQuery.toLowerCase();
+    return results.filter(r => 
+      r.name.toLowerCase().includes(lowerFilter) ||
+      r.parsed_title.toLowerCase().includes(lowerFilter) ||
+      r.parsed_author.toLowerCase().includes(lowerFilter)
+    );
+  }
+}
+
+async function enhanceWithDescriptions(results: any[]): Promise<any[]> {
+  try {
+    const enhancedResults = [];
+    
+    // Process each result to add Hardcover description
+    for (const result of results) {
+      const searchQuery = result.parsed_author 
+        ? `${result.parsed_title} by ${result.parsed_author}`
+        : result.parsed_title;
+      
+      try {
+        const books = await hardcoverClient.searchBooks(searchQuery, 1);
+        if (books && books.length > 0) {
+          const book = books[0];
+          enhancedResults.push({
+            ...result,
+            description: book.description || 'No description available',
+            release_date: book.release_date,
+            hardcover_id: book.id,
+            enhanced: true
+          });
+        } else {
+          // Keep original result if no Hardcover match
+          enhancedResults.push({
+            ...result,
+            description: 'Description not available',
+            enhanced: false
+          });
+        }
+      } catch (bookError) {
+        console.error(`Error fetching description for ${searchQuery}:`, bookError);
+        enhancedResults.push({
+          ...result,
+          description: 'Description not available',
+          enhanced: false
+        });
+      }
+    }
+    
+    return enhancedResults;
+  } catch (error) {
+    console.error('Error enhancing with descriptions:', error);
+    // Return original results if enhancement fails
+    return results.map(r => ({ ...r, description: 'Description not available', enhanced: false }));
+  }
+}
+
 // Simplified tool implementations
 const toolFunctions = {
   async list_available_stock(args: { filter?: string }): Promise<string> {
@@ -167,118 +271,15 @@ const toolFunctions = {
       
       if (args.filter) {
         // Use AI to intelligently filter results
-        const aiFilteredResults = await this.aiFilterResults(allResults, args.filter);
+        const aiFilteredResults = await aiFilterResults(allResults, args.filter);
         // Enhance results with Hardcover descriptions
-        const enhancedResults = await this.enhanceWithDescriptions(aiFilteredResults.slice(0, 10));
+        const enhancedResults = await enhanceWithDescriptions(aiFilteredResults.slice(0, 10));
         return JSON.stringify(enhancedResults);
       }
       
       return JSON.stringify(allResults.slice(0, 10));
     } catch (error) {
       return 'Error checking local stock';
-    }
-  },
-
-  async aiFilterResults(results: any[], userQuery: string): Promise<any[]> {
-    try {
-      // Create a summary of all available titles for the AI to analyze
-      const titlesSummary = results.map((r, index) => 
-        `${index}: "${r.parsed_title}" by ${r.parsed_author} (${r.format})`
-      ).join('\n');
-
-      const filterPrompt = `
-You are helping match a user's book request to available titles in a library.
-
-User is looking for: "${userQuery}"
-
-Available titles:
-${titlesSummary}
-
-Return ONLY the numbers (comma-separated) of titles that match the user's request. Consider:
-- Partial title matches
-- Author matches  
-- Similar/related titles
-- Format preferences (audiobook/ebook)
-
-If no good matches, return "none".
-
-Examples:
-- User wants "Moneyball" → Look for titles containing "Moneyball" or by Michael Lewis
-- User wants "Harry Potter audiobook" → Look for Harry Potter titles in audiobook format
-- User wants "Stephen King" → Look for any Stephen King titles
-
-Numbers only:`;
-
-      const aiResponse = await agenticChat('', filterPrompt, [], {});
-      
-      if (aiResponse.toLowerCase().includes('none')) {
-        return [];
-      }
-      
-      // Parse the AI response to get the indices
-      const indices = aiResponse.match(/\d+/g)?.map(n => parseInt(n)) || [];
-      
-      // Return the matched results
-      return indices
-        .filter(i => i >= 0 && i < results.length)
-        .map(i => results[i]);
-        
-    } catch (error) {
-      console.error('AI filtering failed, falling back to simple search:', error);
-      // Fallback to original simple search
-      const lowerFilter = userQuery.toLowerCase();
-      return results.filter(r => 
-        r.name.toLowerCase().includes(lowerFilter) ||
-        r.parsed_title.toLowerCase().includes(lowerFilter) ||
-        r.parsed_author.toLowerCase().includes(lowerFilter)
-      );
-    }
-  },
-
-  async enhanceWithDescriptions(results: any[]): Promise<any[]> {
-    try {
-      const enhancedResults = [];
-      
-      // Process each result to add Hardcover description
-      for (const result of results) {
-        const searchQuery = result.parsed_author 
-          ? `${result.parsed_title} by ${result.parsed_author}`
-          : result.parsed_title;
-        
-        try {
-          const books = await hardcoverClient.searchBooks(searchQuery, 1);
-          if (books && books.length > 0) {
-            const book = books[0];
-            enhancedResults.push({
-              ...result,
-              description: book.description || 'No description available',
-              release_date: book.release_date,
-              hardcover_id: book.id,
-              enhanced: true
-            });
-          } else {
-            // Keep original result if no Hardcover match
-            enhancedResults.push({
-              ...result,
-              description: 'Description not available',
-              enhanced: false
-            });
-          }
-        } catch (bookError) {
-          console.error(`Error fetching description for ${searchQuery}:`, bookError);
-          enhancedResults.push({
-            ...result,
-            description: 'Description not available',
-            enhanced: false
-          });
-        }
-      }
-      
-      return enhancedResults;
-    } catch (error) {
-      console.error('Error enhancing with descriptions:', error);
-      // Return original results if enhancement fails
-      return results.map(r => ({ ...r, description: 'Description not available', enhanced: false }));
     }
   },
 
