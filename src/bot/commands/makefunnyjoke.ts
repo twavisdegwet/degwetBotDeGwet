@@ -7,7 +7,7 @@ export const data = new SlashCommandBuilder()
     .setDescription('Gets a quick joke from our pre-written comedy collectiion')
     .addStringOption(option =>
         option.setName('topic')
-            .setDescription('Topic for the joke or movie search')
+            .setDescription('Topic for the joke')
             .setRequired(false))
     .addStringOption(option =>
         option.setName('lasagna')

@@ -33,7 +33,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         console.log(`Librarian request: "${query}" (format: ${format}, limit: ${limit})`);
 
-        const response = await getLibrarianResponse(query, format, limit);
+        const response = await getLibrarianResponse(query, format);
         
         // Check if this is a clarification request
         if (response.includes('📚') && (response.includes('Could you please specify') || 
@@ -64,7 +64,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                         
                         // Combine the original query with the follow-up for better context
                         const combinedQuery = `Original request: "${query}". Follow-up: "${followUpMessage.content}"`;
-                        const followUpResponse = await getLibrarianResponse(combinedQuery, format, limit);
+                        const followUpResponse = await getLibrarianResponse(combinedQuery, format);
                         await interaction.followUp({ content: followUpResponse });
                     }
                 }
