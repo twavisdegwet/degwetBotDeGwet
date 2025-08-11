@@ -49,9 +49,18 @@ export const data = new SlashCommandBuilder()
             .setMinValue(0)
             .setMaxValue(25));
 
-async function fetchTopHeadlines(category: string = 'general'): Promise<NewsArticle[]> {
+async function fetchTopHeadlines(category?: string): Promise<NewsArticle[]> {
     const apiKey = '751ec1083d624883bfe62353bb4b38bc';
-    const url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&pageSize=10&apiKey=${apiKey}`;
+    let url: string;
+    
+    if (category && category !== 'general') {
+        // Use category-based filtering
+        url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&pageSize=10&apiKey=${apiKey}`;
+    } else {
+        // Use specific sources for general news
+        const sources = 'associated-press,bbc-news,the-wall-street-journal';
+        url = `https://newsapi.org/v2/top-headlines?sources=${sources}&pageSize=10&apiKey=${apiKey}`;
+    }
     
     try {
         const response = await fetch(url);
@@ -77,17 +86,9 @@ function formatNewsForPrompt(articles: NewsArticle[]): string {
     }
     
     return articles.map((article, index) => {
-        const publishedDate = new Date(article.publishedAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
         return `${index + 1}. ${article.title}
-   Source: ${article.source.name} (${publishedDate})
    ${article.description || 'No description available'}
-   URL: ${article.url}`;
+   ${article.content || ''}`.trim();
     }).join('\n\n');
 }
 
