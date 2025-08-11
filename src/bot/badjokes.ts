@@ -240,6 +240,29 @@ const CONVERSION_JOKES = [
 "🎵💥 These MP3s are about to become one M4B, like how all of Jon's dating disasters become one therapy session! Convert? 💔➡️🧠"
 ];
 
+const BUSY_JOKES = [
+"🍝 Sorry, I'm busy - Garfield got stuck in a lasagna mine and I'm coordinating the rescue mission! The situation is cheesy but critical! 🧀⛑️",
+"🍌 Can't help right now! The minions discovered a banana plantation and now they're trying to establish a banana republic. It's chaos! 🏛️🍌",
+"🎬 Temporarily unavailable - Andrew Garfield just got cast in a Mormon musical about Spider-Man, and I'm helping him practice his jazz hands! 🕷️🎭✨",
+"⚔️ Sorry! Currently busy because Andrew Garfield is starring in Mel Gibson's new war epic 'Hacksaw Spider' and needs emotional support! 🕷️🎬💥",
+"🛋️ Can't download right now - Garfield is stuck upside-down in a recliner and insists only I can solve this 'gravity situation'! 🙃⚖️",
+"🕸️ Unavailable! Spider-Man accidentally webbed himself to a Mormon church and they're trying to convert him. This is above my pay grade! ⛪🕷️",
+"🍌🔬 Busy! The minions are attempting banana-based alchemy and somehow created sentient pasta. Garfield is... interested. Send help! 🍝🧪",
+"📺 Sorry, I'm crisis-managing! Garfield got cast in a reality show called 'Extreme Couch Makeover' and he's having an existential breakdown! 🛋️😱",
+"🎪 Currently occupied - the minions joined the circus but they only know banana-themed acts. The elephants are confused! 🐘🍌🎭",
+"🏥 Can't help! Andrew Garfield pulled a muscle doing method acting for his role as 'Concerned Citizen #3' in a community theater production! 🎬🩹",
+"🍝 Temporarily busy - Garfield discovered that lasagna can be used as building material and now he's constructing a pasta fortress! 🏰🧱",
+"🚁 Sorry! Spider-Man got stuck in helicopter blades (again) and the fire department is blaming ME for some reason! 🚁🕷️🚒",
+"🎭 Unavailable - Andrew Garfield is method acting as a philosophy professor and keeps asking me deep questions about the meaning of web-slinging! 🕸️🤔",
+"🍌🌋 Crisis mode! The minions triggered a banana avalanche and Garfield is trying to surf it to safety. Physics isn't cooperating! 🏄‍♂️🍌💥",
+"⛪ Busy helping! Andrew Garfield accidentally auditioned for a Mormon tabernacle choir and now he's committed to singing soprano for six months! 🎵😇",
+"🥪 Can't download - Garfield created a 47-layer lasagna sandwich and now he can't figure out how to eat it without defying gravity! 🍝🚀",
+"🏖️ Sorry, occupied! The minions built a banana beach resort in my living room and Garfield declared himself the lazy lifeguard! 🏖️😎🍌",
+"🎬 Temporarily unavailable - Andrew Garfield is filming 'Hacksaw Ridge: The Musical' and I'm his emotional support web-slinger! 🕷️🎵⚔️",
+"🍌🧨 Emergency situation! The minions discovered banana-flavored dynamite and Garfield wants to use it for 'extreme lasagna heating'! 💥🍝",
+"🛸 Can't help right now - Garfield got abducted by aliens who only eat lasagna, and they're asking ME to negotiate the ransom! 👽🍝💸"
+];
+
 // Combined generic jokes collection
 const allJokes = [
   ...garfieldJokes,
@@ -266,4 +289,8 @@ export function getRandomUploadJoke(): string {
 
 export function getRandomConversionJoke(): string {
   return CONVERSION_JOKES[Math.floor(Math.random() * CONVERSION_JOKES.length)];
+}
+
+export function getRandomBusyJoke(): string {
+  return BUSY_JOKES[Math.floor(Math.random() * BUSY_JOKES.length)];
 }

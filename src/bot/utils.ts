@@ -5,6 +5,7 @@ import { DownloadManager } from '../api/clients/downloadManagement';
 import DelugeClientManager from '../api/clients/delugeClientManager';
 import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
 import { getPersonality } from './badjokes';
+import { isUserPlayingGame, createPresenceBlockedMessage } from './presenceUtils';
 
 // Helper function to format file size
 export function formatFileSize(bytes: number): string {
@@ -85,6 +86,13 @@ export function analyzeContentType(files: Array<{path: string, size: number}>): 
 export async function handleBookSearch(interaction: CommandInteraction, bookType: 'audiobook' | 'ebook') {
   if (!interaction.isChatInputCommand()) return;
   await interaction.deferReply();
+  
+  // Check if the specified user is currently playing a game
+  const isBlocked = await isUserPlayingGame(interaction.client);
+  if (isBlocked) {
+    await interaction.editReply(createPresenceBlockedMessage());
+    return;
+  }
   
   const query = interaction.options.getString('query', true);
   const limit = interaction.options.getInteger('limit') || 10;

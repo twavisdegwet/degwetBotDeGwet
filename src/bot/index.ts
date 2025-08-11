@@ -9,6 +9,7 @@ import * as makeFunnyJokeCommand from './commands/makefunnyjoke';
 import * as makeBadJokeCommand from './commands/makebadjoke';
 import * as askExpertCommand from './commands/askexpert';
 import * as askLibrarianCommand from './commands/asklibrarian';
+import * as getMovieCommand from './commands/getmovie';
 import { getPersonality } from './badjokes';
 import { handleGDriveUploadInteraction } from './commands/gdrive-upload';
 import { handleAutoUploadInteraction, handleDuplicateUploadInteraction } from './utils';
@@ -22,6 +23,7 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildPresences,
   ],
 }) as CustomClient;
 
@@ -35,6 +37,7 @@ client.commands.set(makeFunnyJokeCommand.data.name, makeFunnyJokeCommand);
 client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 client.commands.set(askExpertCommand.data.name, askExpertCommand);
 client.commands.set(askLibrarianCommand.data.name, askLibrarianCommand);
+client.commands.set(getMovieCommand.data.name, getMovieCommand);
 
 const commands = [
   getAudiobookCommand.data,
@@ -45,7 +48,8 @@ const commands = [
   makeFunnyJokeCommand.data,
   makeBadJokeCommand.data,
   askExpertCommand.data,
-  askLibrarianCommand.data
+  askLibrarianCommand.data,
+  getMovieCommand.data
 ];
 
 const rest = new REST({ version: '10' }).setToken(env.DISCORD_TOKEN);

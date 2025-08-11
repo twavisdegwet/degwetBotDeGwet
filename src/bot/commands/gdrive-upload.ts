@@ -4,6 +4,7 @@ import { DelugeClient } from '../../api/clients/delugeClient';
 import { env } from '../../config/env';
 import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from '../uploadUtils';
 import { getPersonality } from '../badjokes';
+import { isUserPlayingGame, createPresenceBlockedMessage } from '../presenceUtils';
 
 const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
 
@@ -18,6 +19,13 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: CommandInteraction) {
   if (!interaction.isChatInputCommand()) return;
   await interaction.deferReply();
+
+  // Check if the specified user is currently playing a game
+  const isBlocked = await isUserPlayingGame(interaction.client);
+  if (isBlocked) {
+    await interaction.editReply(createPresenceBlockedMessage());
+    return;
+  }
 
   const query = interaction.options.getString('query', true);
 

@@ -10,21 +10,28 @@ import {
 import { NZBHydraClient } from '../../api/clients/nzbhydraClient';
 import { SABnzbdClient } from '../../api/clients/sabnzbdClient';
 import { Logger } from '../../utils/logger';
+import { isUserPlayingGame, createPresenceBlockedMessage } from '../presenceUtils';
 
-export const command = {
-  data: new SlashCommandBuilder()
-    .setName('getmovie')
-    .setDescription('Search NZB indexers for a movie')
-    .addStringOption(option =>
-      option.setName('title')
-        .setDescription('Movie title to search for')
-        .setRequired(true))
-    .addIntegerOption(option =>
-      option.setName('year')
-        .setDescription('Release year')),
+export const data = new SlashCommandBuilder()
+  .setName('getmovie')
+  .setDescription('Search NZB indexers for a movie')
+  .addStringOption(option =>
+    option.setName('title')
+      .setDescription('Movie title to search for')
+      .setRequired(true))
+  .addIntegerOption(option =>
+    option.setName('year')
+      .setDescription('Release year'));
 
-  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
     await interaction.deferReply();
+    
+    // Check if the specified user is currently playing a game
+    const isBlocked = await isUserPlayingGame(interaction.client);
+    if (isBlocked) {
+      await interaction.editReply(createPresenceBlockedMessage());
+      return;
+    }
     
     const hydra = new NZBHydraClient();
     const sabnzbd = new SABnzbdClient();
@@ -137,4 +144,3 @@ export const command = {
       await interaction.editReply('Failed to perform movie search. Please try again later.');
     }
   }
-};
