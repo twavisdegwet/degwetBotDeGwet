@@ -28,7 +28,9 @@ export function getPersonalityFormatting(personality: Personality): PersonalityF
  */
 export function formatExpertResponse(personality: Personality, question: string, response: string): string {
   const { emoji, name } = getPersonalityFormatting(personality);
-  let formattedResponse = `**Question:** ${question}\n**${emoji} ${name}'s Response:**\n${response}`;
+  // Filter out excessive whitespace - replace double+ newlines with single newlines
+  const cleanedResponse = response.replace(/\n\n+/g, '\n');
+  let formattedResponse = `**Question:** ${question}\n**${emoji} ${name}'s Response:**\n${cleanedResponse}`;
   
   // Check if response is too long for Discord (2000 character limit)
   if (formattedResponse.length > 2000) {

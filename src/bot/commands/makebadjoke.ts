@@ -61,8 +61,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         console.log('Ollama response received, processing joke...');
 
+        // Filter out excessive whitespace - replace double+ newlines with single newlines
+        const cleanedResponse = jokeResponse.response.replace(/\n\n+/g, '\n');
+        
         // Reply with just the joke (no personality label)
-        await interaction.editReply({ content: jokeResponse.response });
+        await interaction.editReply({ content: cleanedResponse });
     } catch (err) {
         const errorMessages: ErrorMessages = {
             timeout: 'Joke cooking timed out - my chef needs more burners!',
