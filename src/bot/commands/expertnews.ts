@@ -7,6 +7,7 @@ interface NewsArticle {
     description: string;
     url: string;
     publishedAt: string;
+    content?: string;
     source: {
         name: string;
     };
