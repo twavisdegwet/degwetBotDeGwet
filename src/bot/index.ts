@@ -10,6 +10,7 @@ import * as makeBadJokeCommand from './commands/makebadjoke';
 import * as askExpertCommand from './commands/askexpert';
 import * as askLibrarianCommand from './commands/asklibrarian';
 import * as getMovieCommand from './commands/getmovie';
+import * as expertNewsCommand from './commands/expertnews';
 import { getPersonality } from './badjokes';
 import { handleGDriveUploadInteraction } from './commands/gdrive-upload';
 import { handleAutoUploadInteraction, handleDuplicateUploadInteraction } from './utils';
@@ -38,6 +39,7 @@ client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 client.commands.set(askExpertCommand.data.name, askExpertCommand);
 client.commands.set(askLibrarianCommand.data.name, askLibrarianCommand);
 client.commands.set(getMovieCommand.data.name, getMovieCommand);
+client.commands.set(expertNewsCommand.data.name, expertNewsCommand);
 
 const commands = [
   getAudiobookCommand.data,
@@ -49,7 +51,8 @@ const commands = [
   makeBadJokeCommand.data,
   askExpertCommand.data,
   askLibrarianCommand.data,
-  getMovieCommand.data
+  getMovieCommand.data,
+  expertNewsCommand.data
 ];
 
 const rest = new REST({ version: '10' }).setToken(env.DISCORD_TOKEN);
