@@ -1,11 +1,17 @@
 import { Router, Request, Response } from 'express';
 import { DownloadManager } from '../clients/downloadManagement';
-import { DelugeClient } from '../clients/delugeClient';
-import { env } from '../../config/env';
+import DelugeClientManager from '../clients/delugeClientManager';
 import { uploadTorrentToGDrive } from '../../bot/uploadUtils';
 
 const router = Router();
-const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
+
+/**
+ * Middleware to get Deluge client
+ */
+const getDelugeClient = async () => {
+  const clientManager = DelugeClientManager.getInstance();
+  return await clientManager.getClient();
+};
 
 /**
  * POST /downloads/webhook
@@ -19,6 +25,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
     
     if (event === 'torrent_completed') {
       // Handle completed torrent
+      const delugeClient = await getDelugeClient();
       const downloadManager = new DownloadManager(delugeClient);
       
       // Get torrent info
@@ -69,6 +76,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
  */
 router.get('/completed', async (_req: Request, res: Response) => {
   try {
+    const delugeClient = await getDelugeClient();
     const downloadManager = new DownloadManager(delugeClient);
     const completedTorrents = await downloadManager.listCompletedTorrents();
     
@@ -100,6 +108,7 @@ router.get('/completed', async (_req: Request, res: Response) => {
 router.post('/upload-completed', async (req: Request, res: Response) => {
   try {
     const { convertMp3ToM4b = false } = req.body;
+    const delugeClient = await getDelugeClient();
     const downloadManager = new DownloadManager(delugeClient);
     const completedTorrents = await downloadManager.listCompletedTorrents();
     

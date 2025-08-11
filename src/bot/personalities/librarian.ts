@@ -1,13 +1,12 @@
 import { HardcoverClient } from '../../api/clients/hardcoverClient';
 import { MamClient } from '../../api/clients/mamClient';
-import { DelugeClient } from '../../api/clients/delugeClient';
+import DelugeClientManager from '../../api/clients/delugeClientManager';
 import { env } from '../../config/env';
 import { agenticChat, OllamaTool } from '../agenticutils';
 
 // Initialize clients
 const hardcoverClient = new HardcoverClient();
 const mamClient = new MamClient(env.MAM_BASE_URL, env.MAM_COOKIE);
-const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
 
 // Parse title and author from torrent name
 function parseTorrentTitle(torrentName: string): { title: string; author: string; cleanTitle: string } {
@@ -181,6 +180,8 @@ const toolFunctions = {
   },
 
   async list_available_stock(args: { filter?: string }): Promise<string> {
+    const clientManager = DelugeClientManager.getInstance();
+    const delugeClient = await clientManager.getClient();
     const torrents = await delugeClient.getTorrents();
     let available = torrents.filter(t => t.progress >= 100);
     

@@ -1,17 +1,23 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const downloadManagement_1 = require("../clients/downloadManagement");
-const delugeClient_1 = require("../clients/delugeClient");
-const env_1 = require("../../config/env");
+const delugeClientManager_1 = __importDefault(require("../clients/delugeClientManager"));
 const uploadUtils_1 = require("../../bot/uploadUtils");
 const router = (0, express_1.Router)();
-const delugeClient = new delugeClient_1.DelugeClient(env_1.env.DELUGE_URL, env_1.env.DELUGE_PASSWORD);
+const getDelugeClient = async () => {
+    const clientManager = delugeClientManager_1.default.getInstance();
+    return await clientManager.getClient();
+};
 router.post('/webhook', async (req, res) => {
     try {
         const { event, torrentId, torrentName } = req.body;
         console.log(`📥 Deluge webhook event received: ${event} for torrent ${torrentName} (${torrentId})`);
         if (event === 'torrent_completed') {
+            const delugeClient = await getDelugeClient();
             const downloadManager = new downloadManagement_1.DownloadManager(delugeClient);
             const torrentInfo = await downloadManager.getTorrentInfo(torrentId);
             if (!torrentInfo) {
@@ -48,6 +54,7 @@ router.post('/webhook', async (req, res) => {
 });
 router.get('/completed', async (_req, res) => {
     try {
+        const delugeClient = await getDelugeClient();
         const downloadManager = new downloadManagement_1.DownloadManager(delugeClient);
         const completedTorrents = await downloadManager.listCompletedTorrents();
         const pendingUploads = completedTorrents.filter(_torrent => {
@@ -69,6 +76,7 @@ router.get('/completed', async (_req, res) => {
 router.post('/upload-completed', async (req, res) => {
     try {
         const { convertMp3ToM4b = false } = req.body;
+        const delugeClient = await getDelugeClient();
         const downloadManager = new downloadManagement_1.DownloadManager(delugeClient);
         const completedTorrents = await downloadManager.listCompletedTorrents();
         if (completedTorrents.length === 0) {

@@ -1,11 +1,8 @@
 import axios from 'axios';
 import { DownloadManager } from '../api/clients/downloadManagement';
-import { DelugeClient } from '../api/clients/delugeClient';
+import DelugeClientManager from '../api/clients/delugeClientManager';
 import { env } from '../config/env';
 import { analyzeContentType, formatFileSize } from './utils';
-
-const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
-
 import { getRandomUploadJoke, getRandomConversionJoke } from './badjokes';
 
 export interface UploadResult {
@@ -26,79 +23,7 @@ export async function uploadTorrentToGDrive(
   customMessage?: string,
   progressTarget?: any
 ): Promise<UploadResult> {
-  try {
-    // If we have a progress target, we'll do the upload directly with progress callbacks
-    if (progressTarget) {
-      return await uploadTorrentWithProgress(torrentId, convert, progressTarget);
-    }
-
-    // Fallback to the old API method for backward compatibility
-    const uploadResponse = await axios.post('http://localhost:3000/api/uploads/torrent', {
-      torrentId: torrentId,
-      convertMp3ToM4b: convert
-    });
-
-    if (uploadResponse.data.success) {
-      const downloadManager = new DownloadManager(delugeClient);
-      const files = await downloadManager.getTorrentFiles(torrentId);
-      const analysis = analyzeContentType(files);
-      
-      let successMessage = customMessage || `✅ ${getRandomUploadJoke()}\n\n`;
-      successMessage += `📁 Uploaded ${uploadResponse.data.uploadedFiles.length} files`;
-
-      if (analysis.totalSize > 0) {
-        successMessage += ` (${formatFileSize(analysis.totalSize)})`;
-      }
-      successMessage += '\n';
-
-      const contentParts = [];
-      if (analysis.audioFiles.length > 0) {
-        contentParts.push(`${analysis.audioFiles.length} audio file${analysis.audioFiles.length > 1 ? 's' : ''}`);
-      }
-      if (analysis.ebookFiles.length > 0) {
-        contentParts.push(`${analysis.ebookFiles.length} e-book file${analysis.ebookFiles.length > 1 ? 's' : ''}`);
-      }
-      if (analysis.otherFiles.length > 0) {
-        contentParts.push(`${analysis.otherFiles.length} other file${analysis.otherFiles.length > 1 ? 's' : ''}`);
-      }
-
-      if (contentParts.length > 0) {
-        successMessage += `${analysis.emoji} Content: ${contentParts.join(', ')}\n`;
-      }
-
-      if (uploadResponse.data.convertedFile) {
-        successMessage += `🎵 Converted to: ${uploadResponse.data.convertedFile}\n`;
-      }
-
-      if (uploadResponse.data.folderId) {
-        successMessage += `📂 [View Folder](https://drive.google.com/drive/folders/${uploadResponse.data.folderId})\n\n`;
-        successMessage += `📂 Folder ID: ${uploadResponse.data.folderId}\n\n`;
-      }
-
-      return {
-        success: true,
-        message: successMessage,
-        folderId: uploadResponse.data.folderId,
-        uploadedFiles: uploadResponse.data.uploadedFiles,
-        convertedFile: uploadResponse.data.convertedFile
-      };
-    } else {
-      return {
-        success: false,
-        message: `❌ Upload failed. ${getRandomUploadJoke()} This is worse than running out of lasagna.\n\nError: ${uploadResponse.data.error}\n\nPartially uploaded files: ${uploadResponse.data.uploadedFiles.length}`,
-        uploadedFiles: uploadResponse.data.uploadedFiles,
-        error: uploadResponse.data.error
-      };
-    }
-  } catch (error: any) {
-    console.error('Error uploading torrent:', error);
-    return {
-      success: false,
-        message: `❌ Upload failed. ${getRandomUploadJoke()} This is worse than running out of lasagna.\n\nError: ${error.response?.data?.error || error.message}`,
-      uploadedFiles: [],
-      error: error.response?.data?.error || error.message
-    };
-  }
+  return await uploadTorrentWithProgress(torrentId, convert, progressTarget);
 }
 
 /**
@@ -122,6 +47,8 @@ async function uploadTorrentWithProgress(
     const uploadClient = new UploadManagementClient(serviceAccountPath, driveFolderId);
     
     // Get torrent details
+    const clientManager = DelugeClientManager.getInstance();
+    const delugeClient = await clientManager.getClient();
     const downloadManager = new DownloadManager(delugeClient);
     const torrents = await downloadManager.listCompletedTorrents();
     const selectedTorrent = torrents.find(t => t.id === torrentId);
@@ -249,6 +176,8 @@ export async function checkForMp3AndPrompt(
   actionPrefix: string = 'upload'
 ): Promise<boolean> {
   try {
+    const clientManager = DelugeClientManager.getInstance();
+    const delugeClient = await clientManager.getClient();
     const downloadManager = new DownloadManager(delugeClient);
     const files = await downloadManager.getTorrentFiles(torrentId);
     const analysis = analyzeContentType(files);
@@ -349,6 +278,8 @@ export async function handleUploadButtonInteraction(
 
   try {
     // Get torrent info for the status message - try multiple methods to find the torrent
+    const clientManager = DelugeClientManager.getInstance();
+    const delugeClient = await clientManager.getClient();
     const downloadManager = new DownloadManager(delugeClient);
     
     // First try to get the torrent info directly by ID
