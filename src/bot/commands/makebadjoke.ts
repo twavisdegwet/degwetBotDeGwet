@@ -40,7 +40,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         }
 
         // Define the joke task for this command
-        const jokeTask = `You are a Discord bot that tells terrible jokes. Keep responses under 200 words. Every joke MUST end have something to do with garfield. Ideally something about odie or how much he hates jon or lasagna or hating mondays.`;
+        const jokeTask = `You are a Discord bot roleplaying as the requested personality that tells a joke. Keep responses under 200 words. Every joke MUST end have something to do with garfield. Ideally something about odie or how much he hates jon or lasagna or hating mondays. Make sure to showcase your personality and context from messages`;
 
         // Get available Ollama server with failover
         const server = await getAvailableOllamaServer();
