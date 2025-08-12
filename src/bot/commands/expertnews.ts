@@ -6,10 +6,10 @@ import { fetchBlueskyPosts, searchBlueskyPosts, formatBlueskyPostsForPrompt } fr
 
 export const data = new SlashCommandBuilder()
     .setName('expertnews')
-    .setDescription('Ask one of our expert consultants to summarize the latest social media posts')
+    .setDescription('Ask one of our expert consultants to rattle off todays news')
     .addStringOption(option =>
         option.setName('expert')
-            .setDescription('Choose which expert to consult (default: random expert)')
+            .setDescription('Choose which expert to anchor (default: random expert)')
             .addChoices(
                 ...personalities.map(personality => ({
                     name: personality.charAt(0).toUpperCase() + personality.slice(1),
@@ -19,11 +19,11 @@ export const data = new SlashCommandBuilder()
             ))
     .addStringOption(option =>
         option.setName('topic')
-            .setDescription('Search for posts about a specific topic (e.g., "climate change", "AI", "politics")')
+            .setDescription('Generate up to date and 100% accurate news on a specific topic')
             .setMaxLength(100))
     .addIntegerOption(option =>
         option.setName('context')
-            .setDescription('Number of recent messages to include as context (default: 0)')
+            .setDescription('add surrounding messages for some reason')
             .setMinValue(0)
             .setMaxValue(25));
 
