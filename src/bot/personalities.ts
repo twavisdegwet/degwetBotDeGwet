@@ -73,7 +73,7 @@ export function getCurrentDateTimeInfo(): string {
  * Builds a prompt with personality applied to a given task/command
  */
 export function buildPersonalityPrompt(personality: Personality, task: string, messageContext: string): string {
-  const basePrompt = `/no_think
+  const basePrompt = `
 
 Recent conversation for context:
 ${messageContext}
