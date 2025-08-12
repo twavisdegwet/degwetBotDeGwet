@@ -124,28 +124,28 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         let expertTask: string;
         
         if (topic) {
-            expertTask = `You're hosting a special investigative segment tonight focusing on "${topic}". The posts below aren't just random social media content - they're direct submissions from viewers of tonight's program who are sharing their thoughts, experiences, and hot takes about this topic. Some viewers might be brilliant, others might be complete idiots, and some might be trolling. Your job is to create a compelling story around this topic using these viewer submissions.
+            expertTask = `You're hosting a special investigative segment tonight focusing on "${topic}". The information below comes from our field reporters and social media monitoring teams who are tracking developments and public sentiment around this topic. Your job is to analyze these field reports and create a compelling news story that gets to the heart of what's really happening.
 
 As tonight's investigative host, you should:
 
 1. Open by introducing the special topic segment with your signature style
-2. Treat the posts as viewer mail/submissions - "Here's what you're telling us about ${topic}"
-3. Feel free to call out viewers when they're being ridiculous, praise insightful ones, or roast the trolls
-4. Don't be afraid to disagree with viewers or point out when someone clearly doesn't know what they're talking about
-5. Use the submissions to build a narrative about what's really happening with this topic
-6. Connect different viewer perspectives to show the bigger picture
-7. Share your expert analysis on what these submissions reveal about the state of things
-8. You can absolutely mock, criticize, or dismiss viewer submissions that deserve it
-9. End with your take on what this all means and what viewers should be watching for
+2. Use the field reports as context and evidence to build your story about ${topic}
+3. Focus on the substance and patterns in the information rather than individual sources
+4. Analyze what these reports reveal about the current state of ${topic}
+5. Connect different pieces of information to show the bigger picture
+6. Share your expert analysis and interpretation of what's developing
+7. Don't be afraid to call out inconsistencies or contradictions you see in the reports
+8. Build a narrative that explains what's really going on behind the headlines
+9. End with your take on what this means and what to watch for next
 
-Remember: these are VIEWER SUBMISSIONS from random people watching tonight's show. They can be praised, mocked, dismissed, or used to make larger points. Not all viewer opinions are created equal, and you're the expert here.
+Remember: You're a news anchor analyzing field reports. Focus on the story, not the messengers. Use the information to inform your commentary without getting bogged down in individual social media handles or usernames.
 
-CRITICAL: Keep your entire response under 5000 characters. Be engaging, opinionated, and don't hold back on bad takes.
+CRITICAL: Keep your entire response under 5000 characters. Be engaging, authoritative, and provide sharp news analysis.
 
-VIEWER SUBMISSIONS ABOUT "${topic.toUpperCase()}":
+FIELD REPORTS ON "${topic.toUpperCase()}":
 ${postsContent}
 
-Now analyze what our viewers are telling us about ${topic} - separate the wheat from the chaff and give us the real story!`;
+Now give us your expert analysis of what's developing with ${topic} - what's the real story here?`;
         } else {
             expertTask = `You are hosting a segment on The Daily Show - witty, satirical, and unapologetically opinionated. The social media posts below represent the day's conversations and developments. Your job is to select 3-5 key stories, provide sharp commentary, make jokes, and offer your unique perspective on what these stories really mean, weaving them into a fun, conversational flow.
 
