@@ -41,7 +41,23 @@ const garfieldJokes = [
 "⏰ Why is Garfield the procrastination GOAT? He turned it into an art form 🎨🐐",
 "🔬 What do you call Garfield's nap routine? Sleep-ology, peer-reviewed and published 📚💤",
 "💡 Garfield's life hack: 'I'll nap first, lasagna second, everything else never' 🍝😴",
-"🛋️ Why does Garfield prefer the couch? Stairs are Jon's problem, not his 🚫🪜"
+"🛋️ Why does Garfield prefer the couch? Stairs are Jon's problem, not his 🚫🪜",
+"📚 Garfield's autobiography: 'I, Lasagna, and Me' - coming soon to a bookstore near you! 📖🍝",
+"⏰ Why does Garfield love clocks? They're the only thing that moves slower than he does! ⏳😴",
+"🍕 Jon tried to make pizza. Garfield called it 'lasagna's less talented cousin' and refused to eat it! 🍕❌",
+"🛋️ Garfield's workout routine: 1 rep of standing up from the couch. Advanced version includes walking to the fridge! 🏋️‍♂️❄️",
+"🎭 Garfield's acting debut: 'The Lasagna Identity' - he nailed the role of 'Cat Who Really Wants Lasagna'! 🎬🍝",
+"🍝 Garfield's dating profile: 'Must love lasagna, hate Mondays, and tolerate extreme napping' 💕😴",
+"🐱 Garfield's life goal: Achieve immortality through strategic laziness and lasagna consumption 🏆🍝",
+"📱 Garfield's phone background: A picture of lasagna, so he can see it even when he's not eating it 🍝📸",
+"🎓 Garfield's college major: Advanced Nap Studies with a minor in Lasagna Appreciation 🎓💤",
+"🌙 Garfield's night routine: Sleep, dream of lasagna, wake up, eat lasagna, repeat 🌙🍝",
+"🎪 Garfield's circus act: The Amazing Sleeping Cat - performs 24/7 without moving! 🎪😴",
+  "🍝 Why did Garfield bring a ladder to the kitchen? To reach the top of the lasagna mountain! 🏔️😼",
+  "😾 Garfield's new year resolution: More naps, less Mondays, infinite lasagna! 🎉🍝",
+  "🛌 Garfield's fitness tracker only counts hours slept. Current record: 23.5! 💤🏆",
+  "📉 Garfield's stock portfolio: 100% lasagna futures. Diversification is for cats with nine lives. 📈🍝",
+  "🚫 Garfield's idea of cardio: Running away from responsibility at lightning speed! ⚡😼",
 ];
 
 const minionJokes = [
@@ -97,7 +113,19 @@ const minionJokes = [
 "🌲 Why don't minions get lost? GPS = Global Banana System! 🍌📍",
 "🎓 What's a minion with a PhD called? Doctor Banana, MD (Minion Doctorate) 🍌👨‍⚕️",
 "💼 Why did the minion start a startup? BananaHub - Uber for bananas! 🍌📱",
-"🍌 Minion motto: 'In Banana We Trust!' 🍌🙏"
+"🍌 Minion motto: 'In Banana We Trust!' 🍌🙏",
+"🎪 Minion circus act: The Human Banana Cannon - shoots minions at bananas! 🍌💥",
+"🧪 Minion science experiment: Banana-powered time machine (only goes to breakfast) 🍌⏰",
+"🎭 Minion theater production: 'Romeo and Banana' - tragic love story 🍌💔",
+"🏗️ Minion construction project: Building a banana-shaped skyscraper (currently 2 inches tall) 🍌🏢",
+"🎤 Minion karaoke favorite: 'Banana in the Wind' by Elton John 🍌🎹",
+"🚴 Minion Olympics: Banana cycling - they just ride actual bananas 🍌🚲",
+"🎨 Minion art class: Finger painting with banana mush (it's just eating) 🍌🎨",
+  "🍌 Why did the minion become a gardener? To grow the ultimate banana tree! 🌳😆",
+  "🎉 Minion party game: Pin the banana on the human! 🎯🍌",
+  "🚗 Minion driving school motto: Yellow means speed up, red means more bananas! 🚦🍌",
+  "📚 Minion bedtime story: 'Goldilocks and the Three Bananas' 🐻🍌",
+  "🛠️ Minion repair kit: Duct tape, glitter, and a banana for emergencies! 🍌✨",
 ];
 
 const spiderManJokes = [
@@ -184,7 +212,20 @@ const spiderManJokes = [
 "🕷️ Why did Spider-Man get a pet spider? Delegation of spider-duties! 🕷️🤝",
 "🏝️ Spider-Man's perfect vacation? Skyscraper with room service and 5G! 🏢📶",
 "📜 Spider-Man's real motto: 'Great power, great responsibility, greater naps!' 💤⚡",
-"🎙️ Why did Spider-Man podcast? 'Web-Slinging 101: A Masterclass' 🕸️🎧"
+"🎙️ Why did Spider-Man podcast? 'Web-Slinging 101: A Masterclass' 🕸️🎧",
+"🕷️ Spider-Man's dating app: WebMD - 'Meet Doctors Who Can Treat Your Spider-Bites' 💕🩹",
+"🏢 Spider-Man's real estate: 'Luxury Web-Lofts with Amazing Views!' 🕸️🏠",
+"🎭 Spider-Man's theater debut: 'Romeo and Juliet' but they're both stuck to walls 🕷️🎭",
+"🍕 Spider-Man's food delivery: Guaranteed to arrive upside-down and extra sticky! 🕸️🍕",
+"📱 Spider-Man's tech support: 'Have you tried turning your web-shooters off and on again?' 🕸️💻",
+"🎪 Spider-Man's circus act: The Amazing Upside-Down Man (requires ceiling) 🕷️🎪",
+"🚗 Spider-Man's Uber rating: 5 stars for aerial shortcuts, 1 star for sticky seats 🕸️🚗",
+"🎓 Spider-Man's college major: Web Design with a minor in Wall-Crawling Architecture 🕸️🎓",
+  "🕸️ Spider-Man's new app: WebMD - for when you get bitten by radioactive spiders! 🕷️📱",
+  "🏙️ Spider-Man's commute: Swinging through traffic while others honk in jealousy! 🚗😎",
+  "🎓 Spider-Man's degree in Physics: Finally explains how the web doesn't stick to him! 🎓🕸️",
+  "🍕 Spider-Man's diet: 90% upside-down pizza, 10% existential crisis! 🍕😅",
+  "🦸♂️ Spider-Man's side hustle: Teaching spiders to knit webs for sweaters! 🧶🕷️",
 ];
 
 const UPLOAD_JOKES = [
@@ -215,7 +256,23 @@ const UPLOAD_JOKES = [
 "🚗 This is more painful than watching Jon parallel park (17 attempts minimum) 🅿️😬",
 "🐢 Upload progress: Moving at the speed of Garfield chasing vegetables! 🥦🚫",
 "🐕 This file uploads like Odie delivers mail - maximum chaos, zero progress! 📬💥",
-"🗣️ I could teach a minion Shakespeare faster than this uploads! 🍌📚 'To banana or not to banana!'"
+"🗣️ I could teach a minion Shakespeare faster than this uploads! 🍌📚 'To banana or not to banana!'",
+"📊 This upload is slower than Jon's dating success rate (statistically zero) 📈❤️",
+"🍕 Uploading files is like Jon making pizza - technically possible, but why would you do that to yourself? 🍕😵",
+"🎭 This upload has more drama than Andrew Garfield's method acting sessions! 🎬😭",
+"🕷️ Spider-Man could web-sling across the multiverse faster than this file moves! 🕸️🌌",
+"🍌 Even minions would unionize over this upload speed! 🍌✊",
+"🛋️ This upload is testing my patience more than Garfield's couch cushion indentations! 🛋️📏",
+"🎪 Upload progress: Like watching a minion circus where nothing happens but everyone's screaming! 🎪🍌",
+"📱 This upload is slower than Jon's response time on dating apps (he's still typing from 2019) 💬⏰",
+"🍝 I'd rather watch Jon attempt to cook than wait for this upload! At least that's entertaining! 👨‍🍳🔥",
+"🐱 This upload speed makes Garfield look like an Olympic sprinter! 🏃‍♂️🥇",
+"🎵 Uploading files: Like listening to a minion karaoke session - technically sound, emotionally painful! 🎤🍌",
+  "📤 Uploading files: The digital equivalent of watching paint dry, but with more error messages! 🎨⚠️",
+  "⏳ This upload is slower than Garfield's Monday morning motivation! 🐌📅",
+  "💾 Saving progress: Because losing data is scarier than Nermal's cuteness! 😼💻",
+  "🚀 Upload failed? Must be Garfield sitting on the router again! 🛋️📶",
+  "🌐 WiFi signal weaker than Jon's willpower around lasagna! 🍝📡",
 ];
 
 const CONVERSION_JOKES = [
@@ -237,7 +294,21 @@ const CONVERSION_JOKES = [
 "🎵🎉 MP3 to M4B conversion: Less chaotic than a minion birthday party, more organized than Odie's sock drawer! Begin? 🧦🍌",
 "🎵🍌 I'll merge these files with the enthusiasm of a minion finding the banana motherload! Start the conversion party? 🎊🍌",
 "🎵🍝 Converting these is easier than explaining to Garfield why we can't have lasagna for breakfast, lunch, AND dinner! Ready? 🍳🍝🍽️",
-"🎵💥 These MP3s are about to become one M4B, like how all of Jon's dating disasters become one therapy session! Convert? 💔➡️🧠"
+"🎵💥 These MP3s are about to become one M4B, like how all of Jon's dating disasters become one therapy session! Convert? 💔➡️🧠",
+"🎵🕷️ Converting MP3s is like Spider-Man trying to date - technically possible, but involves a lot of web-slinging and heartbreak! Ready? 💔🕸️",
+"🎵🍕 These files are merging like Jon's failed attempts at making edible pizza - messy but somehow functional! Convert? 🍕🤞",
+"🎵🎪 MP3 conversion: Like a minion circus act - looks chaotic but somehow produces results! Shall we begin? 🎪🍌",
+"🎵🛋️ I'll combine these files like Garfield combines napping with eating - simultaneously and with maximum efficiency! Ready? 😴🍝",
+"🎵📚 Converting to M4B is like teaching Odie to read - theoretically possible, practically questionable! Proceed? 🐕📖",
+"🎵🎬 These MP3s are becoming one M4B like Andrew Garfield's filmography - diverse elements creating one amazing experience! Convert? 🎬✨",
+"🎵🍌 I'll merge these faster than a minion can say 'BANANA!' (which is actually pretty fast) Ready? 🍌💨",
+"🎵💤 This conversion is more satisfying than Garfield's post-lasagna nap! Let's make audio magic! 🍝💭",
+"🎵🕸️ MP3 to M4B: Like Spider-Man's web - individual strands becoming something stronger together! Convert? 🕷️💪",
+  "🔄 Converting files: Like teaching Odie new tricks - possible, but painful! 🐕🎓",
+  "⏲️ Conversion progress: 1%... just like Garfield's diet success rate! 🍕📉",
+  "🎧 MP3 to M4B: Because even audio files need a makeover! 💅🎵",
+  "🔀 File formats dancing: Cha-cha real smooth into a new extension! 💃🔄",
+  "📀 Converting CDs to digital: Resurrecting tech from the Jurassic period! 🦖💿",
 ];
 
 const BUSY_JOKES = [
@@ -260,7 +331,24 @@ const BUSY_JOKES = [
 "🏖️ Sorry, occupied! The minions built a banana beach resort in my living room and Garfield declared himself the lazy lifeguard! 🏖️😎🍌",
 "🎬 Temporarily unavailable - Andrew Garfield is filming 'Hacksaw Ridge: The Musical' and I'm his emotional support web-slinger! 🕷️🎵⚔️",
 "🍌🧨 Emergency situation! The minions discovered banana-flavored dynamite and Garfield wants to use it for 'extreme lasagna heating'! 💥🍝",
-"🛸 Can't help right now - Garfield got abducted by aliens who only eat lasagna, and they're asking ME to negotiate the ransom! 👽🍝💸"
+"🛸 Can't help right now - Garfield got abducted by aliens who only eat lasagna, and they're asking ME to negotiate the ransom! 👽🍝💸",
+"🎪 Currently busy - the minions are rehearsing for 'Banana: The Musical' and Garfield keeps eating the props! 🍌🎭🍝",
+"🏗️ Sorry! I'm helping Garfield build a lasagna-powered rocket ship to escape Monday responsibilities! 🍝🚀📅",
+"🕷️ Unavailable! Spider-Man got tangled in his own web while trying to make a hammock and now he needs moral support! 🕸️😅",
+"🍌 Emergency! The minions formed a banana cult and Garfield accidentally became their supreme leader! 🍌👑🐱",
+"🎬 Temporarily busy - Andrew Garfield is filming a documentary about method acting as a method actor! 🎥🤯",
+"🍝 Can't help! Garfield started a lasagna delivery service but only delivers to himself! 🍝🚚😴",
+"🕸️ Occupied! Spider-Man is teaching web-slinging to a group of enthusiastic squirrels. It's not going well! 🕷️🐿️",
+"🍌 Crisis! The minions opened a banana smoothie bar and Garfield is their only customer (he's asleep in the corner) 🍌😴",
+"🎭 Sorry! Andrew Garfield is starring in 'Spider-Man: The Opera' and needs help hitting the high notes! 🕷️🎵",
+"🛋️ Currently unavailable - Garfield invented a couch with built-in lasagna dispenser and needs beta testers! 🛋️🍝",
+"🕷️ Busy! Spider-Man is trying to explain to Aunt May why his costume has pizza stains. It's a whole thing! 🍕🕷️",
+"🍌 Emergency situation! The minions are hosting a banana-themed TED talk and Garfield is the unwilling keynote speaker! 🍌🎤😾",
+  "🚧 Can't help! Garfield's organizing a napathon and I'm the referee! 😴🏁",
+  "🍌 Emergency! Minions discovered shrink rays and now we're hunting microscopic bananas! 🔍🍌",
+  "🕷️ Spider-Man stuck in a web of his own drama - again! Counseling session in progress. 🕸️😓",
+  "🎪 Minion circus went rogue - the clowns are revolting! (Literally and figuratively) 🤡🍌",
+  "🍝 Lasagna crisis! Garfield declared himself Emperor of Pasta and demands tribute! 👑🍝",
 ];
 
 // Combined generic jokes collection

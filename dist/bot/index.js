@@ -45,7 +45,6 @@ const makeFunnyJokeCommand = __importStar(require("./commands/makefunnyjoke"));
 const makeBadJokeCommand = __importStar(require("./commands/makebadjoke"));
 const askExpertCommand = __importStar(require("./commands/askexpert"));
 const askLibrarianCommand = __importStar(require("./commands/asklibrarian"));
-const getMovieCommand = __importStar(require("./commands/getmovie"));
 const expertNewsCommand = __importStar(require("./commands/expertnews"));
 const badjokes_1 = require("./badjokes");
 const gdrive_upload_1 = require("./commands/gdrive-upload");
@@ -69,7 +68,6 @@ client.commands.set(makeFunnyJokeCommand.data.name, makeFunnyJokeCommand);
 client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 client.commands.set(askExpertCommand.data.name, askExpertCommand);
 client.commands.set(askLibrarianCommand.data.name, askLibrarianCommand);
-client.commands.set(getMovieCommand.data.name, getMovieCommand);
 client.commands.set(expertNewsCommand.data.name, expertNewsCommand);
 const commands = [
     getAudiobookCommand.data,
@@ -81,7 +79,6 @@ const commands = [
     makeBadJokeCommand.data,
     askExpertCommand.data,
     askLibrarianCommand.data,
-    getMovieCommand.data,
     expertNewsCommand.data
 ];
 const rest = new discord_js_1.REST({ version: '10' }).setToken(env_1.env.DISCORD_TOKEN);
