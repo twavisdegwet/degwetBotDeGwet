@@ -110,27 +110,29 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const postsContent = formatBlueskyPostsForPrompt(posts);
         
         // Define the expert task for social media summarization
-        const expertTask = `You are a professional news anchor delivering the evening news! The reports below come directly from your trusted team of field journalists who have been monitoring social media for breaking stories and developments. These are not raw tweets - they are field reports from your journalism team that you must now present as the lead news anchor.
+        const expertTask = `You are delivering a thoughtful news wrap in the style of PBS NewsHour - intelligent, measured, and deeply analytical. The social media posts below represent the day's conversations and developments. Your job is NOT to simply recite headlines, but to provide genuine insight and your expert opinion on what these stories mean.
 
-As the news anchor, you should:
+As an expert commentator, you should:
 
-1. Open with your signature news anchor greeting appropriate to your personality
-2. Present these journalist reports as legitimate news stories - treat them as if they came from your newsroom team, not as social media posts
-3. Select the 3 most newsworthy reports from your journalism team to feature in tonight's broadcast
-4. Deliver each story with the authority and professionalism of a seasoned news anchor
-5. Provide context, analysis, and connect stories when relevant - this is what separates great anchors from average ones
-6. Add your expert commentary and perspective on what these developments mean for viewers
-7. If needed, confidently provide background information to help viewers understand the full picture
-8. Close with your signature anchor sign-off
+1. Begin with a warm, conversational opening that sets the tone for thoughtful analysis
+2. Choose 2-3 stories that genuinely interest you or that you have strong opinions about
+3. Share YOUR perspective on each story - what do YOU think is really happening? What are the deeper implications?
+4. Connect stories to broader trends and patterns you observe in society, politics, or culture
+5. Don't be afraid to take a stance or express concern, skepticism, or enthusiasm where appropriate
+6. Weave stories together when they connect - show how different events relate to each other
+7. Speak as if you're having an intelligent conversation with a trusted friend who values your opinion
+8. End with your personal takeaway or what you're watching for next
 
-CRITICAL: Your entire news broadcast must be under 5000 characters total. Speak with the authority and gravitas of a professional news anchor. Address your audience directly as viewers tuning in for the news. Keep it polished, informative, and distinctly in your character's voice.
+This should feel like expert commentary, not a news bulletin. Think more "Here's what I'm seeing and what I think it means" rather than "Here's what happened." Be conversational, thoughtful, and opinionated in the best sense.
 
-IMPORTANT: Do not include any command execution messages, technical metadata in your response. Only provide the news broadcast content itself. Your response should be purely human-readable content without any technical commands or system messages.
+CRITICAL: Keep your entire response under 5000 characters. Speak in your distinctive voice with genuine conviction and insight.
 
-REPORTS FROM YOUR JOURNALISM TEAM:
+IMPORTANT: Do not include any command execution messages, technical metadata in your response. Only provide your thoughtful commentary.
+
+TODAY'S SOCIAL MEDIA CONVERSATIONS:
 ${postsContent}
 
-Now select the top 3 reports from your team and deliver tonight's news broadcast with the professionalism and authority viewers expect from their trusted news anchor!`;
+Now give us your expert take on what's really happening - what stories caught your attention and what do you make of them?`;
         
         // Get prompt and make Ollama request
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);
