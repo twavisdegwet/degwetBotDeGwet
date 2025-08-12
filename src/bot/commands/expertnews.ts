@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collection, Message } from 'discord.js';
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
 import { buildPersonalityPrompt, Personality, personalities, getPersonalityFormatting } from '../personalities';
-import { fetchBlueskyPosts, searchBlueskyPosts, formatBlueskyPostsForPrompt } from '../../api/clients/bskyclient';
+import { fetchBlueskyPosts, searchBlueskyPosts, formatBlueskyPostsForPrompt, formatBlueskyPostsForPromptAnonymous } from '../../api/clients/bskyclient';
 
 
 export const data = new SlashCommandBuilder()
@@ -117,8 +117,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         console.log(`Getting expert social media summary from ${selectedExpert}`);
 
-        // Format posts for the prompt
-        const postsContent = formatBlueskyPostsForPrompt(posts);
+        // Format posts for the prompt (anonymous for topics, normal for general news)
+        const postsContent = topic ? formatBlueskyPostsForPromptAnonymous(posts) : formatBlueskyPostsForPrompt(posts);
         
         // Create different prompts based on whether we're doing topic search or general news
         let expertTask: string;

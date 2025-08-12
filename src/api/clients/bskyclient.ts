@@ -193,6 +193,18 @@ export function formatBlueskyPostsForPrompt(posts: BlueskyPost[]): string {
     }).join('\n\n');
 }
 
+export function formatBlueskyPostsForPromptAnonymous(posts: BlueskyPost[]): string {
+    if (posts.length === 0) {
+        return "No posts available at this time.";
+    }
+    
+    return posts.map((post, index) => {
+        const timeAgo = getTimeAgo(new Date(post.createdAt));
+        return `${index + 1}. Field Report - ${timeAgo}:
+   ${post.text}`;
+    }).join('\n\n');
+}
+
 function getTimeAgo(date: Date): string {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
