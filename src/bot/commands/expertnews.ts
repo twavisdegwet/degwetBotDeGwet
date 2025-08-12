@@ -140,7 +140,9 @@ Now give us your expert take on what's really happening - what stories caught yo
         
         // Format the response directly without Q&A format (since this is a social media broadcast)
         const { emoji, name } = getPersonalityFormatting(selectedExpert);
-        const cleanedResponse = response.response.replace(/\n\n+/g, '\n');
+        // Filter out command execution complete message if it exists
+        const filteredResponse = response.response.replace(/\[COMMAND EXECUTION COMPLETE\]/g, '');
+        const cleanedResponse = filteredResponse.replace(/\n\n+/g, '\n');
         const formattedResponse = `**${emoji} ${name}'s Social Media Broadcast:**\n${cleanedResponse}`;
         
         // Split the message if it's too long
