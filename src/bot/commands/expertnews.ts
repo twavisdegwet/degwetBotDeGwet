@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collection, Message } from 'discord.js';
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
-import { buildPersonalityPrompt, Personality, personalities, formatExpertResponse } from '../personalities';
+import { buildPersonalityPrompt, Personality, personalities, formatExpertResponse, getPersonalityFormatting } from '../personalities';
 
 interface NewsArticle {
     title: string;
@@ -201,9 +201,10 @@ Now deliver your concise nightly news broadcast focusing on your top 3 story pic
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);
         const response = await makeOllamaRequest(prompt, server);
         
-        // Format the response using centralized formatting
-        const questionText = `Tonight's News Broadcast${category && category !== 'general' ? ` (${category.charAt(0).toUpperCase() + category.slice(1)})` : ''}`;
-        const formattedResponse = formatExpertResponse(selectedExpert, questionText, response.response);
+        // Format the response directly without Q&A format (since this is a news broadcast)
+        const { emoji, name } = getPersonalityFormatting(selectedExpert);
+        const cleanedResponse = response.response.replace(/\n\n+/g, '\n');
+        const formattedResponse = `**${emoji} ${name}'s News Broadcast:**\n${cleanedResponse}`;
         
         // Split the message if it's too long
         const messageParts = splitMessageAtSentence(formattedResponse);
