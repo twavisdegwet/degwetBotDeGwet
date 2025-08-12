@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collection, Message } from 'discord.js';
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
 import { buildPersonalityPrompt, Personality, personalities, getPersonalityFormatting } from '../personalities';
-import { fetchBlueskyPosts, formatBlueskyPostsForPrompt } from '../../api/clients/bskyclient';
+import { fetchBlueskyPosts, searchBlueskyPosts, formatBlueskyPostsForPrompt } from '../../api/clients/bskyclient';
 
 
 export const data = new SlashCommandBuilder()
@@ -17,6 +17,10 @@ export const data = new SlashCommandBuilder()
                 })),
                 { name: 'Random Expert', value: 'random' }
             ))
+    .addStringOption(option =>
+        option.setName('topic')
+            .setDescription('Search for posts about a specific topic (e.g., "climate change", "AI", "politics")')
+            .setMaxLength(100))
     .addIntegerOption(option =>
         option.setName('context')
             .setDescription('Number of recent messages to include as context (default: 0)')
@@ -62,6 +66,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     try {
         const expertChoice = interaction.options.getString('expert') || 'random';
+        const topic = interaction.options.getString('topic');
         const contextLimit = interaction.options.getInteger('context') || 0;
 
         // Get the specified number of messages from the channel for context
@@ -77,9 +82,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             messageContext += messageArray.map(msg => `${msg.author.username}: ${msg.content}`).reverse().join('\n');
         }
 
-        // Fetch Bluesky posts
-        console.log('Fetching latest Bluesky posts...');
-        const posts = await fetchBlueskyPosts();
+        // Fetch Bluesky posts (search if topic provided, otherwise get latest)
+        let posts;
+        if (topic) {
+            console.log(`Searching Bluesky posts for topic: "${topic}"`);
+            posts = await searchBlueskyPosts(topic, 15);
+        } else {
+            console.log('Fetching latest Bluesky posts...');
+            posts = await fetchBlueskyPosts();
+        }
         
         if (posts.length === 0) {
             await interaction.editReply({ 
@@ -109,7 +120,34 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         // Format posts for the prompt
         const postsContent = formatBlueskyPostsForPrompt(posts);
         
-const expertTask = `You are hosting a segment on The Daily Show - witty, satirical, and unapologetically opinionated. The social media posts below represent the day's conversations and developments. Your job is to select 3-5 key stories, provide sharp commentary, make jokes, and offer your unique perspective on what these stories really mean, weaving them into a fun, conversational flow.
+        // Create different prompts based on whether we're doing topic search or general news
+        let expertTask: string;
+        
+        if (topic) {
+            expertTask = `You're hosting a special investigative segment tonight focusing on "${topic}". The posts below aren't just random social media content - they're direct submissions from viewers of tonight's program who are sharing their thoughts, experiences, and hot takes about this topic. Some viewers might be brilliant, others might be complete idiots, and some might be trolling. Your job is to create a compelling story around this topic using these viewer submissions.
+
+As tonight's investigative host, you should:
+
+1. Open by introducing the special topic segment with your signature style
+2. Treat the posts as viewer mail/submissions - "Here's what you're telling us about ${topic}"
+3. Feel free to call out viewers when they're being ridiculous, praise insightful ones, or roast the trolls
+4. Don't be afraid to disagree with viewers or point out when someone clearly doesn't know what they're talking about
+5. Use the submissions to build a narrative about what's really happening with this topic
+6. Connect different viewer perspectives to show the bigger picture
+7. Share your expert analysis on what these submissions reveal about the state of things
+8. You can absolutely mock, criticize, or dismiss viewer submissions that deserve it
+9. End with your take on what this all means and what viewers should be watching for
+
+Remember: these are VIEWER SUBMISSIONS from random people watching tonight's show. They can be praised, mocked, dismissed, or used to make larger points. Not all viewer opinions are created equal, and you're the expert here.
+
+CRITICAL: Keep your entire response under 5000 characters. Be engaging, opinionated, and don't hold back on bad takes.
+
+VIEWER SUBMISSIONS ABOUT "${topic.toUpperCase()}":
+${postsContent}
+
+Now analyze what our viewers are telling us about ${topic} - separate the wheat from the chaff and give us the real story!`;
+        } else {
+            expertTask = `You are hosting a segment on The Daily Show - witty, satirical, and unapologetically opinionated. The social media posts below represent the day's conversations and developments. Your job is to select 3-5 key stories, provide sharp commentary, make jokes, and offer your unique perspective on what these stories really mean, weaving them into a fun, conversational flow.
 
 As a Daily Show-style commentator, you should:
 
@@ -132,6 +170,7 @@ TODAY'S SOCIAL MEDIA CONVERSATIONS:
 ${postsContent}
 
 Now give us your Daily Show-style take on what's ridiculous today - pick a few stories that caught your eye and riff on them with plenty of commentary and jokes!`;
+        }
         
         // Get prompt and make Ollama request
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);

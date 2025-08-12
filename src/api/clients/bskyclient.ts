@@ -26,6 +26,51 @@ interface BlueskyFeedResponse {
     feed: BlueskyFeedItem[];
 }
 
+interface BlueskySearchPost {
+    record: {
+        text: string;
+        createdAt: string;
+    };
+    author: {
+        displayName: string;
+        handle: string;
+    };
+}
+
+interface BlueskySearchResponse {
+    posts: BlueskySearchPost[];
+}
+
+export async function searchBlueskyPosts(query: string, limit: number = 10): Promise<BlueskyPost[]> {
+    try {
+        const encodedQuery = encodeURIComponent(query);
+        const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodedQuery}&limit=${limit}&sort=top`;
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            console.error(`Failed to search posts for "${query}": ${response.status}`);
+            // Fall back to regular feed if search fails
+            return await fetchBlueskyPosts();
+        }
+        
+        const data = await response.json() as BlueskySearchResponse;
+        
+        return data.posts.map(post => ({
+            text: post.record.text,
+            createdAt: post.record.createdAt,
+            author: {
+                displayName: post.author.displayName,
+                handle: post.author.handle
+            }
+        }));
+    } catch (error) {
+        console.error(`Error searching posts for "${query}":`, error);
+        // Fall back to regular feed if search fails
+        return await fetchBlueskyPosts();
+    }
+}
+
 export async function fetchBlueskyPosts(): Promise<BlueskyPost[]> {
     const allPosts: BlueskyPost[] = [];
     
