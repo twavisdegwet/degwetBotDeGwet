@@ -9,7 +9,8 @@ import * as makeFunnyJokeCommand from './commands/makefunnyjoke';
 import * as makeBadJokeCommand from './commands/makebadjoke';
 import * as askExpertCommand from './commands/askexpert';
 import * as askLibrarianCommand from './commands/asklibrarian';
-import * as getMovieCommand from './commands/getmovie';
+// DO NOT RE-ADD: getmovie command is intentionally hidden - accessible via /makefunnyjoke lasagna
+// import * as getMovieCommand from './commands/getmovie';
 import * as expertNewsCommand from './commands/expertnews';
 import { getPersonality } from './badjokes';
 import { handleGDriveUploadInteraction } from './commands/gdrive-upload';
@@ -38,7 +39,8 @@ client.commands.set(makeFunnyJokeCommand.data.name, makeFunnyJokeCommand);
 client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 client.commands.set(askExpertCommand.data.name, askExpertCommand);
 client.commands.set(askLibrarianCommand.data.name, askLibrarianCommand);
-client.commands.set(getMovieCommand.data.name, getMovieCommand);
+// DO NOT RE-ADD: getmovie command registration - intentionally hidden, accessible via /makefunnyjoke lasagna
+// client.commands.set(getMovieCommand.data.name, getMovieCommand);
 client.commands.set(expertNewsCommand.data.name, expertNewsCommand);
 
 const commands = [
@@ -51,7 +53,8 @@ const commands = [
   makeBadJokeCommand.data,
   askExpertCommand.data,
   askLibrarianCommand.data,
-  getMovieCommand.data,
+  // DO NOT RE-ADD: getmovie command - intentionally hidden, accessible via /makefunnyjoke lasagna
+  // getMovieCommand.data,
   expertNewsCommand.data
 ];
 
