@@ -110,22 +110,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const postsContent = formatBlueskyPostsForPrompt(posts);
         
         // Define the expert task for social media summarization
-        const expertTask = `You are hosting your own social media news show! You must present the latest posts from major news sources and commentators as if you're a social media correspondent delivering a live broadcast. You should:
+        const expertTask = `You are a professional news anchor delivering the evening news! The reports below come directly from your trusted team of field journalists who have been monitoring social media for breaking stories and developments. These are not raw tweets - they are field reports from your journalism team that you must now present as the lead news anchor.
 
-1. Open with a greeting appropriate to your personality
-2. Select and focus on the 3 most interesting/important posts from the feed (choose ones most relevant to the chat context, or your personal favorites if none apply)
-3. Present each post with context and your unique perspective
-4. Connect posts together when possible, showing relationships between topics
-5. Add context, background, or implications that help viewers understand why these posts matter
-6. If you need to fabricate reasonable context or background details to make the posts more engaging and understandable, do so confidently
-7. Close with your signature sign-off
+As the news anchor, you should:
 
-CRITICAL: Your entire social media broadcast must be under 4000 characters total. Write in a flowing, natural speaking style as if you're on TV. Address your audience directly. Make it engaging, informative, and distinctly in your character's voice, but keep it concise.
+1. Open with your signature news anchor greeting appropriate to your personality
+2. Present these journalist reports as legitimate news stories - treat them as if they came from your newsroom team, not as social media posts
+3. Select the 3 most newsworthy reports from your journalism team to feature in tonight's broadcast
+4. Deliver each story with the authority and professionalism of a seasoned news anchor
+5. Provide context, analysis, and connect stories when relevant - this is what separates great anchors from average ones
+6. Add your expert commentary and perspective on what these developments mean for viewers
+7. If needed, confidently provide background information to help viewers understand the full picture
+8. Close with your signature anchor sign-off
 
-LATEST SOCIAL MEDIA POSTS:
+CRITICAL: Your entire news broadcast must be under 4000 characters total. Speak with the authority and gravitas of a professional news anchor. Address your audience directly as viewers tuning in for the news. Keep it polished, informative, and distinctly in your character's voice.
+
+REPORTS FROM YOUR JOURNALISM TEAM:
 ${postsContent}
 
-Now deliver your concise social media news broadcast focusing on your top 3 post picks!`;
+Now select the top 3 reports from your team and deliver tonight's news broadcast with the professionalism and authority viewers expect from their trusted news anchor!`;
         
         // Get prompt and make Ollama request
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);

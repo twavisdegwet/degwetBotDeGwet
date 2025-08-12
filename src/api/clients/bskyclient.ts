@@ -31,7 +31,7 @@ export async function fetchBlueskyPosts(): Promise<BlueskyPost[]> {
     
     for (const account of BLUESKY_ACCOUNTS) {
         try {
-            const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${account}&limit=5&filter=posts_no_replies`;
+            const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${account}&limit=3&filter=posts_no_replies`;
             const response = await fetch(url);
             
             if (!response.ok) {
@@ -56,10 +56,9 @@ export async function fetchBlueskyPosts(): Promise<BlueskyPost[]> {
         }
     }
     
-    // Sort by creation date (newest first) and return top 5
+    // Sort by creation date (newest first)
     return allPosts
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5);
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export function formatBlueskyPostsForPrompt(posts: BlueskyPost[]): string {
