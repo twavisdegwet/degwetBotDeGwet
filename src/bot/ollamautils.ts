@@ -114,7 +114,10 @@ export async function makeOllamaRequest(
     model: server.model,
     prompt: prompt,
     stream: false,
-    options: requestOptions
+    options: {
+      ...requestOptions,
+      num_ctx: 8192 // Double the context window from default 4096
+    }
   }, {
     timeout: 420000 // 5 minute timeout for complex prompts
   });
