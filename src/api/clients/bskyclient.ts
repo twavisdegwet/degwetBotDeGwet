@@ -1,4 +1,5 @@
 import { BLUESKY_ACCOUNTS } from '../../config/bluesky-accounts';
+import { blueskyAuth } from '../auth/bluesky-auth';
 
 interface BlueskyPost {
     text: string;
@@ -43,30 +44,104 @@ interface BlueskySearchResponse {
 
 export async function searchBlueskyPosts(query: string, limit: number = 10): Promise<BlueskyPost[]> {
     try {
+        // Try authenticated search API first
+        console.log(`Attempting authenticated search for "${query}"`);
+        const authHeaders = await blueskyAuth.getAuthHeaders();
+        const encodedQuery = encodeURIComponent(query);
+        const url = `https://bsky.social/xrpc/app.bsky.feed.searchPosts?q=${encodedQuery}&limit=${limit}&sort=top`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; Bot/1.0)',
+                'Accept': 'application/json',
+                ...authHeaders
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json() as BlueskySearchResponse;
+            console.log(`Authenticated search API worked! Found ${data.posts.length} posts for "${query}"`);
+            return data.posts.map(post => ({
+                text: post.record.text,
+                createdAt: post.record.createdAt,
+                author: {
+                    displayName: post.author.displayName,
+                    handle: post.author.handle
+                }
+            }));
+        } else {
+            console.log(`Authenticated search API returned ${response.status}, trying public API...`);
+        }
+        
+    } catch (error) {
+        console.log(`Authenticated search failed, trying public API:`, error);
+    }
+
+    try {
+        // Try public search API as fallback
         const encodedQuery = encodeURIComponent(query);
         const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodedQuery}&limit=${limit}&sort=top`;
         
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; Bot/1.0)',
+                'Accept': 'application/json'
+            }
+        });
         
-        if (!response.ok) {
-            console.error(`Failed to search posts for "${query}": ${response.status}`);
-            // Fall back to regular feed if search fails
-            return await fetchBlueskyPosts();
+        if (response.ok) {
+            const data = await response.json() as BlueskySearchResponse;
+            console.log(`Public search API worked! Found ${data.posts.length} posts for "${query}"`);
+            return data.posts.map(post => ({
+                text: post.record.text,
+                createdAt: post.record.createdAt,
+                author: {
+                    displayName: post.author.displayName,
+                    handle: post.author.handle
+                }
+            }));
+        } else {
+            console.log(`Public search API returned ${response.status}, falling back to local filtering`);
         }
         
-        const data = await response.json() as BlueskySearchResponse;
-        
-        return data.posts.map(post => ({
-            text: post.record.text,
-            createdAt: post.record.createdAt,
-            author: {
-                displayName: post.author.displayName,
-                handle: post.author.handle
-            }
-        }));
     } catch (error) {
-        console.error(`Error searching posts for "${query}":`, error);
-        // Fall back to regular feed if search fails
+        console.log(`Public search API failed, falling back to local filtering:`, error);
+    }
+    
+    // Fallback: Filter local posts
+    try {
+        console.log(`Filtering local posts for "${query}"`);
+        const allPosts = await fetchBlueskyPosts();
+        
+        // Create search terms (split query and make case-insensitive)
+        const searchTerms = query.toLowerCase().split(/\s+/);
+        
+        // Filter posts that contain any of the search terms
+        const filteredPosts = allPosts.filter(post => {
+            const postText = post.text.toLowerCase();
+            const authorName = post.author.displayName.toLowerCase();
+            const authorHandle = post.author.handle.toLowerCase();
+            
+            return searchTerms.some(term => 
+                postText.includes(term) || 
+                authorName.includes(term) || 
+                authorHandle.includes(term)
+            );
+        });
+        
+        // If we found matches, return them (limited)
+        if (filteredPosts.length > 0) {
+            console.log(`Found ${filteredPosts.length} local posts matching "${query}"`);
+            return filteredPosts.slice(0, limit);
+        }
+        
+        // If no matches, return all posts but note the failed search
+        console.log(`No local posts found matching "${query}", returning general feed`);
+        return allPosts.slice(0, limit);
+        
+    } catch (error) {
+        console.error(`Error filtering posts for "${query}":`, error);
+        // Final fallback to regular feed
         return await fetchBlueskyPosts();
     }
 }
