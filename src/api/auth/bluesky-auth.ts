@@ -66,6 +66,9 @@ class BlueskyAuthManager {
 
     private async createSession(): Promise<BlueskySession> {
         console.log('Creating new Bluesky session...');
+        console.log('Handle:', this.handle);
+        console.log('Password length:', this.password.length);
+        console.log('PDS Host:', this.pdsHost);
         
         const response = await fetch(`${this.pdsHost}/xrpc/com.atproto.server.createSession`, {
             method: 'POST',
