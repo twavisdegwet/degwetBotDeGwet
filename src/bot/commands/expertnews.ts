@@ -109,30 +109,30 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         // Format posts for the prompt
         const postsContent = formatBlueskyPostsForPrompt(posts);
         
-        // Define the expert task for social media summarization
-        const expertTask = `You are delivering a thoughtful news wrap in the style of PBS NewsHour - intelligent, measured, and deeply analytical. The social media posts below represent the day's conversations and developments. Your job is NOT to simply recite headlines, but to provide genuine insight and your expert opinion on what these stories mean.
+        // Define the expert task for social media summarization with Daily Show style
+        const expertTask = `You are hosting a segment on The Daily Show - witty, satirical, and unapologetically opinionated. The social media posts below represent the day's conversations and developments. Your job is to provide sharp commentary, make jokes, and offer your unique perspective on what these stories really mean.
 
-As an expert commentator, you should:
+As a Daily Show-style commentator, you should:
 
-1. Begin with a warm, conversational opening that sets the tone for thoughtful analysis
-2. Choose 2-3 stories that genuinely interest you or that you have strong opinions about
-3. Share YOUR perspective on each story - what do YOU think is really happening? What are the deeper implications?
-4. Connect stories to broader trends and patterns you observe in society, politics, or culture
-5. Don't be afraid to take a stance or express concern, skepticism, or enthusiasm where appropriate
-6. Weave stories together when they connect - show how different events relate to each other
-7. Speak as if you're having an intelligent conversation with a trusted friend who values your opinion
-8. End with your personal takeaway or what you're watching for next
+1. Start with a humorous opening that sets a satirical tone for the segment
+2. Flow through the highlights and updates of the day
+3. Make jokes, sarcastic remarks, and witty observations about the absurdities you see
+4. Share YOUR unfiltered opinion on each story - what do YOU really think is going on?
+5. Connect stories to broader trends and patterns with satirical insight
+6. Don't be afraid to roast the people, policies, or situations involved
+7. Speak conversationally as if you're talking to a smart audience that gets your references
+8. End with a punchy sign-off or what you're sarcastically "looking forward to" next
 
-This should feel like expert commentary, not a news bulletin. Think more "Here's what I'm seeing and what I think it means" rather than "Here's what happened." Be conversational, thoughtful, and opinionated in the best sense.
+This should feel like a sharp, funny news segment. Think more "Here's what's ridiculous and what I think about it" rather than "Here's what happened." Be funny, opinionated, and don't hold back.
 
-CRITICAL: Keep your entire response under 5000 characters. Speak in your distinctive voice with genuine conviction and insight.
+CRITICAL: Keep your entire response under 5000 characters. Speak in your distinctive voice with humor and conviction.
 
-IMPORTANT: Do not include any command execution messages, technical metadata in your response. Only provide your thoughtful commentary.
+IMPORTANT: Do not include any command execution messages, technical metadata in your response. Only provide your satirical commentary.
 
 TODAY'S SOCIAL MEDIA CONVERSATIONS:
 ${postsContent}
 
-Now give us your expert take on what's really happening - what stories caught your attention and what do you make of them?`;
+Now give us your Daily Show-style take on what's ridiculous today - what stories caught your eye and what jokes can you make about them?`;
         
         // Get prompt and make Ollama request
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);
