@@ -19,7 +19,7 @@ export const data = new SlashCommandBuilder()
             ))
     .addIntegerOption(option =>
         option.setName('context')
-            .setDescription('Number of recent messages to include as context (default: 5)')
+            .setDescription('Number of recent messages to include as context (default: 0)')
             .setMinValue(0)
             .setMaxValue(25));
 
@@ -62,7 +62,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     try {
         const expertChoice = interaction.options.getString('expert') || 'random';
-        const contextLimit = interaction.options.getInteger('context') || 5;
+        const contextLimit = interaction.options.getInteger('context') || 0;
 
         // Get the specified number of messages from the channel for context
         let messages: Collection<string, Message<true>> | undefined;
