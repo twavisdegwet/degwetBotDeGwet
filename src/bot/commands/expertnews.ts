@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collection, Message } from 'discord.js';
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
-import { buildPersonalityPrompt, Personality, personalities, formatExpertResponse, getPersonalityFormatting } from '../personalities';
+import { buildPersonalityPrompt, Personality, personalities, getPersonalityFormatting } from '../personalities';
 
 interface NewsArticle {
     title: string;
