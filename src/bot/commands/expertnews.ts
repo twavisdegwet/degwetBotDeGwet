@@ -190,7 +190,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 6. If you need to fabricate reasonable context or background details to make the stories more engaging and understandable, do so confidently
 7. Close with your signature sign-off
 
-CRITICAL: Your entire news broadcast must be under 1800 characters total. Write in a flowing, natural speaking style as if you're on TV. Address your audience directly. Make it engaging, informative, and distinctly in your character's voice, but keep it concise.
+CRITICAL: Your entire news broadcast must be under 4000 characters total. Write in a flowing, natural speaking style as if you're on TV. Address your audience directly. Make it engaging, informative, and distinctly in your character's voice, but keep it concise.
 
 TODAY'S TOP HEADLINES${category && category !== 'general' ? ` (${category.toUpperCase()} FOCUS)` : ''}:
 ${newsContent}
