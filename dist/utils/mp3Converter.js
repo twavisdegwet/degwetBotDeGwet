@@ -27,7 +27,7 @@ async function convertMp3ToM4b(sourceDirectory, options = {}) {
         if (options.autoApprove !== false) {
             args.push('-y');
         }
-        const scriptPath = path_1.default.join(__dirname, '../../samplefiles/mp3tom4b.sh');
+        const scriptPath = path_1.default.join(process.cwd(), 'samplefiles/mp3tom4b.sh');
         const command = `cd "${sourceDirectory}" && "${scriptPath}" ${args.join(' ')}`;
         logger_1.Logger.info(`Starting MP3 to M4B conversion in: ${sourceDirectory}`);
         logger_1.Logger.info(`Command: ${command}`);

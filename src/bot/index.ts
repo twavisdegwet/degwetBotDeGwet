@@ -101,7 +101,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
       // Use the unified upload button handler system
       if (interaction.customId.startsWith('auto_upload:')) {
         await handleAutoUploadInteraction(interaction);
-      } else if (interaction.customId.startsWith('duplicate_')) {
+      } else if (interaction.customId.startsWith('duplicate_') || interaction.customId.startsWith('duplicate:')) {
         await handleDuplicateUploadInteraction(interaction);
       } else if (interaction.customId.startsWith('gdrive_upload:')) {
         await handleGDriveUploadInteraction(interaction);

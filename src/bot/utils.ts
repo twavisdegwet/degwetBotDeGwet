@@ -471,7 +471,11 @@ export async function handleAutoUploadInteraction(interaction: any) {
 export async function handleDuplicateUploadInteraction(interaction: any) {
   if (!interaction.isButton()) return;
 
-  const [action, actionType, torrentId] = interaction.customId.split('_');
+  // Handle both underscore and colon separators
+  const parts = interaction.customId.includes('_') 
+    ? interaction.customId.split('_') 
+    : interaction.customId.split(':');
+  const [action, actionType, torrentId] = parts;
 
   if (action === 'duplicate') {
     if (actionType === 'upload') {

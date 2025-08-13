@@ -122,7 +122,7 @@ client.on('interactionCreate', async (interaction) => {
             if (interaction.customId.startsWith('auto_upload:')) {
                 await (0, utils_1.handleAutoUploadInteraction)(interaction);
             }
-            else if (interaction.customId.startsWith('duplicate_')) {
+            else if (interaction.customId.startsWith('duplicate_') || interaction.customId.startsWith('duplicate:')) {
                 await (0, utils_1.handleDuplicateUploadInteraction)(interaction);
             }
             else if (interaction.customId.startsWith('gdrive_upload:')) {
