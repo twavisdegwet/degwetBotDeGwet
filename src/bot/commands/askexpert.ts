@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collection, Message } from 'discord.js';
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
 import { buildPersonalityPrompt, Personality, personalities, formatExpertResponse } from '../personalities';
+import { searchBlueskyPosts, formatBlueskyPostsForPrompt } from '../../api/clients/bskyclient';
 
 export const data = new SlashCommandBuilder()
     .setName('askexpert')
@@ -23,7 +24,11 @@ export const data = new SlashCommandBuilder()
         option.setName('context')
             .setDescription('Number of recent messages to include as context (default: 10)')
             .setMinValue(0)
-            .setMaxValue(50));
+            .setMaxValue(50))
+    .addStringOption(option =>
+        option.setName('skeets')
+            .setDescription('Search Bluesky posts for additional context')
+            .setMaxLength(100));
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
@@ -32,6 +37,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const question = interaction.options.getString('question', true);
         const expertChoice = interaction.options.getString('expert') || 'random';
         const contextLimit = interaction.options.getInteger('context') || 10;
+        const skeetsQuery = interaction.options.getString('skeets');
 
         // Get the specified number of messages from the channel for context
         let messages: Collection<string, Message<true>> | undefined;
@@ -44,6 +50,23 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         if (messages && contextLimit > 0) {
             const messageArray = Array.from(messages.values());
             messageContext += messageArray.map(msg => `${msg.author.username}: ${msg.content}`).reverse().join('\n');
+        }
+
+        // Add Bluesky context if skeets query is provided
+        if (skeetsQuery) {
+            try {
+                console.log(`Searching Bluesky posts for: "${skeetsQuery}"`);
+                const blueskyPosts = await searchBlueskyPosts(skeetsQuery, 10);
+                if (blueskyPosts.length > 0) {
+                    const formattedPosts = formatBlueskyPostsForPrompt(blueskyPosts);
+                    messageContext += `\n\nContext from Bluesky search for "${skeetsQuery}":\n${formattedPosts}`;
+                } else {
+                    messageContext += `\n\nBluesky search for "${skeetsQuery}" returned no results.`;
+                }
+            } catch (error) {
+                console.error(`Failed to search Bluesky for "${skeetsQuery}":`, error);
+                messageContext += `\n\nBluesky search for "${skeetsQuery}" failed due to technical issues.`;
+            }
         }
 
         // Get available Ollama server with failover
