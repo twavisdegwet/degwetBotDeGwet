@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collection, Message } from 'discord.js';
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
 import { buildPersonalityPrompt, Personality, personalities, getPersonalityFormatting } from '../personalities';
-import { fetchBlueskyPosts, searchBlueskyPosts, formatBlueskyPostsForPrompt, formatBlueskyPostsForPromptAnonymous } from '../../api/clients/bskyclient';
+import { fetchBlueskyPosts, searchBlueskyPosts, formatBlueskyPostsForPromptAnonymous } from '../../api/clients/bskyclient';
 
 
 export const data = new SlashCommandBuilder()
@@ -117,59 +117,54 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         console.log(`Getting expert social media summary from ${selectedExpert}`);
 
-        // Format posts for the prompt (anonymous for topics, normal for general news)
-        const postsContent = topic ? formatBlueskyPostsForPromptAnonymous(posts) : formatBlueskyPostsForPrompt(posts);
+                // Use anonymous formatting for both to avoid direct citations
+        const postsContent = formatBlueskyPostsForPromptAnonymous(posts);
         
         // Create different prompts based on whether we're doing topic search or general news
         let expertTask: string;
         
         if (topic) {
-            expertTask = `You're hosting a special investigative segment tonight focusing on "${topic}". The information below comes from our field reporters and social media monitoring teams who are tracking developments and public sentiment around this topic. Your job is to analyze these field reports and create a compelling news story that gets to the heart of what's really happening.
+            expertTask = `You're hosting a special report segment on "${topic}", delivering in-depth insights and analysis in your unique character style, similar to a Daily Show or Tonight Show special feature. Draw from the anonymous field reports below to provide thoughtful insights, patterns, and connections without direct citations or references to specific sources. Focus on building a narrative that's engaging, opinionated, and revealing.
 
-As tonight's investigative host, you should:
+As the host, you should:
 
-1. Open by introducing the special topic segment with your signature style
-2. Use the field reports as context and evidence to build your story about ${topic}
-3. Focus on the substance and patterns in the information rather than individual sources
-4. Analyze what these reports reveal about the current state of ${topic}
-5. Connect different pieces of information to show the bigger picture
-6. Share your expert analysis and interpretation of what's developing
-7. Don't be afraid to call out inconsistencies or contradictions you see in the reports
-8. Build a narrative that explains what's really going on behind the headlines
-9. End with your take on what this means and what to watch for next
+1. Open with a charismatic introduction to the special report, infused with your personality's flair.
+2. Synthesize the reports into key insights about ${topic}, highlighting emerging patterns and deeper implications.
+3. Provide your expert take, drawing connections and offering analysis that's more than surface-level.
+4. Incorporate humor, satire, or witty observations where it fits your style.
+5. Point out contradictions, trends, or hidden stories emerging from the information.
+6. Build a cohesive story that explains the bigger picture.
+7. End with forward-looking insights on what this means and what's next.
 
-Remember: You're a news anchor analyzing field reports. Focus on the story, not the messengers. Use the information to inform your commentary without getting bogged down in individual social media handles or usernames.
+Remember: Emphasize insights and your character's perspective over quoting sources. Keep it character-driven, like a late-night show special.
 
-CRITICAL: Keep your entire response under 5000 characters. Be engaging, authoritative, and provide sharp news analysis.
+CRITICAL: Keep your entire response under 5000 characters. Be engaging, insightful, and true to your character.
 
 FIELD REPORTS ON "${topic.toUpperCase()}":
 ${postsContent}
 
-Now give us your expert analysis of what's developing with ${topic} - what's the real story here?`;
+Now, deliver your special report on ${topic} - what's the deeper story here?`;
         } else {
-            expertTask = `You are hosting a segment on The Daily Show - witty, satirical, and unapologetically opinionated. The social media posts below represent the day's conversations and developments. Your job is to select 3-5 key stories, provide sharp commentary, make jokes, and offer your unique perspective on what these stories really mean, weaving them into a fun, conversational flow.
+            expertTask = `You're anchoring a PBS-style news wrap-up with a heavy editorial skew, delivered in your distinctive character voice like a Daily Show or Tonight Show host providing opinionated commentary. Use the anonymous social media insights below to summarize key stories, providing deep insights, editorial opinions, and connections without direct citations. Focus on 3-5 major topics, weaving in your personality's take with humor, satire, or sharp analysis.
 
-As a Daily Show-style commentator, you should:
+As the anchor, you should:
 
-1. Start with a humorous opening that sets a satirical tone for the segment
-2. Choose only 3-5 most interesting or absurd stories - don't list everything
-3. For each selected story, dive deep with extended commentary, multiple jokes, sarcastic remarks, and witty observations
-4. Share YOUR unfiltered opinion on each story - what do YOU really think is going on? Expand on this with more thoughts and connections
-5. Connect the stories to broader trends and patterns with satirical insight, transitioning smoothly between them
-6. Don't be afraid to roast the people, policies, or situations involved - add layers of humor
-7. Speak conversationally as if you're talking to a smart audience that gets your references, with a natural flow like a monologue
-8. End with a punchy sign-off or what you're sarcastically "looking forward to" next
+1. Start with an opening that sets a thoughtful yet skewed tone, reflecting your character's style.
+2. Select 3-5 key stories from the insights, providing summaries enriched with your editorial insights.
+3. For each, offer in-depth analysis, opinions, and connections to broader contexts.
+4. Infuse your character's humor, wit, or perspective to make it engaging and skewed.
+5. Transition smoothly between stories, building an overall narrative of the day's events.
+6. Highlight patterns, implications, and your take on what matters most.
+7. End with a reflective sign-off on the day's news.
 
-This should feel like a sharp, funny news segment with depth. Think more "Here's what's ridiculous about these few things and let me rant hilariously about them" rather than a bullet list of headlines. Be funny, opinionated, don't hold back, and make it engaging and conversational.
+This should feel like a sophisticated news wrap with strong personality-driven editorializing, not just facts.
 
-CRITICAL: Keep your entire response under 5000 characters. Speak in your distinctive voice with humor and conviction.
+CRITICAL: Keep your entire response under 5000 characters. Be opinionated, insightful, and character-focused.
 
-IMPORTANT: Do not include any command execution messages, technical metadata in your response. Only provide your satirical commentary.
-
-TODAY'S SOCIAL MEDIA CONVERSATIONS:
+TODAY'S FIELD REPORTS:
 ${postsContent}
 
-Now give us your Daily Show-style take on what's ridiculous today - pick a few stories that caught your eye and riff on them with plenty of commentary and jokes!`;
+Now, give us your editorial news wrap - what's your skewed take on today's key stories?`;
         }
         
         // Get prompt and make Ollama request

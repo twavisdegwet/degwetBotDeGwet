@@ -198,9 +198,9 @@ export function formatBlueskyPostsForPromptAnonymous(posts: BlueskyPost[]): stri
         return "No posts available at this time.";
     }
     
-    return posts.map((post, index) => {
+    return posts.map((post) => {
         const timeAgo = getTimeAgo(new Date(post.createdAt));
-        return `${index + 1}. Field Report - ${timeAgo}:
+        return `Field Report - ${timeAgo}:
    ${post.text}`;
     }).join('\n\n');
 }
