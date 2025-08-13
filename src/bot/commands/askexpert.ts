@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collection, Message } from 'discord.js';
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
 import { buildPersonalityPrompt, Personality, personalities, formatExpertResponse } from '../personalities';
-import { searchBlueskyPosts, formatBlueskyPostsForPrompt } from '../../api/clients/bskyclient';
+import { searchBlueskyPosts, formatBlueskyPostsForPromptAnonymous } from '../../api/clients/bskyclient';
 
 export const data = new SlashCommandBuilder()
     .setName('askexpert')
@@ -58,7 +58,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 console.log(`Searching Bluesky posts for: "${skeetsQuery}"`);
                 const blueskyPosts = await searchBlueskyPosts(skeetsQuery, 10);
                 if (blueskyPosts.length > 0) {
-                    const formattedPosts = formatBlueskyPostsForPrompt(blueskyPosts);
+                    const formattedPosts = formatBlueskyPostsForPromptAnonymous(blueskyPosts);
                     messageContext += `\n\nContext from Bluesky search for "${skeetsQuery}":\n${formattedPosts}`;
                 } else {
                     messageContext += `\n\nBluesky search for "${skeetsQuery}" returned no results.`;

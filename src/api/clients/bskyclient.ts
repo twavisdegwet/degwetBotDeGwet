@@ -200,7 +200,7 @@ export function formatBlueskyPostsForPromptAnonymous(posts: BlueskyPost[]): stri
     
     return posts.map((post) => {
         const timeAgo = getTimeAgo(new Date(post.createdAt));
-        return `Field Report - ${timeAgo}:
+        return `${timeAgo}:
    ${post.text}`;
     }).join('\n\n');
 }
