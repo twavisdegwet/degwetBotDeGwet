@@ -52,7 +52,7 @@ export async function convertMp3ToM4b(
     }
     
     // Path to the conversion script
-    const scriptPath = path.join(__dirname, '../../samplefiles/mp3tom4b.sh');
+    const scriptPath = path.join(process.cwd(), 'samplefiles/mp3tom4b.sh');
     
     // Build the full command
     const command = `cd "${sourceDirectory}" && "${scriptPath}" ${args.join(' ')}`;
