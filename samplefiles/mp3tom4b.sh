@@ -284,12 +284,14 @@ echo "Attempting hardware-accelerated encoding..."
 if ! ffmpeg -y -f concat -safe 0 -i "$FFMPEG_INPUT_LIST_FILE" -i "$METADATA_CHAPTER_FILE" \
        -map_metadata 1 -c:a aac -b:a 96k -ar 44100 -ac 2 -vn \
        -hwaccel auto -threads "$NUM_THREADS" -filter_threads "$NUM_THREADS" \
+       -preset fast \
        "$OUTPUT_M4B_FILENAME" 2>/dev/null; then
     
     echo "Hardware acceleration failed or unavailable, falling back to software encoding..."
     ffmpeg -y -f concat -safe 0 -i "$FFMPEG_INPUT_LIST_FILE" -i "$METADATA_CHAPTER_FILE" \
            -map_metadata 1 -c:a aac -b:a 96k -ar 44100 -ac 2 -vn \
            -threads "$NUM_THREADS" -filter_threads "$NUM_THREADS" \
+           -preset fast  \
            "$OUTPUT_M4B_FILENAME"
 fi
 
