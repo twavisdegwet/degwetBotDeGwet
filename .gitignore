@@ -1,5 +1,4 @@
 node_modules
-samplefiles/
 .env.local
 node_modules/.env.local
 dist/
