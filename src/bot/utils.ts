@@ -371,35 +371,36 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
         state.lastProgress = torrentStatus.progress;
       }
       
-      // Check if torrent is completed (progress 100% AND state is Seeding or Paused)
-      const isCompleted = torrentStatus.progress === 100 && 
-                         (torrentStatus.state === 'Seeding' || torrentStatus.state === 'Paused');
-      
-      if (isCompleted && !state.hasNotifiedCompletion) {
-        console.log(`Torrent ${torrentId} completed! Starting upload process.`);
-        state.hasNotifiedCompletion = true;
-        
+      // Break immediately if torrent is seeding with 100% progress, even if we've already processed it
+      if (torrentStatus.progress === 100 && torrentStatus.state === 'Seeding') {
+        console.log(`Torrent ${torrentId} is seeding with 100% progress. Stopping monitoring.`);
         if (intervalId) {
           clearInterval(intervalId);
           intervalId = null;
         }
         
-        // Start the upload process - send alert as new message
-        await message.channel.send(`<@${message.author.id}> 🎉 **${torrentName}** is downloaded! ${getPersonality()} Checking for MP3 then uploading to drive`);
-        
-        // Use the new unified upload system
-        const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
-        
-        if (!hasMp3Files) {
-          // If no MP3 files, proceed with upload immediately with progress updates
-          const result = await uploadTorrentToGDrive(torrentId, false, message);
+        // Only start upload process if we haven't already notified
+        if (!state.hasNotifiedCompletion) {
+          console.log(`Torrent ${torrentId} completed! Starting upload process.`);
+          state.hasNotifiedCompletion = true;
           
-          // Send the final result message if it wasn't sent through the progressTarget
-          if (result.success && result.message) {
-            try {
-              await message.channel.send(`<@${message.author.id}> ${result.message}`);
-            } catch (error) {
-              console.error('Error sending final upload message:', error);
+          // Start the upload process - send alert as new message
+          await message.channel.send(`<@${message.author.id}> 🎉 **${torrentName}** is downloaded! ${getPersonality()} Checking for MP3 then uploading to drive`);
+          
+          // Use the new unified upload system
+          const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
+          
+          if (!hasMp3Files) {
+            // If no MP3 files, proceed with upload immediately with progress updates
+            const result = await uploadTorrentToGDrive(torrentId, false, message);
+            
+            // Send the final result message if it wasn't sent through the progressTarget
+            if (result.success && result.message) {
+              try {
+                await message.channel.send(`<@${message.author.id}> ${result.message}`);
+              } catch (error) {
+                console.error('Error sending final upload message:', error);
+              }
             }
           }
         }
