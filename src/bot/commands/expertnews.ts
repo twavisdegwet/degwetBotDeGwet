@@ -171,12 +171,12 @@ Now, give us your editorial news wrap - what's your skewed take on today's key s
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);
         const response = await makeOllamaRequest(prompt, server);
         
-        // Format the response directly without Q&A format (since this is a social media broadcast)
+        
         const { emoji, name } = getPersonalityFormatting(selectedExpert);
         // Filter out command execution complete message if it exists
         const filteredResponse = response.response.replace(/\[COMMAND EXECUTION COMPLETE\]/g, '');
         const cleanedResponse = filteredResponse.replace(/\n\n+/g, '\n');
-        const formattedResponse = `**${emoji} ${name}'s Social Media Broadcast:**\n${cleanedResponse}`;
+        const formattedResponse = `**${emoji} ${name}'s Newswrap:**\n${cleanedResponse}`;
         
         // Split the message if it's too long
         const messageParts = splitMessageAtSentence(formattedResponse);
