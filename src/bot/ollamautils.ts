@@ -116,7 +116,7 @@ export async function makeOllamaRequest(
     stream: false,
     options: {
       ...requestOptions,
-      num_ctx: 20384 // Double the context window from default 4096
+      num_ctx: 17384 
     }
   }, {
     timeout: 420000 // 5 minute timeout for complex prompts
