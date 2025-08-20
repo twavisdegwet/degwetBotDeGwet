@@ -126,6 +126,11 @@ export class DelugeClient {
         this.isAuthenticated = response.data.result === true;
         console.log('Deluge login successful:', this.isAuthenticated);
         
+        if (this.isAuthenticated) {
+          // After successful login, connect to the daemon
+          await this.connectToDaemon();
+        }
+        
         return this.isAuthenticated;
       } else {
         this.isAuthenticated = false;
@@ -135,6 +140,48 @@ export class DelugeClient {
       console.error('Error logging into Deluge:', error);
       this.isAuthenticated = false;
       throw new Error(`Failed to login to Deluge: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Connect to the daemon after authentication
+   */
+  private async connectToDaemon(): Promise<void> {
+    try {
+      // Get available hosts
+      const hostsResponse = await this.axiosInstance.post('json', {
+        id: Date.now(),
+        method: 'web.get_hosts',
+        params: []
+      });
+
+      if (hostsResponse.data && hostsResponse.data.error) {
+        throw new Error(`Failed to get hosts: ${hostsResponse.data.error.message}`);
+      }
+
+      const hosts = hostsResponse.data.result;
+      if (!hosts || hosts.length === 0) {
+        throw new Error('No daemon hosts available');
+      }
+
+      // Connect to the first available host (usually the local daemon)
+      const hostId = hosts[0][0]; // Host ID is the first element
+      console.log(`Connecting to daemon host: ${hostId}`);
+      
+      const connectResponse = await this.axiosInstance.post('json', {
+        id: Date.now(),
+        method: 'web.connect',
+        params: [hostId]
+      });
+
+      if (connectResponse.data && connectResponse.data.error) {
+        throw new Error(`Failed to connect to daemon: ${connectResponse.data.error.message}`);
+      }
+
+      console.log('Successfully connected to Deluge daemon');
+    } catch (error) {
+      console.error('Error connecting to daemon:', error);
+      throw new Error(`Failed to connect to daemon: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
