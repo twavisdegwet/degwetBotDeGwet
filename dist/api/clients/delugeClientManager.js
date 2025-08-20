@@ -80,4 +80,3 @@ class DelugeClientManager {
     }
 }
 exports.default = DelugeClientManager;
-//# sourceMappingURL=delugeClientManager.js.map

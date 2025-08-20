@@ -14,4 +14,3 @@ describe('Health Endpoint', () => {
         expect(response.body).toHaveProperty('timestamp');
     });
 });
-//# sourceMappingURL=health.test.js.map

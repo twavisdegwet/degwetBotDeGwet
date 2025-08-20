@@ -271,4 +271,3 @@ class MamClient {
     }
 }
 exports.MamClient = MamClient;
-//# sourceMappingURL=mamClient.js.map

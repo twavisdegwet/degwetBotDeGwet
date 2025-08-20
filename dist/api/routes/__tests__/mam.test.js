@@ -70,4 +70,3 @@ describe('MAM Endpoints', () => {
         });
     });
 });
-//# sourceMappingURL=mam.test.js.map

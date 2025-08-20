@@ -56,4 +56,3 @@ class DownloadManager {
     }
 }
 exports.DownloadManager = DownloadManager;
-//# sourceMappingURL=downloadManagement.js.map

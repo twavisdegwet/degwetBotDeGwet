@@ -129,4 +129,3 @@ router.get('/files', async (req, res) => {
     }
 });
 exports.default = router;
-//# sourceMappingURL=uploads.js.map

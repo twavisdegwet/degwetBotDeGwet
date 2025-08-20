@@ -6,4 +6,3 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config({ path: '.env.local' });
 jest.setTimeout(10000);
-//# sourceMappingURL=test-setup.js.map

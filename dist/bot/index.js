@@ -167,4 +167,3 @@ if (env_1.env.DISCORD_TOKEN && env_1.env.DISCORD_TOKEN !== 'your_discord_bot_tok
 else {
     console.log('Discord bot token not configured. Skipping Discord bot startup.');
 }
-//# sourceMappingURL=index.js.map

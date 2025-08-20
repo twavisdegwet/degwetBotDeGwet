@@ -443,4 +443,3 @@ Server runs on port 3000 by default.
     }
 });
 exports.default = router;
-//# sourceMappingURL=mam.js.map

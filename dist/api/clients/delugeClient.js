@@ -377,4 +377,3 @@ class DelugeClient {
     }
 }
 exports.DelugeClient = DelugeClient;
-//# sourceMappingURL=delugeClient.js.map

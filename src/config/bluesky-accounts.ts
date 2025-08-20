@@ -5,4 +5,5 @@ export const BLUESKY_ACCOUNTS = [
     'trumpreposter.bsky.social', // Trump Truth Social reposter
     'bloomberg.com', // Bloomberg
     'did:plc:k5nskatzhyxersjilvtnz4lh', // Washington Post
+    'did:plc:eclio37ymobqex2ncko63h4r', // NYT
 ];

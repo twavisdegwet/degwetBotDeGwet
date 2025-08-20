@@ -32,4 +32,3 @@ const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 exports.server = server;
-//# sourceMappingURL=index.js.map
