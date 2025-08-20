@@ -105,7 +105,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           try {
             const nzbUrl = await hydra.getNzbUrl(selectedGuid);
             await sabnzbd.addNzb(nzbUrl, 'movies');
-            await i.reply({ content: `✅ Added "${selectedMovie.title}" to SABnzbd!`, ephemeral: true });
+            await i.reply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one `, ephemeral: false });
             
             // Disable the select menu after selection
             const disabledRow = new ActionRowBuilder<StringSelectMenuBuilder>()
@@ -117,7 +117,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
             });
           } catch (error) {
             Logger.error('Download failed:', error);
-            await i.reply({ content: '❌ Failed to add download', ephemeral: true });
+            await i.reply({ content: '❌ Failed to add download', ephemeral: false });
           }
         }
       });

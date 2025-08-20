@@ -351,6 +351,10 @@ class UploadManagementClient {
                 progressCallback(uploadStartMessage);
             for (const filePath of filesToUpload) {
                 const fileName = path_1.default.basename(filePath);
+                if (!fs_1.default.existsSync(filePath)) {
+                    console.error(`❌ File does not exist, skipping upload: ${filePath}`);
+                    continue;
+                }
                 try {
                     const fileId = await this.uploadFile(filePath, fileName, folderId);
                     uploadedFiles.push(fileName);
