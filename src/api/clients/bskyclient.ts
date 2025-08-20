@@ -151,7 +151,7 @@ export async function fetchBlueskyPosts(): Promise<BlueskyPost[]> {
     
     for (const account of BLUESKY_ACCOUNTS) {
         try {
-            const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${account}&limit=3&filter=posts_no_replies`;
+            const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${account}&limit=5&filter=posts_no_replies`;
             const response = await fetch(url);
             
             if (!response.ok) {
@@ -200,8 +200,10 @@ export function formatBlueskyPostsForPromptAnonymous(posts: BlueskyPost[]): stri
     
     return posts.map((post) => {
         const timeAgo = getTimeAgo(new Date(post.createdAt));
+        // Remove URLs from post text
+        const cleanText = removeUrlsFromText(post.text);
         return `${timeAgo}:
-   ${post.text}`;
+   ${cleanText}`;
     }).join('\n\n');
 }
 
@@ -216,4 +218,11 @@ function getTimeAgo(date: Date): string {
     } else {
         return `${Math.floor(diffInMinutes / 1440)}d ago`;
     }
+}
+
+function removeUrlsFromText(text: string): string {
+    // Remove URLs using a comprehensive regex pattern
+    // This matches http(s) URLs, shortened URLs, and domain.com patterns
+    const urlRegex = /https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]*\.[a-zA-Z]{2,}(?:\/[^\s]*)?/g;
+    return text.replace(urlRegex, '').replace(/\s+/g, ' ').trim();
 }
