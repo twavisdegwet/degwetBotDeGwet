@@ -125,7 +125,7 @@ Consult with one of our expert consultants for advice on any topic.
 **Parameters:**
 - `question` (required) - The question you want to ask our expert
 - `expert` (optional) - Choose which expert to consult (default: random expert)
-  - Available experts: Trump, Clyde, Cuddy, Waifu
+  - Available experts: Trump, Clyde, Cuddy, Emperor, Foghorn
   - "Random Expert" - Get a random expert for your question
 - `context` (optional) - Number of recent messages to include as context (default: 10, max: 50)
 

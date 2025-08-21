@@ -77,7 +77,7 @@ External service clients use consistent patterns:
 
 ### Expert Consultation System
 The bot features an advanced AI consultation system powered by Ollama:
-- **Multiple Personalities**: 5 distinct expert personalities (Trump, Clyde, Cuddy, Waifu, Emperor) each with unique response styles
+- **Multiple Personalities**: 5 distinct expert personalities (Trump, Clyde, Cuddy, Emperor, Foghorn) each with unique response styles
 - **Context Awareness**: Incorporates recent chat history for natural conversation flow
 - **Server Failover**: Automatic failover between primary/secondary Ollama servers
 - **Character Consistency**: Personality-driven responses maintain character throughout interactions
