@@ -85,6 +85,8 @@ export function analyzeContentType(files: Array<{path: string, size: number}>): 
 // Shared function for book search logic
 export async function handleBookSearch(interaction: CommandInteraction, bookType: 'audiobook' | 'ebook') {
   if (!interaction.isChatInputCommand()) return;
+  
+  // Defer reply immediately to prevent timeout
   await interaction.deferReply();
   
   // Check if the specified user is currently playing a game

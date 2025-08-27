@@ -90,10 +90,14 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     } catch (error) {
       console.error(error);
       const joke = getPersonality();
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: `There was an error while executing this command! ${joke}`, flags: 64 });
-      } else {
-        await interaction.reply({ content: `There was an error while executing this command! ${joke}`, flags: 64 });
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp({ content: `There was an error while executing this command! ${joke}`, flags: 64 });
+        } else {
+          await interaction.reply({ content: `There was an error while executing this command! ${joke}`, flags: 64 });
+        }
+      } catch (replyError) {
+        console.error('Failed to send error reply for command:', replyError);
       }
     }
   } else if (interaction.isButton()) {
