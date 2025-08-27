@@ -293,10 +293,13 @@ if ! ffmpeg -y -f concat -safe 0 -i "$FFMPEG_INPUT_LIST_FILE" -i "$METADATA_CHAP
            -threads "$NUM_THREADS" -filter_threads "$NUM_THREADS" \
            -preset fast  \
            "$OUTPUT_M4B_FILENAME"
+    ffmpeg_exit_code=$?
+else
+    ffmpeg_exit_code=0
 fi
 
 # --- Finalization ---
-if [ $? -eq 0 ]; then
+if [ $ffmpeg_exit_code -eq 0 ]; then
     echo "--------------------------------------------------"
     echo "Successfully created M4B audiobook: $OUTPUT_M4B_FILENAME"
     echo "Cleaning up temporary files..."
