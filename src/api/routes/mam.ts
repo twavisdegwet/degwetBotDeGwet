@@ -258,24 +258,21 @@ router.post('/download', async (req: Request, res: Response) => {
       }
     }
     
-    // Check if duplicate (for non-error cases)
+    // If we reach this point, the torrent was successfully added (no duplicate error thrown)
     const existingTorrents = await delugeClient.getTorrents();
     const torrentInfo = existingTorrents.find((t: any) => t.id === torrentId);
-    const isExisting = torrentInfo && torrentInfo.progress !== undefined && torrentInfo.progress > 0;
     
     return res.json({
       torrentId,
-      isDuplicate: isExisting,
+      isDuplicate: false, // Successfully added, not a duplicate
       isDuplicateError: false,
       torrentInfo: torrentInfo ? {
         name: torrentInfo.name,
         state: torrentInfo.state,
         progress: torrentInfo.progress || 0
       } : undefined,
-      canUploadToGDrive: torrentInfo && (torrentInfo.state === 'Seeding' || (torrentInfo.progress && torrentInfo.progress >= 100)),
-      message: isExisting 
-        ? `Torrent already exists in Deluge (ID: ${torrentId})`
-        : 'Torrent added successfully to Deluge'
+      canUploadToGDrive: false, // Newly added torrents are not ready for upload yet
+      message: 'Torrent added successfully to Deluge'
     });
   } catch (error) {
     console.error('Error in download endpoint:', error);

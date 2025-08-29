@@ -26,6 +26,15 @@ npm run lint
 npm run format
 ```
 
+## Deployment Notes
+
+**IMPORTANT**: The Discord bot runs on a separate production server (192.168.2.124), not on the local development machine. After making code changes:
+
+1. Only build locally with `npm run build` to verify compilation
+2. DO NOT attempt to restart services locally - they won't affect the production bot
+3. User handles git push/pull and service updates on the production server
+4. The bot connects to Deluge at `192.168.2.124:8112` and other network services
+
 ## Architecture Overview
 
 The codebase is organized into three main layers:

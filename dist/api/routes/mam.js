@@ -230,20 +230,17 @@ router.post('/download', async (req, res) => {
         }
         const existingTorrents = await delugeClient.getTorrents();
         const torrentInfo = existingTorrents.find((t) => t.id === torrentId);
-        const isExisting = torrentInfo && torrentInfo.progress !== undefined && torrentInfo.progress > 0;
         return res.json({
             torrentId,
-            isDuplicate: isExisting,
+            isDuplicate: false,
             isDuplicateError: false,
             torrentInfo: torrentInfo ? {
                 name: torrentInfo.name,
                 state: torrentInfo.state,
                 progress: torrentInfo.progress || 0
             } : undefined,
-            canUploadToGDrive: torrentInfo && (torrentInfo.state === 'Seeding' || (torrentInfo.progress && torrentInfo.progress >= 100)),
-            message: isExisting
-                ? `Torrent already exists in Deluge (ID: ${torrentId})`
-                : 'Torrent added successfully to Deluge'
+            canUploadToGDrive: false,
+            message: 'Torrent added successfully to Deluge'
         });
     }
     catch (error) {

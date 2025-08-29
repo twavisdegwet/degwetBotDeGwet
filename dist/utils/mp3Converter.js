@@ -33,7 +33,7 @@ async function convertMp3ToM4b(sourceDirectory, options = {}) {
         logger_1.Logger.info(`Command: ${command}`);
         const { stdout, stderr } = await execAsync(command, {
             maxBuffer: 1024 * 1024 * 10,
-            timeout: 30 * 60 * 1000,
+            timeout: 90 * 60 * 1000,
         });
         const duration = Date.now() - startTime;
         let outputFilename;
