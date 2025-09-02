@@ -179,9 +179,11 @@ export class MamClient {
         searchPayload.append('tor[maxSnatched]', params.maxSnatched.toString());
       }
 
-      // For the search endpoint, we make a GET request with query parameters.
-      const response = await this.axiosInstance.get('/tor/js/loadSearchJSONbasic.php', {
-        params: Object.fromEntries(searchPayload.entries())
+      // For the search endpoint, we make a POST request with form data.
+      const response = await this.axiosInstance.post('/tor/js/loadSearchJSONbasic.php', searchPayload, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       });
 
       // Log the raw response for debugging
