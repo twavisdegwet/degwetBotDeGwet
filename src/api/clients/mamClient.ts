@@ -65,7 +65,11 @@ export class MamClient {
       baseURL: baseUrl,
       headers: {
         'Cookie': formattedCookie,
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Referer': `${baseUrl}/tor/browse.php`,
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br'
       },
       timeout: 10000 // 10 second timeout
     });
@@ -175,8 +179,10 @@ export class MamClient {
         searchPayload.append('tor[maxSnatched]', params.maxSnatched.toString());
       }
 
-      // For the search endpoint, we make a POST request with form data.
-      const response = await this.axiosInstance.post('/tor/js/loadSearchJSONbasic.php', searchPayload);
+      // For the search endpoint, we make a GET request with query parameters.
+      const response = await this.axiosInstance.get('/tor/js/loadSearchJSONbasic.php', {
+        params: Object.fromEntries(searchPayload.entries())
+      });
 
       // Log the raw response for debugging
       console.log('Raw MAM search response:', JSON.stringify(response.data, null, 2));
