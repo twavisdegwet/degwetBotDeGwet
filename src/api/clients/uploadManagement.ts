@@ -102,9 +102,7 @@ export class UploadManagementClient {
    */
   async createFolder(name: string, parentId?: string, progressCallback?: (message: string) => void): Promise<string> {
     try {
-      const createMessage = `📁 Creating folder "${name}" - This is more organized than Jon's sock drawer.`;
-      console.log(createMessage);
-      if (progressCallback) progressCallback(createMessage);
+      console.log(`📁 Creating folder "${name}"`);
       
       const fileMetadata: any = {
         name: name,
@@ -356,12 +354,10 @@ export class UploadManagementClient {
   /**
    * Clean up temporary directory
    */
-  private async cleanupTemp(tempDir: string, progressCallback?: (message: string) => void): Promise<void> {
+  private async cleanupTemp(tempDir: string): Promise<void> {
     try {
       await execAsync(`rm -rf "${tempDir}"`);
-      const message = `🧹 Cleaned up temp directory: ${tempDir}. I'm tidier than Jon's cooking attempts.`;
-      console.log(message);
-      if (progressCallback) progressCallback(message);
+      console.log(`🧹 Cleaned up temp directory: ${tempDir}`);
     } catch (error) {
       console.error('❌ Error cleaning up temp directory. This mess is worse than Odie\'s drool:', error);
     }
@@ -430,13 +426,9 @@ export class UploadManagementClient {
         
         const folderName = folderPrefix + torrentObject.name;
         
-        // Create consolidated message with content analysis, file size, folder creation, and copy start
-        const consolidatedMessage = `Content analysis: ${contentAnalysis.type} (${contentAnalysis.audioFiles.length} audio, ${contentAnalysis.ebookFiles.length} ebook, ${contentAnalysis.otherFiles.length} other files, ${formatFileSize(contentAnalysis.totalSize)})
-
-📁 Creating folder "${folderName}" and copying files to temporary directory... Andrew Garfield would be proud of this level of dedication. To Lasagna`;
-        
-        console.log(consolidatedMessage);
-        if (progressCallback) progressCallback(consolidatedMessage);
+        // Log content analysis for debugging but don't send to user
+        const analysisMessage = `Content analysis: ${contentAnalysis.type} (${contentAnalysis.audioFiles.length} audio, ${contentAnalysis.ebookFiles.length} ebook, ${contentAnalysis.otherFiles.length} other files, ${formatFileSize(contentAnalysis.totalSize)})`;
+        console.log(analysisMessage);
         
         folderId = await this.createFolder(folderName, options.parentFolderId);
         const folderMessage = `Created folder: ${folderName} (ID: ${folderId})`;
@@ -496,11 +488,9 @@ export class UploadManagementClient {
           const fileId = await this.uploadFile(filePath, fileName, folderId);
           uploadedFiles.push(fileName);
           console.log(`Uploaded: ${fileName} (ID: ${fileId})`);
-          // Send progress update for every 10th file or important files
+          // Log progress for debugging
           if (uploadedFiles.length % 10 === 0 || uploadedFiles.length === filesToUpload.length) {
-            if (progressCallback) {
-              progressCallback(`📤 Uploaded ${uploadedFiles.length}/${filesToUpload.length} files...`);
-            }
+            console.log(`📤 Uploaded ${uploadedFiles.length}/${filesToUpload.length} files...`);
           }
         } catch (error) {
           console.error(`Failed to upload ${fileName}:`, error);
@@ -508,7 +498,7 @@ export class UploadManagementClient {
       }
 
       // Clean up temp directory
-      await this.cleanupTemp(tempSessionDir, progressCallback);
+      await this.cleanupTemp(tempSessionDir);
 
       return {
         success: true,

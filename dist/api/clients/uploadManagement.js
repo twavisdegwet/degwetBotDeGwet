@@ -65,10 +65,7 @@ class UploadManagementClient {
     }
     async createFolder(name, parentId, progressCallback) {
         try {
-            const createMessage = `📁 Creating folder "${name}" - This is more organized than Jon's sock drawer.`;
-            console.log(createMessage);
-            if (progressCallback)
-                progressCallback(createMessage);
+            console.log(`📁 Creating folder "${name}"`);
             const fileMetadata = {
                 name: name,
                 mimeType: 'application/vnd.google-apps.folder'
@@ -260,13 +257,10 @@ class UploadManagementClient {
             totalSize
         };
     }
-    async cleanupTemp(tempDir, progressCallback) {
+    async cleanupTemp(tempDir) {
         try {
             await execAsync(`rm -rf "${tempDir}"`);
-            const message = `🧹 Cleaned up temp directory: ${tempDir}. I'm tidier than Jon's cooking attempts.`;
-            console.log(message);
-            if (progressCallback)
-                progressCallback(message);
+            console.log(`🧹 Cleaned up temp directory: ${tempDir}`);
         }
         catch (error) {
             console.error('❌ Error cleaning up temp directory. This mess is worse than Odie\'s drool:', error);
@@ -308,12 +302,8 @@ class UploadManagementClient {
                         folderPrefix = '';
                 }
                 const folderName = folderPrefix + torrentObject.name;
-                const consolidatedMessage = `Content analysis: ${contentAnalysis.type} (${contentAnalysis.audioFiles.length} audio, ${contentAnalysis.ebookFiles.length} ebook, ${contentAnalysis.otherFiles.length} other files, ${formatFileSize(contentAnalysis.totalSize)})
-
-📁 Creating folder "${folderName}" and copying files to temporary directory... Andrew Garfield would be proud of this level of dedication. To Lasagna`;
-                console.log(consolidatedMessage);
-                if (progressCallback)
-                    progressCallback(consolidatedMessage);
+                const analysisMessage = `Content analysis: ${contentAnalysis.type} (${contentAnalysis.audioFiles.length} audio, ${contentAnalysis.ebookFiles.length} ebook, ${contentAnalysis.otherFiles.length} other files, ${formatFileSize(contentAnalysis.totalSize)})`;
+                console.log(analysisMessage);
                 folderId = await this.createFolder(folderName, options.parentFolderId);
                 const folderMessage = `Created folder: ${folderName} (ID: ${folderId})`;
                 console.log(folderMessage);
@@ -360,16 +350,14 @@ class UploadManagementClient {
                     uploadedFiles.push(fileName);
                     console.log(`Uploaded: ${fileName} (ID: ${fileId})`);
                     if (uploadedFiles.length % 10 === 0 || uploadedFiles.length === filesToUpload.length) {
-                        if (progressCallback) {
-                            progressCallback(`📤 Uploaded ${uploadedFiles.length}/${filesToUpload.length} files...`);
-                        }
+                        console.log(`📤 Uploaded ${uploadedFiles.length}/${filesToUpload.length} files...`);
                     }
                 }
                 catch (error) {
                     console.error(`Failed to upload ${fileName}:`, error);
                 }
             }
-            await this.cleanupTemp(tempSessionDir, progressCallback);
+            await this.cleanupTemp(tempSessionDir);
             return {
                 success: true,
                 folderId,
