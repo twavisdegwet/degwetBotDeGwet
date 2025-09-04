@@ -233,7 +233,7 @@ export async function checkForMp3AndPrompt(
  * Create a status message for upload operations
  */
 export function createUploadStatusMessage(torrentName: string, convert: boolean): string {
-  const baseMessage = `🎉 ${getRandomUploadJoke()} Successfully added **${torrentName}** to Deluge! I'll automatically upload it to Google Drive faster than Odie chases squirrels.`;
+  const baseMessage = `🚀 **${torrentName}** is ready! Starting upload to Google Drive... ${getRandomUploadJoke()}`;
   
   if (convert) {
     return `${baseMessage}\n\n🎵 Converting MP3s to M4B... This will take about 30 minutes. ${getRandomConversionJoke()}`;
@@ -315,41 +315,24 @@ export async function handleUploadButtonInteraction(
       return;
     }
 
-    // Show status message
+    // Show status message using interaction (this is immediate, so safe)
     const statusMessage = createUploadStatusMessage(selectedTorrent.name, convert);
     await interaction.editReply({ content: statusMessage, components: [] });
 
-    // Call custom upload start handler if provided
+    // Call custom upload start handler if provided (they handle their own completion messages)
     if (onUploadStart) {
       await onUploadStart(torrentId, convert);
     } else {
-      // Default upload behavior
+      // Default upload behavior - send completion as new channel message
       const result = await uploadTorrentToGDrive(torrentId, convert);
-      
-      // Update the message with the result
-      try {
-        await interaction.editReply({ content: result.message, components: [] });
-      } catch (editError: any) {
-        if (editError.code === 50027) { // Invalid Webhook Token
-          await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
-        } else {
-          throw editError;
-        }
-      }
+      await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
     }
 
   } catch (error: any) {
     console.error('Error in upload button interaction:', error);
     const errorMessage = `❌ Upload failed. This is all Odie's fault. I just know it.\n\nError: ${error.message}`;
     
-    try {
-      await interaction.editReply({ content: errorMessage, components: [] });
-    } catch (editError: any) {
-      if (editError.code === 50027) { // Invalid Webhook Token
-        await interaction.channel?.send(`<@${interaction.user.id}> ${errorMessage}`);
-      } else {
-        console.error('Failed to send error message:', editError);
-      }
-    }
+    // Always send error as new channel message (no interaction editing)
+    await interaction.channel?.send(`<@${interaction.user.id}> ${errorMessage}`);
   }
 }

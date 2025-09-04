@@ -18,6 +18,10 @@ async function safeEditReply(interaction: CommandInteraction, content: any): Pro
         console.log('Interaction expired during editReply');
         return false;
       }
+      if (error.code === 50027) {
+        console.log('Invalid webhook token during editReply');
+        return false;
+      }
       throw error;
     }
   }
@@ -345,7 +349,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
           await m.reply(duplicateMessage);
         }
       } else {
-        await m.reply(`✅ Successfully added torrent to Deluge!\nID: ${downloadResponse.data.torrentId}\nName: ${downloadResponse.data.torrentInfo?.name || selectedTorrent.title} \n \n 🔄 Will automatically upload to Google Drive once download completes...`);
+        await m.reply(`✅ Successfully added **${downloadResponse.data.torrentInfo?.name || selectedTorrent.title}** to the oven! \n \n🔄 Will automatically upload to Google Drive once it's done cooking... ${getPersonality()}`);
         
 
         
@@ -489,12 +493,8 @@ export async function handleAutoUploadInteraction(interaction: any) {
     // Custom upload logic for auto-upload (getebook/getaudiobook)
     const result = await uploadTorrentToGDrive(torrentId, convert, interaction);
     
-    // Update the interaction with the result
-    const replied = await safeEditReply(interaction, { content: result.message, components: [] });
-    if (!replied) {
-      // If interaction expired, try sending a regular message
-      await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
-    }
+    // Always send completion as a new channel message (no interaction editing)
+    await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
   });
 }
 
