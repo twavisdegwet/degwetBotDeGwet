@@ -126,18 +126,18 @@ async function uploadTorrentWithProgress(
       // Send the Google Drive link as a separate message if we have a progress target
       if (result.folderId && progressTarget) {
         try {
-          const linkMessage = `📂 [View Folder](https://drive.google.com/drive/folders/${result.folderId})\n📂 Folder ID: ${result.folderId}`;
+          const linkMessage = `📂 [DOWNLOAD AVAILABLE HERE](https://drive.google.com/drive/folders/${result.folderId})`;
           const userId = progressTarget.user?.id || progressTarget.author?.id;
           await progressTarget.channel?.send(`<@${userId}> ${linkMessage}`);
         } catch (error) {
           console.error('Error sending Google Drive link message:', error);
           // If we can't send a separate message, include it in the main message
-          successMessage += `\n📂 [View Folder](https://drive.google.com/drive/folders/${result.folderId})\n`;
+          successMessage += `\n📂 [DOWNLOAD AVAILABLE HERE](https://drive.google.com/drive/folders/${result.folderId})\n`;
           successMessage += `📂 Folder ID: ${result.folderId}`;
         }
       } else if (result.folderId) {
         // Fallback: include in main message if no progress target
-        successMessage += `📂 [View Folder](https://drive.google.com/drive/folders/${result.folderId})\n`;
+        successMessage += `📂 [DOWNLOAD AVAILABLE HERE](https://drive.google.com/drive/folders/${result.folderId})\n`;
         successMessage += `📂 Folder ID: ${result.folderId}`;
       }
 

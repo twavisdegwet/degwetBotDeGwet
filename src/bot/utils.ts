@@ -7,6 +7,24 @@ import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteract
 import { getPersonality } from './badjokes';
 import { isUserPlayingGame, createPresenceBlockedMessage } from './presenceUtils';
 
+// Helper function to safely edit interaction replies
+async function safeEditReply(interaction: CommandInteraction, content: any): Promise<boolean> {
+  if (interaction.replied || interaction.deferred) {
+    try {
+      await interaction.editReply(content);
+      return true;
+    } catch (error: any) {
+      if (error.code === 10062) {
+        console.log('Interaction expired during editReply');
+        return false;
+      }
+      throw error;
+    }
+  }
+  console.log('Interaction not deferred, cannot edit reply');
+  return false;
+}
+
 // Helper function to format file size
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -86,13 +104,27 @@ export function analyzeContentType(files: Array<{path: string, size: number}>): 
 export async function handleBookSearch(interaction: CommandInteraction, bookType: 'audiobook' | 'ebook') {
   if (!interaction.isChatInputCommand()) return;
   
-  // Defer reply immediately to prevent timeout
-  await interaction.deferReply();
+  // Check if interaction is still valid before deferring
+  if (interaction.replied || interaction.deferred) {
+    console.log('Interaction already replied or deferred');
+    return;
+  }
+  
+  try {
+    // Defer reply immediately to prevent timeout
+    await interaction.deferReply();
+  } catch (error: any) {
+    if (error.code === 10062) {
+      console.log('Interaction expired before deferReply');
+      return;
+    }
+    throw error;
+  }
   
   // Check if the specified user is currently playing a game
   const isBlocked = await isUserPlayingGame(interaction.client);
   if (isBlocked) {
-    await interaction.editReply(createPresenceBlockedMessage());
+    await safeEditReply(interaction, createPresenceBlockedMessage());
     return;
   }
   
@@ -160,7 +192,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
   results.sort((a: any, b: any) => b.seeders - a.seeders);
   
   if (results.length === 0) {
-    await interaction.editReply(`I found nothing. Zero. Zilch. Nada. ${getPersonality()}`);
+    await safeEditReply(interaction, `I found nothing. Zero. Zilch. Nada. ${getPersonality()}`);
     return;
   }
   
@@ -223,7 +255,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
     timestamp: Date.now()
   });
   
-  await interaction.editReply(message);
+  await safeEditReply(interaction, message);
   
   // Listen for user selection
   const filter = (m: any) => m.author.id === interaction.user.id && /^\d+$/.test(m.content) && parseInt(m.content) <= results.length && parseInt(m.content) > 0;
@@ -458,14 +490,10 @@ export async function handleAutoUploadInteraction(interaction: any) {
     const result = await uploadTorrentToGDrive(torrentId, convert, interaction);
     
     // Update the interaction with the result
-    try {
-      await interaction.editReply({ content: result.message, components: [] });
-    } catch (editError: any) {
-      if (editError.code === 50027) { // Invalid Webhook Token
-        await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
-      } else {
-        throw editError;
-      }
+    const replied = await safeEditReply(interaction, { content: result.message, components: [] });
+    if (!replied) {
+      // If interaction expired, try sending a regular message
+      await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
     }
   });
 }
@@ -506,12 +534,12 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
         // Send a follow-up message with the MP3 conversion prompt
         const hasMp3Files = await checkForMp3AndPrompt(torrentId, interaction, 'duplicate');
         
-        await interaction.editReply({ content: '🔄 Checking files for MP3 conversion...', components: [] });
+        await safeEditReply(interaction, { content: '🔄 Checking files for MP3 conversion...', components: [] });
         
         if (!hasMp3Files) {
           // If no MP3 files, proceed with upload and show progress
           const statusMessage = `🚀 Now uploading **${selectedTorrent.name}** to Google Drive. ${getPersonality()}`;
-          await interaction.editReply({ content: statusMessage });
+          await safeEditReply(interaction, { content: statusMessage });
           
           // Upload with progress updates
           const result = await uploadTorrentToGDrive(torrentId, false, interaction);
@@ -526,7 +554,7 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
           }
         }
         } else {
-          await interaction.editReply({ 
+          await safeEditReply(interaction, { 
             content: `Torrent not found. It probably ran away to find a more interesting bot. One with more lasagna.\n\nTorrent ID: ${torrentId}`, 
             components: [] 
           });
@@ -534,14 +562,14 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
 
       } catch (error: any) {
         console.error('Error checking torrent files:', error);
-        await interaction.editReply({ 
+        await safeEditReply(interaction, { 
           content: `❌ Error checking torrent files: ${error.message}`, 
           components: [] 
         });
       }
     } else if (actionType === 'cancel') {
       await interaction.deferUpdate();
-      await interaction.editReply({ 
+      await safeEditReply(interaction, { 
         content: `❌ Upload cancelled.`, 
         components: [] 
       });

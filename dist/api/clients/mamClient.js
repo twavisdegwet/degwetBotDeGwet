@@ -55,7 +55,11 @@ class MamClient {
             baseURL: baseUrl,
             headers: {
                 'Cookie': formattedCookie,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Referer': `${baseUrl}/tor/browse.php`,
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br'
             },
             timeout: 10000
         });
@@ -119,7 +123,11 @@ class MamClient {
             if (params.maxSnatched !== undefined) {
                 searchPayload.append('tor[maxSnatched]', params.maxSnatched.toString());
             }
-            const response = await this.axiosInstance.post('/tor/js/loadSearchJSONbasic.php', searchPayload);
+            const response = await this.axiosInstance.post('/tor/js/loadSearchJSONbasic.php', searchPayload, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
             console.log('Raw MAM search response:', JSON.stringify(response.data, null, 2));
             if (response.data && response.data.error &&
                 response.data.error.includes("Nothing returned, out of")) {
