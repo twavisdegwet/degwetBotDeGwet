@@ -123,22 +123,9 @@ async function uploadTorrentWithProgress(
         successMessage += `🎵 Converted to: ${result.convertedFile}\n`;
       }
 
-      // Send the Google Drive link as a separate message if we have a progress target
-      if (result.folderId && progressTarget) {
-        try {
-          const linkMessage = `📂 [DOWNLOAD AVAILABLE HERE](https://drive.google.com/drive/folders/${result.folderId})`;
-          const userId = progressTarget.user?.id || progressTarget.author?.id;
-          await progressTarget.channel?.send(`<@${userId}> ${linkMessage}`);
-        } catch (error) {
-          console.error('Error sending Google Drive link message:', error);
-          // If we can't send a separate message, include it in the main message
-          successMessage += `\n📂 [DOWNLOAD AVAILABLE HERE](https://drive.google.com/drive/folders/${result.folderId})\n`;
-          successMessage += `📂 Folder ID: ${result.folderId}`;
-        }
-      } else if (result.folderId) {
-        // Fallback: include in main message if no progress target
-        successMessage += `📂 [DOWNLOAD AVAILABLE HERE](https://drive.google.com/drive/folders/${result.folderId})\n`;
-        successMessage += `📂 Folder ID: ${result.folderId}`;
+      // Add Italian food emojis and download link to the main message
+      if (result.folderId) {
+        successMessage += `\n🍝🍕🧄🍞🐱🍝🍕🧄🍞🐱🍝🍕🧄🍞🐱\n📂 [DOWNLOAD AVAILABLE HERE](https://drive.google.com/drive/folders/${result.folderId})\n🍝🍕🧄🍞🐱🍝🍕🧄🍞🐱🍝🍕🧄🍞🐱`;
       }
 
       return {
