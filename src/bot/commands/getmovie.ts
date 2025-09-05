@@ -18,28 +18,30 @@ export const data = new SlashCommandBuilder()
   .addStringOption(option =>
     option.setName('title')
       .setDescription('Movie title to search for')
-      .setRequired(true))
-  .addIntegerOption(option =>
-    option.setName('year')
-      .setDescription('Release year'));
+      .setRequired(true));
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
+    const title = interaction.options.getString('title', true);
+    
+    console.log(`Movie search initiated: "${title}"`);
+    
     await interaction.deferReply();
     
     // Check if the specified user is currently playing a game
+    console.log('Checking user presence...');
     const isBlocked = await isUserPlayingGame(interaction.client);
     if (isBlocked) {
+      console.log('User presence check blocked movie search');
       await interaction.editReply(createPresenceBlockedMessage());
       return;
     }
+    console.log('User presence check passed');
     
     const hydra = new NZBHydraClient();
     const sabnzbd = new SABnzbdClient();
-    const title = interaction.options.getString('title', true);
-    const year = interaction.options.getInteger('year') ?? undefined;
 
     try {
-      const results = await hydra.searchMovies(title, year);
+      const results = await hydra.searchMovies(title);
       
       if (results.length === 0) {
         await interaction.editReply('No movie releases found matching your criteria.');

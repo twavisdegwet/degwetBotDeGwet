@@ -27,10 +27,10 @@ export class NZBHydraClient {
     });
   }
 
-  async searchMovies(query: string, year?: number, quality?: string): Promise<NZBHydraSearchResult[]> {
+  async searchMovies(query: string, quality?: string): Promise<NZBHydraSearchResult[]> {
     try {
       // Build query with quality preference and 1080p 5.1 filter
-      let searchQuery = `${query} ${year || ''}`.trim();
+      let searchQuery = query;
       
       // Add quality preference if provided
       if (quality) {
@@ -53,7 +53,7 @@ export class NZBHydraClient {
       // If no results found with "1080p 5.1", try without it
       if (items.length === 0) {
         // Remove the 1080p 5.1 filter but keep quality preference
-        searchQuery = `${query} ${year || ''} ${quality || ''}`.trim();
+        searchQuery = `${query} ${quality || ''}`.trim();
         params = {
           t: 'movie',
           q: searchQuery.trim(),
