@@ -1,11 +1,14 @@
 
 import axios from 'axios';
-import { CommandInteraction } from 'discord.js';
+import { CommandInteraction, AttachmentBuilder } from 'discord.js';
+import * as fs from 'fs';
+import * as path from 'path';
 import { DownloadManager } from '../api/clients/downloadManagement';
 import DelugeClientManager from '../api/clients/delugeClientManager';
 import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
 import { getPersonality } from './badjokes';
 import { isUserPlayingGame, createPresenceBlockedMessage } from './presenceUtils';
+import { env } from '../config/env';
 
 // Helper function to safely edit interaction replies
 async function safeEditReply(interaction: CommandInteraction, content: any): Promise<boolean> {
@@ -436,6 +439,8 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
             if (result.success && result.message) {
               try {
                 await message.channel.send(`<@${message.author.id}> ${result.message}`);
+                // Send Garfield comic after successful upload with download link
+                await sendRandomGarfieldComic(message.channel, message.author.id);
               } catch (error) {
                 console.error('Error sending final upload message:', error);
               }
@@ -495,6 +500,10 @@ export async function handleAutoUploadInteraction(interaction: any) {
     
     // Always send completion as a new channel message (no interaction editing)
     await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+    // Send Garfield comic after successful upload with download link
+    if (result.success) {
+      await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+    }
   });
 }
 
@@ -548,6 +557,8 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
           if (result.success && result.message) {
             try {
               await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+              // Send Garfield comic after successful upload with download link
+              await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
             } catch (error) {
               console.error('Error sending final upload message:', error);
             }
@@ -583,11 +594,76 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
         if (result.success && result.message) {
           try {
             await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+            // Send Garfield comic after successful upload with download link
+            await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
           } catch (error) {
             console.error('Error sending final upload message:', error);
           }
         }
       });
     }
+  }
+}
+
+/**
+ * Gets a random Garfield comic (actually Heathcliff) from the configured comics directory
+ * @returns Promise<AttachmentBuilder | null> - Discord attachment for the comic image, or null if none found
+ */
+export async function getRandomGarfieldComic(): Promise<AttachmentBuilder | null> {
+  try {
+    const comicsPath = env.COMIC_IMAGE_PATH;
+    
+    // Check if directory exists
+    if (!fs.existsSync(comicsPath)) {
+      console.log(`Comics directory not found: ${comicsPath}`);
+      return null;
+    }
+    
+    // Read directory and filter for JPG files
+    const files = fs.readdirSync(comicsPath);
+    const jpgFiles = files.filter(file => 
+      file.toLowerCase().endsWith('.jpg') || file.toLowerCase().endsWith('.jpeg')
+    );
+    
+    if (jpgFiles.length === 0) {
+      console.log(`No JPG files found in comics directory: ${comicsPath}`);
+      return null;
+    }
+    
+    // Select random comic
+    const randomComic = jpgFiles[Math.floor(Math.random() * jpgFiles.length)];
+    const comicPath = path.join(comicsPath, randomComic);
+    
+    // Create Discord attachment
+    const attachment = new AttachmentBuilder(comicPath, { name: randomComic });
+    
+    return attachment;
+  } catch (error) {
+    console.error('Error getting random Garfield comic:', error);
+    return null;
+  }
+}
+
+/**
+ * Sends a random Garfield comic (actually Heathcliff) to a Discord channel
+ * @param channel - The Discord channel to send to
+ * @param userId - Optional user ID to mention
+ */
+export async function sendRandomGarfieldComic(channel: any, userId?: string): Promise<void> {
+  try {
+    const comic = await getRandomGarfieldComic();
+    
+    if (!comic) {
+      console.log('No Garfield comic available to send');
+      return;
+    }
+    
+    const mention = userId ? `<@${userId}> ` : '';
+    await channel.send({ 
+      content: `${mention}here's that garfield comic you asked for!`,
+      files: [comic]
+    });
+  } catch (error) {
+    console.error('Error sending Garfield comic:', error);
   }
 }

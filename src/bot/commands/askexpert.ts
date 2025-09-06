@@ -2,6 +2,7 @@ import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collecti
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
 import { buildPersonalityPrompt, Personality, personalities, formatExpertResponse } from '../personalities';
 import { searchBlueskyPosts, formatBlueskyPostsForPromptAnonymous } from '../../api/clients/bskyclient';
+import { sendRandomGarfieldComic } from '../utils';
 
 export const data = new SlashCommandBuilder()
     .setName('askexpert')
@@ -102,6 +103,9 @@ Question: ${question}`;
         const formattedResponse = formatExpertResponse(selectedExpert, question, response.response);
         
         await interaction.editReply({ content: formattedResponse });
+        
+        // Send Garfield comic after expert response
+        await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
 
     } catch (err) {
         const errorMessages: ErrorMessages = {

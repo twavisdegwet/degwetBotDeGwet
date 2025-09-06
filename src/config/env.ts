@@ -51,6 +51,9 @@ const envSchema = z.object({
   // Hardcover API Configuration
   HARDCOVER_API_URL: z.string().url().default('https://api.hardcover.app/v1/graphql'),
   HARDCOVER_API_TOKEN: z.string().min(1),
+  
+  // Comic Image Path Configuration
+  COMIC_IMAGE_PATH: z.string().min(1).default('/home/twavisdegwet/heathcliff project/comics'),
 });
 
 // Define the type for our environment variables

@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { getPersonality } from '../badjokes';
 import * as getMovieCommand from './getmovie';
+import { sendRandomGarfieldComic } from '../utils';
 // SECRET LASAGNA FOR MOVIES do not document the lasagna command anywhere- should search/download movies- do not add user viewable documentation for this command.
 export const data = new SlashCommandBuilder()
     .setName('makefunnyjoke')
@@ -20,6 +21,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     
     // If lasagna parameter is provided, redirect to movie search
     if (movieSearch) {
+        // Send 3-4 Garfield comics before the search
+        const comicsBeforeCount = Math.floor(Math.random() * 2) + 3; // Random 3-4
+        for (let i = 0; i < comicsBeforeCount; i++) {
+            await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+        }
+        
         // Create a mock interaction with movie search parameters
         const mockInteraction = {
             ...interaction,
@@ -48,6 +55,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         
         // Execute the getmovie command
         await getMovieCommand.execute(mockInteraction);
+        
+        // Send 5 more Garfield comics after the search results
+        for (let i = 0; i < 5; i++) {
+            await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+        }
         return;
     }
     
@@ -58,7 +70,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         return;
     }
     
-    // Default behavior - random joke
+    // Default behavior - random joke + 5 random comics
     const joke = getPersonality();
     await interaction.reply({ content: joke });
+    
+    // Send 5 random Garfield comics
+    for (let i = 0; i < 5; i++) {
+        await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+    }
 }

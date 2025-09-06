@@ -2,6 +2,7 @@ import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collecti
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
 import { buildPersonalityPrompt, Personality, personalities, getPersonalityFormatting } from '../personalities';
 import { fetchBlueskyPosts, searchBlueskyPosts, formatBlueskyPostsForPromptAnonymous } from '../../api/clients/bskyclient';
+import { sendRandomGarfieldComic } from '../utils';
 
 
 export const data = new SlashCommandBuilder()
@@ -188,6 +189,9 @@ Now, give us your editorial news wrap - what's your skewed take on today's key s
         for (let i = 1; i < messageParts.length; i++) {
             await interaction.followUp({ content: messageParts[i] });
         }
+        
+        // Send Garfield comic after all responses
+        await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
 
     } catch (err) {
         const errorMessages: ErrorMessages = {

@@ -5,6 +5,7 @@ import { env } from '../../config/env';
 import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from '../uploadUtils';
 import { getPersonality } from '../badjokes';
 import { isUserPlayingGame, createPresenceBlockedMessage } from '../presenceUtils';
+import { sendRandomGarfieldComic } from '../utils';
 
 const delugeClient = new DelugeClient(env.DELUGE_URL, env.DELUGE_PASSWORD);
 
@@ -121,6 +122,8 @@ export async function execute(interaction: CommandInteraction) {
         if (result.success && result.message) {
           try {
             await m.channel.send(`<@${m.author.id}> ${result.message}`);
+            // Send Garfield comic after successful upload with download link
+            await sendRandomGarfieldComic(m.channel, m.author.id);
           } catch (error) {
             console.error('Error sending final upload message:', error);
           }
