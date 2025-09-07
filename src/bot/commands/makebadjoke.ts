@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ChannelType, Collection, Message } from 'discord.js';
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
 import { buildPersonalityPrompt, Personality, personalities } from '../personalities';
+import { sendRandomGarfieldComic } from '../utils';
 
 export const data = new SlashCommandBuilder()
     .setName('makebadjoke')
