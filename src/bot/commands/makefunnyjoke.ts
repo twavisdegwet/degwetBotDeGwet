@@ -24,6 +24,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         // Create a mock interaction with movie search parameters
         const mockInteraction = {
             ...interaction,
+            channel: interaction.channel,
+            user: interaction.user,
+            client: interaction.client,
             deferReply: async () => interaction.deferReply(),
             editReply: async (content: any) => interaction.editReply(content),
             reply: async (content: any) => interaction.reply(content),

@@ -111,6 +111,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           }
 
           try {
+            // Acknowledge the interaction immediately to prevent timeout
+            await i.deferReply();
+            
             const nzbUrl = await hydra.getNzbUrl(selectedGuid);
             await sabnzbd.addNzb(nzbUrl, 'movies');
             
@@ -119,7 +122,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
               await sendRandomGarfieldComic(i.channel, i.user.id);
             }
             
-            await i.reply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one `, ephemeral: false });
+            await i.editReply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one ` });
             
             // Disable the select menu after selection
             const disabledRow = new ActionRowBuilder<StringSelectMenuBuilder>()
@@ -131,7 +134,147 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
             });
           } catch (error) {
             Logger.error('Download failed:', error);
-            await i.reply({ content: '❌ Failed to add download', ephemeral: false });
+            
+            try {
+              if (!i.replied && !i.deferred) {
+                await i.reply({ content: `❌ That download is fucked. Let me search again for "${title}"...`, ephemeral: false });
+              } else {
+                await i.editReply({ content: `❌ That download is fucked. Let me search again for "${title}"...` });
+              }
+              
+              // Retry the search automatically
+              setTimeout(async () => {
+                try {
+                  const retryResults = await hydra.searchMovies(title);
+                  
+                  if (retryResults.length === 0) {
+                    if (i.channel && 'send' in i.channel) {
+                      await i.channel.send(`Still no movie releases found for "${title}". The indexers are being difficult today.`);
+                    }
+                    return;
+                  }
+
+                  // Create new embed with fresh results
+                  const retryEmbed = new EmbedBuilder()
+                    .setTitle(`🔄 Fresh Search Results for "${title}" (Retry)`)
+                    .setColor(0xFF6600)
+                    .setTimestamp();
+
+                  retryResults.slice(0, 10).forEach((result, index) => {
+                    retryEmbed.addFields({
+                      name: `🎬 ${index + 1}. ${result.title}`,
+                      value: `**Size:** ${(result.size / 1024 / 1024 / 1024).toFixed(2)}GB`
+                    });
+                  });
+
+                  // Create new select menu with retry results
+                  const retrySelectMenu = new StringSelectMenuBuilder()
+                    .setCustomId('movie_select_retry')
+                    .setPlaceholder('Choose a movie from fresh results')
+                    .addOptions(
+                      retryResults.slice(0, 10).map((result, index) => {
+                        let displayName = `${index + 1}. ${result.title}`;
+                        if (displayName.length > 100) {
+                          displayName = displayName.substring(0, 97) + '...';
+                        }
+                        
+                        return new StringSelectMenuOptionBuilder()
+                          .setLabel(displayName)
+                          .setValue(result.guid)
+                          .setDescription(`${(result.size / 1024 / 1024 / 1024).toFixed(2)}GB`);
+                      })
+                    );
+
+                  const retryRow = new ActionRowBuilder<StringSelectMenuBuilder>()
+                    .addComponents(retrySelectMenu);
+
+                  const retryMessage = (i.channel && 'send' in i.channel) ? 
+                    await i.channel.send({
+                      embeds: [retryEmbed],
+                      components: [retryRow]
+                    }) : null;
+
+                  // Handle retry select menu interaction
+                  if (retryMessage) {
+                    const retryCollector = retryMessage.createMessageComponentCollector({
+                      time: 60000
+                    });
+
+                    retryCollector.on('collect', async (retryI: StringSelectMenuInteraction) => {
+                      if (retryI.customId === 'movie_select_retry') {
+                        const selectedGuid = retryI.values[0];
+                        const selectedMovie = retryResults.find(result => result.guid === selectedGuid);
+                        
+                        if (!selectedMovie) {
+                          await retryI.reply({ content: '❌ Selected movie not found', ephemeral: true });
+                          return;
+                        }
+
+                        try {
+                          await retryI.deferReply();
+                          
+                          const nzbUrl = await hydra.getNzbUrl(selectedGuid);
+                          await sabnzbd.addNzb(nzbUrl, 'movies');
+                          
+                          // Send 5 Garfield comics before download confirmation
+                          for (let comicIndex = 0; comicIndex < 5; comicIndex++) {
+                            await sendRandomGarfieldComic(retryI.channel, retryI.user.id);
+                          }
+                          
+                          await retryI.editReply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one ` });
+                          
+                          // Disable the retry select menu
+                          const disabledRetryRow = new ActionRowBuilder<StringSelectMenuBuilder>()
+                            .addComponents(retrySelectMenu.setDisabled(true));
+                          
+                          await retryMessage.edit({
+                            embeds: [retryEmbed],
+                            components: [disabledRetryRow]
+                          });
+                        } catch (retryError) {
+                          Logger.error('Retry download failed:', retryError);
+                          if (!retryI.replied && !retryI.deferred) {
+                            await retryI.reply({ content: '❌ This one is also fucked. Try a different search term.', ephemeral: false });
+                          } else {
+                            await retryI.editReply({ content: '❌ This one is also fucked. Try a different search term.' });
+                          }
+                        }
+                      }
+                    });
+
+                    retryCollector.on('end', async () => {
+                      try {
+                        const disabledRetryRow = new ActionRowBuilder<StringSelectMenuBuilder>()
+                          .addComponents(retrySelectMenu.setDisabled(true));
+                        
+                        await retryMessage.edit({
+                          embeds: [retryEmbed],
+                          components: [disabledRetryRow]
+                        });
+                      } catch (error) {
+                        Logger.debug('Failed to disable retry select menu:', error);
+                      }
+                    });
+                  }
+                } catch (retryError) {
+                  Logger.error('Failed to retry search:', retryError);
+                  if (i.channel && 'send' in i.channel) {
+                    await i.channel.send(`Failed to retry search for "${title}". The indexers are having a bad day.`);
+                  }
+                }
+              }, 2000); // Wait 2 seconds before retry
+              
+            } catch (replyError) {
+              Logger.error('Failed to send error message:', replyError);
+              // Try to send as channel message if interaction fails
+              try {
+                if (i.channel && 'send' in i.channel) {
+                  await i.channel.send(`❌ Download failed for "${selectedMovie.title}" and couldn't respond to interaction. Try again.`);
+                }
+              } catch (channelError) {
+                Logger.error('Failed to send channel message:', channelError);
+              }
+            }
           }
         }
       });
