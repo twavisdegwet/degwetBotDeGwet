@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, Message } from 'discord.js';
 import { getLibrarianResponse } from '../personalities/librarian';
 import { getPersonality } from '../badjokes';
+import { sendRandomGarfieldComic } from '../utils';
 
 export const data = new SlashCommandBuilder()
     .setName('asklibrarian')
@@ -25,6 +26,9 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
+
+    // Send Garfield comic while user waits for librarian consultation
+    await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'waiting');
 
     try {
         const query = interaction.options.getString('query', true);

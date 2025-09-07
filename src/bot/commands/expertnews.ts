@@ -65,6 +65,9 @@ function splitMessageAtSentence(text: string, maxLength: number = 1800): string[
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
+    // Send Garfield comic while user waits for expert news
+    await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'waiting');
+
     try {
         const expertChoice = interaction.options.getString('expert') || 'random';
         const topic = interaction.options.getString('topic');
@@ -191,7 +194,7 @@ Now, give us your editorial news wrap - what's your skewed take on today's key s
         }
         
         // Send Garfield comic after all responses
-        await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+        await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'completion');
 
     } catch (err) {
         const errorMessages: ErrorMessages = {

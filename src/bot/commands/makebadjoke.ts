@@ -19,6 +19,9 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
+    // Send Garfield comic while user waits for bad joke generation
+    await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'waiting');
+
     try {
         // Get personality (random if not specified)
         const personalityInput = interaction.options.getString('personality');
@@ -66,6 +69,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         
         // Reply with just the joke (no personality label)
         await interaction.editReply({ content: cleanedResponse });
+        
+        // Send completion Garfield comic after joke delivery
+        await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'completion');
     } catch (err) {
         const errorMessages: ErrorMessages = {
             timeout: 'Joke cooking timed out - my chef needs more burners!',

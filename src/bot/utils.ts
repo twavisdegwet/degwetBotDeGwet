@@ -8,6 +8,7 @@ import DelugeClientManager from '../api/clients/delugeClientManager';
 import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
 import { getPersonality } from './badjokes';
 import { isUserPlayingGame, createPresenceBlockedMessage } from './presenceUtils';
+import { getRandomWaitingMessage, getRandomCompletionMessage } from './garfieldMessages';
 import { env } from '../config/env';
 
 // Helper function to safely edit interaction replies
@@ -440,7 +441,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
               try {
                 await message.channel.send(`<@${message.author.id}> ${result.message}`);
                 // Send Garfield comic after successful upload with download link
-                await sendRandomGarfieldComic(message.channel, message.author.id);
+                await sendRandomGarfieldComic(message.channel, message.author.id, 'completion');
               } catch (error) {
                 console.error('Error sending final upload message:', error);
               }
@@ -502,7 +503,7 @@ export async function handleAutoUploadInteraction(interaction: any) {
     await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
     // Send Garfield comic after successful upload with download link
     if (result.success) {
-      await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+      await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'completion');
     }
   });
 }
@@ -558,7 +559,7 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
             try {
               await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
               // Send Garfield comic after successful upload with download link
-              await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+              await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'completion');
             } catch (error) {
               console.error('Error sending final upload message:', error);
             }
@@ -595,7 +596,7 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
           try {
             await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
             // Send Garfield comic after successful upload with download link
-            await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+            await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'completion');
           } catch (error) {
             console.error('Error sending final upload message:', error);
           }
@@ -648,8 +649,9 @@ export async function getRandomGarfieldComic(): Promise<AttachmentBuilder | null
  * Sends a random Garfield comic (actually Heathcliff) to a Discord channel
  * @param channel - The Discord channel to send to
  * @param userId - Optional user ID to mention
+ * @param messageType - Type of message: 'waiting' (while processing) or 'completion' (after done)
  */
-export async function sendRandomGarfieldComic(channel: any, userId?: string): Promise<void> {
+export async function sendRandomGarfieldComic(channel: any, userId?: string, messageType: 'waiting' | 'completion' = 'completion'): Promise<void> {
   try {
     const comic = await getRandomGarfieldComic();
     
@@ -659,8 +661,10 @@ export async function sendRandomGarfieldComic(channel: any, userId?: string): Pr
     }
     
     const mention = userId ? `<@${userId}> ` : '';
+    const message = messageType === 'waiting' ? getRandomWaitingMessage() : getRandomCompletionMessage();
+    
     await channel.send({ 
-      content: `${mention}here's that garfield comic you asked for!`,
+      content: `${mention}${message}`,
       files: [comic]
     });
   } catch (error) {

@@ -34,6 +34,9 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
+    // Send Garfield comic while user waits for expert consultation
+    await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'waiting');
+
     try {
         const question = interaction.options.getString('question', true);
         const expertChoice = interaction.options.getString('expert') || 'random';
@@ -105,7 +108,7 @@ Question: ${question}`;
         await interaction.editReply({ content: formattedResponse });
         
         // Send Garfield comic after expert response
-        await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+        await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'completion');
 
     } catch (err) {
         const errorMessages: ErrorMessages = {

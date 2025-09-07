@@ -117,7 +117,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
             
             // Send 5 Garfield comics as reading material
             for (let comicIndex = 0; comicIndex < 5; comicIndex++) {
-              await sendRandomGarfieldComic(i.channel, i.user.id);
+              await sendRandomGarfieldComic(i.channel, i.user.id, 'completion');
             }
             
             // Wait 2 seconds to ensure comics are displayed before success message
@@ -222,7 +222,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
                           
                           // Send 5 Garfield comics as reading material
                           for (let comicIndex = 0; comicIndex < 5; comicIndex++) {
-                            await sendRandomGarfieldComic(retryI.channel, retryI.user.id);
+                            await sendRandomGarfieldComic(retryI.channel, retryI.user.id, 'completion');
                           }
                           
                           // Wait 2 seconds to ensure comics are displayed before success message

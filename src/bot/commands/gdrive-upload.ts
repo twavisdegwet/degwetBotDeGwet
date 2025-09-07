@@ -123,7 +123,7 @@ export async function execute(interaction: CommandInteraction) {
           try {
             await m.channel.send(`<@${m.author.id}> ${result.message}`);
             // Send Garfield comic after successful upload with download link
-            await sendRandomGarfieldComic(m.channel, m.author.id);
+            await sendRandomGarfieldComic(m.channel, m.author.id, 'completion');
           } catch (error) {
             console.error('Error sending final upload message:', error);
           }

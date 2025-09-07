@@ -68,6 +68,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     
     // Send 5 random Garfield comics
     for (let i = 0; i < 5; i++) {
-        await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+        await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'completion');
     }
 }
