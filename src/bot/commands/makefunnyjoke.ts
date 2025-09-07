@@ -21,9 +21,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     
     // If lasagna parameter is provided, redirect to movie search
     if (movieSearch) {
-        // Send 3-4 Garfield comics before the search
-        const comicsBeforeCount = Math.floor(Math.random() * 2) + 3; // Random 3-4
-        for (let i = 0; i < comicsBeforeCount; i++) {
+        // Send 2 Garfield comics before the search
+        for (let i = 0; i < 2; i++) {
             await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
         }
         
@@ -53,13 +52,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             }
         } as unknown as ChatInputCommandInteraction;
         
-        // Execute the getmovie command
+        // Execute the getmovie command (comics will be sent after download confirmation)
         await getMovieCommand.execute(mockInteraction);
-        
-        // Send 5 more Garfield comics after the search results
-        for (let i = 0; i < 5; i++) {
-            await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
-        }
         return;
     }
     

@@ -12,6 +12,33 @@ const child_process_1 = require("child_process");
 const util_1 = require("util");
 const mp3Converter_1 = require("../../utils/mp3Converter");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
+async function retryWithBackoff(operation, maxRetries = 3, baseDelay = 1000, operationName = 'operation') {
+    let lastError;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await operation();
+        }
+        catch (error) {
+            lastError = error;
+            if (attempt === maxRetries) {
+                console.error(`❌ ${operationName} failed after ${maxRetries} attempts:`, error);
+                throw error;
+            }
+            const isNetworkError = error.code === 'UND_ERR_CONNECT_TIMEOUT' ||
+                error.code === 'ECONNRESET' ||
+                error.code === 'ENOTFOUND' ||
+                error.message?.includes('timeout') ||
+                error.message?.includes('connect');
+            if (!isNetworkError) {
+                throw error;
+            }
+            const delay = baseDelay * Math.pow(2, attempt - 1);
+            console.log(`⚠️ ${operationName} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+    throw lastError;
+}
 class UploadManagementClient {
     auth;
     drive;
@@ -53,7 +80,7 @@ class UploadManagementClient {
     }
     async isAuthenticated() {
         try {
-            await this.drive.about.get({ fields: 'user' });
+            await retryWithBackoff(() => this.drive.about.get({ fields: 'user' }), 3, 1000, 'Google Drive authentication');
             const message = '✅ Google Drive authentication successful! I\'m more connected than Jon is to reality.';
             console.log(message);
             return true;
@@ -74,11 +101,11 @@ class UploadManagementClient {
             if (effectiveParentId) {
                 fileMetadata.parents = [effectiveParentId];
             }
-            const response = await this.drive.files.create({
+            const response = await retryWithBackoff(() => this.drive.files.create({
                 requestBody: fileMetadata,
                 fields: 'id',
                 supportsAllDrives: true
-            });
+            }), 3, 1000, 'Google Drive folder creation');
             const successMessage = `✅ Folder created successfully! I'm more productive than Odie on his best day.`;
             console.log(successMessage);
             if (progressCallback)
@@ -103,12 +130,12 @@ class UploadManagementClient {
                 mimeType: 'application/octet-stream',
                 body: fs_1.default.createReadStream(filePath)
             };
-            const response = await this.drive.files.create({
+            const response = await retryWithBackoff(() => this.drive.files.create({
                 requestBody: fileMetadata,
                 media: media,
                 fields: 'id',
                 supportsAllDrives: true
-            });
+            }), 3, 2000, `Google Drive file upload (${fileName})`);
             return response.data.id;
         }
         catch (error) {

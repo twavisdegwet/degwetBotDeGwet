@@ -8,6 +8,49 @@ import { convertMp3ToM4b, hasMP3Files } from '../../utils/mp3Converter';
 
 const execAsync = promisify(exec);
 
+/**
+ * Retry wrapper for network operations with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000,
+  operationName: string = 'operation'
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      
+      if (attempt === maxRetries) {
+        console.error(`❌ ${operationName} failed after ${maxRetries} attempts:`, error);
+        throw error;
+      }
+      
+      // Check if it's a network timeout/connection error
+      const isNetworkError = error.code === 'UND_ERR_CONNECT_TIMEOUT' ||
+                           error.code === 'ECONNRESET' ||
+                           error.code === 'ENOTFOUND' ||
+                           error.message?.includes('timeout') ||
+                           error.message?.includes('connect');
+      
+      if (!isNetworkError) {
+        // If it's not a network error, don't retry
+        throw error;
+      }
+      
+      const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+      console.log(`⚠️ ${operationName} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError!;
+}
+
 export interface TorrentObject {
   id: string;
   name: string;
@@ -87,7 +130,12 @@ export class UploadManagementClient {
    */
   async isAuthenticated(): Promise<boolean> {
     try {
-      await this.drive.about.get({ fields: 'user' });
+      await retryWithBackoff(
+        () => this.drive.about.get({ fields: 'user' }),
+        3,
+        1000,
+        'Google Drive authentication'
+      );
       const message = '✅ Google Drive authentication successful! I\'m more connected than Jon is to reality.';
       console.log(message);
       return true;
@@ -115,11 +163,16 @@ export class UploadManagementClient {
         fileMetadata.parents = [effectiveParentId];
       }
 
-      const response = await this.drive.files.create({
-        requestBody: fileMetadata,
-        fields: 'id',
-        supportsAllDrives: true
-      });
+      const response = await retryWithBackoff(
+        () => this.drive.files.create({
+          requestBody: fileMetadata,
+          fields: 'id',
+          supportsAllDrives: true
+        }),
+        3,
+        1000,
+        'Google Drive folder creation'
+      );
 
       const successMessage = `✅ Folder created successfully! I'm more productive than Odie on his best day.`;
       console.log(successMessage);
@@ -151,12 +204,17 @@ export class UploadManagementClient {
         body: fs.createReadStream(filePath)
       };
 
-      const response = await this.drive.files.create({
-        requestBody: fileMetadata,
-        media: media,
-        fields: 'id',
-        supportsAllDrives: true
-      });
+      const response = await retryWithBackoff(
+        () => this.drive.files.create({
+          requestBody: fileMetadata,
+          media: media,
+          fields: 'id',
+          supportsAllDrives: true
+        }),
+        3,
+        2000, // Longer delay for file uploads
+        `Google Drive file upload (${fileName})`
+      );
 
       return response.data.id!;
     } catch (error) {

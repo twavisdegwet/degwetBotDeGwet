@@ -4,6 +4,52 @@ import { env } from '../config/env';
 import { analyzeContentType, formatFileSize } from './utils';
 import { getRandomUploadJoke, getRandomConversionJoke } from './badjokes';
 
+/**
+ * Retry wrapper for upload operations with exponential backoff
+ */
+async function retryUploadOperation<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 2000,
+  operationName: string = 'upload operation'
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      
+      if (attempt === maxRetries) {
+        console.error(`❌ ${operationName} failed after ${maxRetries} attempts:`, error);
+        throw error;
+      }
+      
+      // Check if it's a network timeout/connection error that should be retried
+      const isRetryableError = error.code === 'UND_ERR_CONNECT_TIMEOUT' ||
+                              error.code === 'ECONNRESET' ||
+                              error.code === 'ENOTFOUND' ||
+                              error.message?.includes('timeout') ||
+                              error.message?.includes('connect') ||
+                              error.message?.includes('Authentication check failed') ||
+                              error.message?.includes('Failed to create folder') ||
+                              error.message?.includes('Failed to upload file');
+      
+      if (!isRetryableError) {
+        // If it's not a retryable error (like "torrent not found"), don't retry
+        throw error;
+      }
+      
+      const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+      console.log(`⚠️ ${operationName} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms... Error: ${error.message}`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError!;
+}
+
 export interface UploadResult {
   success: boolean;
   message: string;
@@ -21,7 +67,12 @@ export async function uploadTorrentToGDrive(
   convert: boolean = false,
   progressTarget?: any
 ): Promise<UploadResult> {
-  return await uploadTorrentWithProgress(torrentId, convert, progressTarget);
+  return await retryUploadOperation(
+    () => uploadTorrentWithProgress(torrentId, convert, progressTarget),
+    3,
+    2000,
+    `Upload torrent ${torrentId}`
+  );
 }
 
 /**
