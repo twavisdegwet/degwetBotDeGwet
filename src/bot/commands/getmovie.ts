@@ -122,6 +122,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
               await sendRandomGarfieldComic(i.channel, i.user.id);
             }
             
+            // Small delay to ensure comics are sent before success message
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
             await i.editReply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one ` });
             
             // Disable the select menu after selection
@@ -220,6 +223,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
                           for (let comicIndex = 0; comicIndex < 5; comicIndex++) {
                             await sendRandomGarfieldComic(retryI.channel, retryI.user.id);
                           }
+                          
+                          // Small delay to ensure comics are sent before success message
+                          await new Promise(resolve => setTimeout(resolve, 500));
                           
                           await retryI.editReply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one ` });
                           
