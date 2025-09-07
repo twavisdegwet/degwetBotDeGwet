@@ -89,11 +89,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         components: [row]
       });
 
-      // Send 2 Garfield comics after search results are displayed
-      for (let i = 0; i < 2; i++) {
-        await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
-      }
-
       // Handle select menu interaction
       const collector = message.createMessageComponentCollector({
         time: 60000 // Increased time to 1 minute
@@ -114,16 +109,19 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
             // Acknowledge the interaction immediately to prevent timeout
             await i.deferReply();
             
+            // Show attempting message first
+            await i.editReply({ content: `🔄 Attempting to add "${selectedMovie.title}" to download list. Here's some reading material while I get that cooking...` });
+            
             const nzbUrl = await hydra.getNzbUrl(selectedGuid);
             await sabnzbd.addNzb(nzbUrl, 'movies');
             
-            // Send 5 Garfield comics before download confirmation message
+            // Send 5 Garfield comics as reading material
             for (let comicIndex = 0; comicIndex < 5; comicIndex++) {
               await sendRandomGarfieldComic(i.channel, i.user.id);
             }
             
-            // Small delay to ensure comics are sent before success message
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Wait 2 seconds to ensure comics are displayed before success message
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
             await i.editReply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one ` });
             
@@ -216,16 +214,19 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
                         try {
                           await retryI.deferReply();
                           
+                          // Show attempting message first
+                          await retryI.editReply({ content: `🔄 Attempting to add "${selectedMovie.title}" to download list. Here's some reading material while I get that cooking...` });
+                          
                           const nzbUrl = await hydra.getNzbUrl(selectedGuid);
                           await sabnzbd.addNzb(nzbUrl, 'movies');
                           
-                          // Send 5 Garfield comics before download confirmation
+                          // Send 5 Garfield comics as reading material
                           for (let comicIndex = 0; comicIndex < 5; comicIndex++) {
                             await sendRandomGarfieldComic(retryI.channel, retryI.user.id);
                           }
                           
-                          // Small delay to ensure comics are sent before success message
-                          await new Promise(resolve => setTimeout(resolve, 500));
+                          // Wait 2 seconds to ensure comics are displayed before success message
+                          await new Promise(resolve => setTimeout(resolve, 2000));
                           
                           await retryI.editReply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one ` });
                           
