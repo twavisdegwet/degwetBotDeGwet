@@ -21,11 +21,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     
     // If lasagna parameter is provided, redirect to movie search
     if (movieSearch) {
-        // Send 2 Garfield comics before the search
-        for (let i = 0; i < 2; i++) {
-            await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
-        }
-        
         // Create a mock interaction with movie search parameters
         const mockInteraction = {
             ...interaction,

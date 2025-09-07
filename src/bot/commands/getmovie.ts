@@ -89,6 +89,11 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         components: [row]
       });
 
+      // Send 2 Garfield comics after search results are displayed
+      for (let i = 0; i < 2; i++) {
+        await sendRandomGarfieldComic(interaction.channel, interaction.user.id);
+      }
+
       // Handle select menu interaction
       const collector = message.createMessageComponentCollector({
         time: 60000 // Increased time to 1 minute
@@ -108,12 +113,13 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           try {
             const nzbUrl = await hydra.getNzbUrl(selectedGuid);
             await sabnzbd.addNzb(nzbUrl, 'movies');
-            await i.reply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one `, ephemeral: false });
             
-            // Send 5 Garfield comics after successful download confirmation
+            // Send 5 Garfield comics before download confirmation message
             for (let comicIndex = 0; comicIndex < 5; comicIndex++) {
               await sendRandomGarfieldComic(i.channel, i.user.id);
             }
+            
+            await i.reply({ content: `✅ Added "${selectedMovie.title}" to download list. There's no tracking on this- if it isn't in "the folder" in like 30 minutes then it probably failed and you should get a new one `, ephemeral: false });
             
             // Disable the select menu after selection
             const disabledRow = new ActionRowBuilder<StringSelectMenuBuilder>()
