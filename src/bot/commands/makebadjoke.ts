@@ -65,8 +65,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         console.log('Ollama response received, processing joke...');
 
+        // Filter out think tags and their content
+        let filteredResponse = jokeResponse.response.replace(/<think>[\s\S]*?<\/think>/g, '');
         // Filter out excessive whitespace - replace double+ newlines with single newlines
-        const cleanedResponse = jokeResponse.response.replace(/\n\n+/g, '\n');
+        const cleanedResponse = filteredResponse.replace(/\n\n+/g, '\n');
         
         // Reply with just the joke (no personality label)
         await interaction.editReply({ content: cleanedResponse });

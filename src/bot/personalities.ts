@@ -31,7 +31,9 @@ export function getPersonalityFormatting(personality: Personality): PersonalityF
 export function formatExpertResponse(personality: Personality, question: string, response: string): string {
   const { emoji, name } = getPersonalityFormatting(personality);
   // Filter out command execution complete message if it exists
-  const filteredResponse = response.replace(/\[COMMAND EXECUTION COMPLETE\]/g, '');
+  let filteredResponse = response.replace(/\[COMMAND EXECUTION COMPLETE\]/g, '');
+  // Filter out think tags and their content
+  filteredResponse = filteredResponse.replace(/<think>[\s\S]*?<\/think>/g, '');
   // Filter out excessive whitespace - replace double+ newlines with single newlines
   const cleanedResponse = filteredResponse.replace(/\n\n+/g, '\n');
   let formattedResponse = `**Question:** ${question}\n**${emoji} ${name}'s Response:**\n${cleanedResponse}`;
