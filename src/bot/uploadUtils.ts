@@ -206,7 +206,7 @@ async function uploadTorrentWithProgress(
 }
 
 /**
- * Check if torrent has MP3 files and create conversion prompt
+ * Check if torrent has MP3 files and create conversion prompt with auto-convert on timeout
  */
 export async function checkForMp3AndPrompt(
   torrentId: string,
@@ -223,11 +223,11 @@ export async function checkForMp3AndPrompt(
       const lowerFile = file.toLowerCase();
       return lowerFile.endsWith('.mp3') && !lowerFile.endsWith('.m4b');
     });
-    
+
     if (hasMp3Files) {
       // Create a dedicated status message that will be updated
       const statusMessage = await replyTarget.channel.send('🔄 Checking files...');
-      
+
       const promptMessage = {
         content: getRandomConversionJoke(),
         components: [
@@ -255,11 +255,50 @@ export async function checkForMp3AndPrompt(
 
       // Edit the status message with the actual prompt
       await statusMessage.edit(promptMessage);
-      return true;
-      
+
+      // Create a collector to wait for button interaction with 60 second timeout
+      const filter = (i: any) => {
+        return (i.customId === `${actionPrefix}:convert:${torrentId}` ||
+                i.customId === `${actionPrefix}:no-convert:${torrentId}`);
+      };
+
+      const collector = statusMessage.createMessageComponentCollector({
+        filter,
+        time: 60000, // 60 seconds timeout
+        max: 1
+      });
+
+      collector.on('end', async (collected: any, reason: string) => {
+        if (reason === 'time') {
+          // Timeout occurred - default to conversion
+          console.log(`M4B conversion prompt timed out for torrent ${torrentId}, defaulting to conversion`);
+
+          try {
+            // Remove the buttons
+            await statusMessage.edit({
+              content: '⏰ **Conversion prompt timed out - defaulting to M4B conversion**\n\n🎵 Starting MP3 to M4B conversion... This will take about 30 minutes.',
+              components: []
+            });
+
+            // Trigger the upload with conversion enabled
+            const result = await uploadTorrentToGDrive(torrentId, true, replyTarget);
+
+            // Send completion message
+            const userId = replyTarget.user?.id || replyTarget.author?.id;
+            if (userId && result.message) {
+              await replyTarget.channel?.send(`<@${userId}> ${result.message}`);
+            }
+          } catch (error) {
+            console.error('Error handling timeout conversion:', error);
+            const userId = replyTarget.user?.id || replyTarget.author?.id;
+            await replyTarget.channel?.send(`<@${userId}> ❌ Error starting conversion after timeout: ${error}`);
+          }
+        }
+      });
+
       return true; // MP3s found, user prompted
     }
-    
+
     return false; // No MP3s found
   } catch (error) {
     console.error('Error checking for MP3 files:', error);
