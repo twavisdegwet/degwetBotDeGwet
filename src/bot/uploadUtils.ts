@@ -268,7 +268,7 @@ export async function checkForMp3AndPrompt(
         max: 1
       });
 
-      collector.on('end', async (collected: any, reason: string) => {
+      collector.on('end', async (_collected: any, reason: string) => {
         if (reason === 'time') {
           // Timeout occurred - default to conversion
           console.log(`M4B conversion prompt timed out for torrent ${torrentId}, defaulting to conversion`);
