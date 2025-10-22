@@ -11,6 +11,7 @@ const path_1 = __importDefault(require("path"));
 const child_process_1 = require("child_process");
 const util_1 = require("util");
 const mp3Converter_1 = require("../../utils/mp3Converter");
+const ebookConverter_1 = require("../../utils/ebookConverter");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 async function retryWithBackoff(operation, maxRetries = 3, baseDelay = 1000, operationName = 'operation') {
     let lastError;
@@ -242,6 +243,50 @@ class UploadManagementClient {
             return null;
         }
     }
+    async convertEbooksImproved(tempDir, torrentName) {
+        try {
+            const ebookCheck = await (0, ebookConverter_1.hasConvertibleEbooks)(tempDir);
+            if (!ebookCheck.hasConvertible) {
+                console.log(`📚 No ebook conversion needed: ${ebookCheck.reason}`);
+                return [];
+            }
+            console.log(`📚 Converting ebooks to EPUB + MOBI... This is more work than I usually do in a week!`);
+            console.log(`Found ${ebookCheck.files.length} file(s) to convert: ${ebookCheck.reason}`);
+            const metadata = this.extractMetadataFromName(torrentName);
+            console.log('📖 Extracted metadata for ebook conversion:', metadata);
+            const convertedFiles = [];
+            for (const sourceFile of ebookCheck.files) {
+                const result = await (0, ebookConverter_1.convertEbook)(sourceFile, {
+                    title: metadata.title,
+                    author: metadata.author,
+                    autoApprove: true
+                });
+                if (result.success) {
+                    const durationSeconds = Math.round((result.duration || 0) / 1000);
+                    console.log(`✅ Ebook conversion successful! Took ${durationSeconds} seconds.`);
+                    if (result.epubPath) {
+                        convertedFiles.push(result.epubPath);
+                        console.log(`  📗 EPUB: ${path_1.default.basename(result.epubPath)}`);
+                    }
+                    if (result.mobiPath) {
+                        convertedFiles.push(result.mobiPath);
+                        console.log(`  📘 MOBI: ${path_1.default.basename(result.mobiPath)}`);
+                    }
+                }
+                else {
+                    console.error(`❌ Ebook conversion failed: ${result.error}`);
+                }
+            }
+            if (convertedFiles.length > 0) {
+                console.log(`✅ Ebook conversion completed! Created ${convertedFiles.length} file(s).`);
+            }
+            return convertedFiles;
+        }
+        catch (error) {
+            console.error('❌ Error in ebook conversion:', error);
+            return [];
+        }
+    }
     analyzeContentType(files) {
         const audioExtensions = ['.mp3', '.m4a', '.m4b', '.flac', '.wav', '.aac'];
         const ebookExtensions = ['.epub', '.mobi', '.azw3', '.azw', '.pdf', '.txt', '.fb2'];
@@ -360,6 +405,20 @@ class UploadManagementClient {
                     filesToUpload = copiedFiles.filter(file => !file.endsWith('.mp3'));
                     filesToUpload.push(m4bFile);
                     convertedFile = path_1.default.basename(m4bFile);
+                }
+            }
+            if (options.convertEbooks) {
+                const ebookConversionMessage = 'Converting ebooks to EPUB + MOBI formats...';
+                console.log(ebookConversionMessage);
+                if (progressCallback)
+                    progressCallback(ebookConversionMessage);
+                const convertedEbookFiles = await this.convertEbooksImproved(tempSessionDir, torrentObject.name);
+                if (convertedEbookFiles.length > 0) {
+                    const pdfFiles = copiedFiles.filter(file => file.toLowerCase().endsWith('.pdf'));
+                    if (pdfFiles.length > 0) {
+                        filesToUpload = filesToUpload.filter(file => !file.toLowerCase().endsWith('.pdf'));
+                    }
+                    filesToUpload.push(...convertedEbookFiles);
                 }
             }
             const uploadStartMessage = `📤 Uploading ${filesToUpload.length} files to Google Drive...`;

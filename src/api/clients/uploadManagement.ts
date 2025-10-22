@@ -5,6 +5,7 @@ import path from 'path';
 import { exec, execSync } from 'child_process';
 import { promisify } from 'util';
 import { convertMp3ToM4b, hasMP3Files } from '../../utils/mp3Converter';
+import { convertEbook, hasConvertibleEbooks } from '../../utils/ebookConverter';
 
 const execAsync = promisify(exec);
 
@@ -63,6 +64,7 @@ export interface TorrentObject {
 
 export interface UploadOptions {
   convertMp3ToM4b?: boolean;
+  convertEbooks?: boolean;
   parentFolderId?: string;
   createSubfolder?: boolean;
   progressCallback?: (message: string) => void;
@@ -362,6 +364,63 @@ export class UploadManagementClient {
   }
 
   /**
+   * Convert ebooks to EPUB and MOBI formats
+   */
+  private async convertEbooksImproved(tempDir: string, torrentName: string): Promise<string[]> {
+    try {
+      // Check if directory has convertible ebooks
+      const ebookCheck = await hasConvertibleEbooks(tempDir);
+      if (!ebookCheck.hasConvertible) {
+        console.log(`📚 No ebook conversion needed: ${ebookCheck.reason}`);
+        return [];
+      }
+
+      console.log(`📚 Converting ebooks to EPUB + MOBI... This is more work than I usually do in a week!`);
+      console.log(`Found ${ebookCheck.files.length} file(s) to convert: ${ebookCheck.reason}`);
+
+      // Extract metadata from torrent name
+      const metadata = this.extractMetadataFromName(torrentName);
+      console.log('📖 Extracted metadata for ebook conversion:', metadata);
+
+      const convertedFiles: string[] = [];
+
+      // Convert each ebook file
+      for (const sourceFile of ebookCheck.files) {
+        const result = await convertEbook(sourceFile, {
+          title: metadata.title,
+          author: metadata.author,
+          autoApprove: true
+        });
+
+        if (result.success) {
+          const durationSeconds = Math.round((result.duration || 0) / 1000);
+          console.log(`✅ Ebook conversion successful! Took ${durationSeconds} seconds.`);
+
+          if (result.epubPath) {
+            convertedFiles.push(result.epubPath);
+            console.log(`  📗 EPUB: ${path.basename(result.epubPath)}`);
+          }
+          if (result.mobiPath) {
+            convertedFiles.push(result.mobiPath);
+            console.log(`  📘 MOBI: ${path.basename(result.mobiPath)}`);
+          }
+        } else {
+          console.error(`❌ Ebook conversion failed: ${result.error}`);
+        }
+      }
+
+      if (convertedFiles.length > 0) {
+        console.log(`✅ Ebook conversion completed! Created ${convertedFiles.length} file(s).`);
+      }
+
+      return convertedFiles;
+    } catch (error) {
+      console.error('❌ Error in ebook conversion:', error);
+      return [];
+    }
+  }
+
+  /**
    * Analyze content type based on file extensions
    */
   private analyzeContentType(files: Array<{path: string, size: number}>): ContentTypeAnalysis {
@@ -519,12 +578,33 @@ export class UploadManagementClient {
         console.log(conversionStartMessage);
         if (progressCallback) progressCallback(conversionStartMessage);
         const m4bFile = await this.convertMp3ToM4bImproved(tempSessionDir, torrentObject.name);
-        
+
         if (m4bFile) {
           // Upload only the M4B file instead of individual MP3s
           filesToUpload = copiedFiles.filter(file => !file.endsWith('.mp3'));
           filesToUpload.push(m4bFile);
           convertedFile = path.basename(m4bFile);
+        }
+      }
+
+      // Check if we should convert ebooks
+      if (options.convertEbooks) {
+        const ebookConversionMessage = 'Converting ebooks to EPUB + MOBI formats...';
+        console.log(ebookConversionMessage);
+        if (progressCallback) progressCallback(ebookConversionMessage);
+
+        const convertedEbookFiles = await this.convertEbooksImproved(tempSessionDir, torrentObject.name);
+
+        if (convertedEbookFiles.length > 0) {
+          // Add converted ebooks to the upload list
+          // Remove source PDFs if they were converted
+          const pdfFiles = copiedFiles.filter(file => file.toLowerCase().endsWith('.pdf'));
+          if (pdfFiles.length > 0) {
+            filesToUpload = filesToUpload.filter(file => !file.toLowerCase().endsWith('.pdf'));
+          }
+
+          // Add all converted ebook files
+          filesToUpload.push(...convertedEbookFiles);
         }
       }
 

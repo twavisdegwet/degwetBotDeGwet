@@ -29,6 +29,8 @@ A comprehensive Discord bot that integrates with MyAnonaMouse (MAM) private trac
 - Deluge torrent client with Web UI enabled
 - Google Drive API service account (for cloud uploads)
 - Discord bot token and server permissions
+- FFmpeg (for MP3→M4B audiobook conversion)
+- Calibre (for ebook format conversion - PDF/EPUB/MOBI)
 
 ### Installation
 
@@ -73,7 +75,8 @@ GOOGLE_DRIVE_SHARED_DRIVE_ID=your_shared_drive_id
 
 Place these files in the `samplefiles/` directory:
 - `discord-468217-313c7eccba67.json` - Google Drive service account credentials
-- `mp3tom4b.sh` - MP3 to M4B conversion script
+- `mp3tom4b.sh` - MP3 to M4B conversion script (requires FFmpeg)
+- `ebookconvert.sh` - Ebook format conversion script (requires Calibre)
 
 ### Running
 
@@ -170,10 +173,10 @@ When a torrent already exists in Deluge:
 ### Content Organization
 Files are automatically organized in Google Drive:
 - `[Audiobook] Author - Title` - For audio content
-- `[E-book] Author - Title` - For text content  
+- `[E-book] Author - Title` - For text content
 - `[Mixed Media] Author - Title` - For combined content
 
-## 🎵 MP3 to M4B Conversion
+## 🎵 MP3 to M4B Conversion (Audiobooks)
 
 ### Automatic Detection
 The bot automatically detects audiobooks with MP3 files and offers conversion:
@@ -190,6 +193,37 @@ The bot automatically detects audiobooks with MP3 files and offers conversion:
 - **Quality Preservation**: Lossless conversion process
 - **Progress Tracking**: Shows conversion progress and estimated time
 - **Error Handling**: Graceful fallback if conversion fails
+
+## 📚 Ebook Format Conversion
+
+### Automatic Detection
+The bot automatically detects ebooks that could benefit from conversion:
+- **PDF files** → Converts to both EPUB and MOBI
+- **EPUB only** → Generates MOBI version
+- **MOBI only** → Generates EPUB version
+
+### Conversion Process
+1. **Detection**: Scans for convertible ebook formats in completed torrents
+2. **User Choice**: Prompts with interactive buttons for conversion preference
+3. **Processing**: Uses Calibre's `ebook-convert` for high-quality conversion
+4. **Metadata**: Preserves and enhances metadata (title, author, cover)
+5. **Upload**: Uploads both EPUB and MOBI versions to Google Drive
+
+### Conversion Features
+- **Format Support**: PDF, EPUB, and MOBI input formats
+- **Dual Output**: Always creates both EPUB + MOBI for maximum compatibility
+- **Metadata Preservation**: Maintains title, author, and cover information
+- **Quality Conversion**: Uses Calibre's industry-standard conversion engine
+- **Auto-timeout**: Defaults to conversion after 60 seconds if no response
+
+### Installation
+```bash
+# Fedora
+sudo dnf install calibre
+
+# Ubuntu/Debian
+sudo apt install calibre
+```
 
 ## 🛠️ API Endpoints
 
@@ -340,7 +374,13 @@ Ensure Deluge Web UI is accessible and configured with:
 
 **MP3 Conversion Fails:**
 - Verify `mp3tom4b.sh` script exists and is executable
-- Check ffmpeg installation
+- Check FFmpeg installation (`ffmpeg --version`)
+- Ensure sufficient disk space for conversion
+
+**Ebook Conversion Fails:**
+- Verify Calibre is installed (`ebook-convert --version`)
+- Installation: `dnf install calibre` (Fedora) or `apt install calibre` (Ubuntu)
+- Check `ebookconvert.sh` script exists and is executable
 - Ensure sufficient disk space for conversion
 
 ### Debug Commands

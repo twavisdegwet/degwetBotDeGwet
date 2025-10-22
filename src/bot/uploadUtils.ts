@@ -307,15 +307,132 @@ export async function checkForMp3AndPrompt(
 }
 
 /**
+ * Check if torrent has convertible ebooks and create conversion prompt with auto-convert on timeout
+ */
+export async function checkForEbooksAndPrompt(
+  torrentId: string,
+  replyTarget: any,
+  actionPrefix: string = 'upload'
+): Promise<boolean> {
+  try {
+    const clientManager = DelugeClientManager.getInstance();
+    const delugeClient = await clientManager.getClient();
+    const downloadManager = new DownloadManager(delugeClient);
+    const files = await downloadManager.getTorrentFiles(torrentId);
+    const analysis = analyzeContentType(files);
+
+    // Check for convertible ebooks (PDF, or missing EPUB/MOBI)
+    const hasPdf = analysis.ebookFiles.some(file => file.toLowerCase().endsWith('.pdf'));
+    const hasEpub = analysis.ebookFiles.some(file => file.toLowerCase().endsWith('.epub'));
+    const hasMobi = analysis.ebookFiles.some(file => file.toLowerCase().endsWith('.mobi'));
+
+    // Determine if conversion would be beneficial
+    const shouldConvert = hasPdf || (hasEpub && !hasMobi) || (!hasEpub && hasMobi);
+
+    if (shouldConvert && analysis.ebookFiles.length > 0) {
+      // Create a dedicated status message that will be updated
+      const statusMessage = await replyTarget.channel.send('🔄 Checking ebook files...');
+
+      let promptContent = '📚 Found ebook files that could be converted!\n\n';
+      if (hasPdf) {
+        promptContent += '• PDF file(s) detected - can convert to EPUB + MOBI\n';
+      }
+      if (hasEpub && !hasMobi) {
+        promptContent += '• EPUB file(s) found but no MOBI - can generate MOBI version\n';
+      }
+      if (hasMobi && !hasEpub) {
+        promptContent += '• MOBI file(s) found but no EPUB - can generate EPUB version\n';
+      }
+      promptContent += '\nWould you like to convert to both EPUB and MOBI formats?';
+
+      const promptMessage = {
+        content: promptContent,
+        components: [
+          {
+            type: 1,
+            components: [
+              {
+                type: 2,
+                style: 1,
+                label: '📚 Convert to EPUB + MOBI',
+                custom_id: `${actionPrefix}:convert-ebook:${torrentId}`,
+                emoji: { name: '📚' }
+              },
+              {
+                type: 2,
+                style: 2,
+                label: '📁 Upload As-Is',
+                custom_id: `${actionPrefix}:no-convert-ebook:${torrentId}`,
+                emoji: { name: '📁' }
+              }
+            ]
+          }
+        ]
+      };
+
+      // Edit the status message with the actual prompt
+      await statusMessage.edit(promptMessage);
+
+      // Create a collector to wait for button interaction with 60 second timeout
+      const filter = (i: any) => {
+        return (i.customId === `${actionPrefix}:convert-ebook:${torrentId}` ||
+                i.customId === `${actionPrefix}:no-convert-ebook:${torrentId}`);
+      };
+
+      const collector = statusMessage.createMessageComponentCollector({
+        filter,
+        time: 60000, // 60 seconds timeout
+        max: 1
+      });
+
+      collector.on('end', async (_collected: any, reason: string) => {
+        if (reason === 'time') {
+          // Timeout occurred - default to conversion
+          console.log(`Ebook conversion prompt timed out for torrent ${torrentId}, defaulting to conversion`);
+
+          try {
+            // Remove the buttons
+            await statusMessage.edit({
+              content: '⏰ **Conversion prompt timed out - defaulting to ebook conversion**\n\n📚 Starting ebook conversion to EPUB + MOBI... This may take a few minutes.',
+              components: []
+            });
+
+            // Trigger the upload with ebook conversion enabled
+            const result = await uploadTorrentToGDrive(torrentId, false, replyTarget);
+
+            // Send completion message
+            const userId = replyTarget.user?.id || replyTarget.author?.id;
+            if (userId && result.message) {
+              await replyTarget.channel?.send(`<@${userId}> ${result.message}`);
+            }
+          } catch (error) {
+            console.error('Error handling timeout ebook conversion:', error);
+            const userId = replyTarget.user?.id || replyTarget.author?.id;
+            await replyTarget.channel?.send(`<@${userId}> ❌ Error starting ebook conversion after timeout: ${error}`);
+          }
+        }
+      });
+
+      return true; // Convertible ebooks found, user prompted
+    }
+
+    return false; // No convertible ebooks found
+  } catch (error) {
+    console.error('Error checking for convertible ebooks:', error);
+    return false;
+  }
+}
+
+/**
  * Create a status message for upload operations
  */
 export function createUploadStatusMessage(torrentName: string, convert: boolean): string {
   const baseMessage = `🚀 **${torrentName}** is ready! Starting upload to Google Drive... ${getRandomUploadJoke()}`;
-  
+
   if (convert) {
     return `${baseMessage}\n\n🎵 Converting MP3s to M4B... This will take about 30 minutes. ${getRandomConversionJoke()}`;
   }
-  
+
   return `${baseMessage}\n\n🔄 Upload will start automatically when download completes...`;
 }
 
@@ -342,6 +459,15 @@ export async function handleUploadButtonInteraction(
     convert = true;
     torrentId = parts.slice(2).join(':');
   } else if (parts[1] === 'no-convert') {
+    convert = false;
+    torrentId = parts.slice(2).join(':');
+  } else if (parts[1] === 'convert-ebook') {
+    // Ebook conversion buttons - handled by checkForEbooksAndPrompt timeout
+    // Just treat as regular upload for now
+    convert = false;
+    torrentId = parts.slice(2).join(':');
+  } else if (parts[1] === 'no-convert-ebook') {
+    // No ebook conversion requested
     convert = false;
     torrentId = parts.slice(2).join(':');
   } else {
