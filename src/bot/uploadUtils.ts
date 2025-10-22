@@ -284,7 +284,7 @@ export async function checkForMp3AndPrompt(
             });
 
             // Trigger the upload with conversion enabled
-            const result = await uploadTorrentToGDrive(torrentId, true, replyTarget);
+            const result = await uploadTorrentToGDrive(torrentId, true, false, replyTarget);
 
             // Send completion message
             const userId = replyTarget.user?.id || replyTarget.author?.id;
@@ -445,7 +445,7 @@ export function createUploadStatusMessage(torrentName: string, convert: boolean)
 export async function handleUploadButtonInteraction(
   interaction: any,
   actionPrefix: string,
-  onUploadStart?: (torrentId: string, convert: boolean) => Promise<void>
+  onUploadStart?: (torrentId: string, convertMp3: boolean, convertEbook: boolean) => Promise<void>
 ): Promise<void> {
   if (!interaction.isButton()) return;
 
@@ -455,30 +455,30 @@ export async function handleUploadButtonInteraction(
   const parts = customId.split(':');
   if (parts.length < 3) return;
 
-  let convert = false;
+  let convertMp3 = false;
+  let convertEbook = false;
   let torrentId = '';
 
   if (parts[1] === 'convert') {
-    convert = true;
+    convertMp3 = true;
     torrentId = parts.slice(2).join(':');
   } else if (parts[1] === 'no-convert') {
-    convert = false;
+    convertMp3 = false;
     torrentId = parts.slice(2).join(':');
   } else if (parts[1] === 'convert-ebook') {
-    // Ebook conversion buttons - handled by checkForEbooksAndPrompt timeout
-    // Just treat as regular upload for now
-    convert = false;
+    // Ebook conversion requested
+    convertEbook = true;
     torrentId = parts.slice(2).join(':');
   } else if (parts[1] === 'no-convert-ebook') {
     // No ebook conversion requested
-    convert = false;
+    convertEbook = false;
     torrentId = parts.slice(2).join(':');
   } else {
     console.error(`Invalid button custom_id format: ${customId}`);
     return;
   }
 
-  console.log(`Button interaction: actionPrefix=${actionPrefix}, convert=${convert}, torrentId=${torrentId}`);
+  console.log(`Button interaction: actionPrefix=${actionPrefix}, convertMp3=${convertMp3}, convertEbook=${convertEbook}, torrentId=${torrentId}`);
 
   await interaction.deferUpdate();
 
@@ -514,23 +514,30 @@ export async function handleUploadButtonInteraction(
     
     if (!selectedTorrent) {
       console.error(`Torrent not found anywhere: ${torrentId}`);
-      await interaction.editReply({ 
-        content: `Torrent not found. It probably ran away to find a more interesting bot. One with more lasagna.\n\nTorrent ID: ${torrentId}`, 
-        components: [] 
+      await interaction.editReply({
+        content: `Torrent not found. It probably ran away to find a more interesting bot. One with more lasagna.\n\nTorrent ID: ${torrentId}`,
+        components: []
       });
       return;
     }
 
     // Show status message using interaction (this is immediate, so safe)
-    const statusMessage = createUploadStatusMessage(selectedTorrent.name, convert);
+    let statusMessage: string;
+    if (convertEbook) {
+      statusMessage = `🚀 **${selectedTorrent.name}** is ready! Starting ebook conversion and upload to Google Drive... ${getRandomUploadJoke()}\n\n📚 Converting to EPUB + MOBI... This may take a few minutes.`;
+    } else if (convertMp3) {
+      statusMessage = createUploadStatusMessage(selectedTorrent.name, true);
+    } else {
+      statusMessage = createUploadStatusMessage(selectedTorrent.name, false);
+    }
     await interaction.editReply({ content: statusMessage, components: [] });
 
     // Call custom upload start handler if provided (they handle their own completion messages)
     if (onUploadStart) {
-      await onUploadStart(torrentId, convert);
+      await onUploadStart(torrentId, convertMp3, convertEbook);
     } else {
       // Default upload behavior - send completion as new channel message
-      const result = await uploadTorrentToGDrive(torrentId, convert);
+      const result = await uploadTorrentToGDrive(torrentId, convertMp3, convertEbook);
       await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
     }
 

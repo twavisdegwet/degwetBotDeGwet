@@ -437,7 +437,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
 
             if (!hasMp3Files) {
               // If no MP3 files, proceed with upload immediately with progress updates
-              const result = await uploadTorrentToGDrive(torrentId, false, message);
+              const result = await uploadTorrentToGDrive(torrentId, false, false, message);
 
               // Send the final result message if it wasn't sent through the progressTarget
               if (result.success && result.message) {
@@ -456,7 +456,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
 
             if (!hasConvertibleEbooks) {
               // If no convertible ebooks, proceed with upload immediately with progress updates
-              const result = await uploadTorrentToGDrive(torrentId, false, message);
+              const result = await uploadTorrentToGDrive(torrentId, false, false, message);
 
               // Send the final result message if it wasn't sent through the progressTarget
               if (result.success && result.message) {
@@ -518,10 +518,10 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
 // Function to handle auto-upload button interactions
 export async function handleAutoUploadInteraction(interaction: any) {
   // Use the new unified upload button handler
-  await handleUploadButtonInteraction(interaction, 'auto_upload', async (torrentId: string, convert: boolean) => {
+  await handleUploadButtonInteraction(interaction, 'auto_upload', async (torrentId: string, convertMp3: boolean, convertEbook: boolean) => {
     // Custom upload logic for auto-upload (getebook/getaudiobook)
-    const result = await uploadTorrentToGDrive(torrentId, convert, interaction);
-    
+    const result = await uploadTorrentToGDrive(torrentId, convertMp3, convertEbook, interaction);
+
     // Always send completion as a new channel message (no interaction editing)
     await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
     // Send Garfield comic after successful upload with download link
@@ -573,9 +573,9 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
           // If no MP3 files, proceed with upload and show progress
           const statusMessage = `🚀 Now uploading **${selectedTorrent.name}** to Google Drive. ${getPersonality()}`;
           await safeEditReply(interaction, { content: statusMessage });
-          
+
           // Upload with progress updates
-          const result = await uploadTorrentToGDrive(torrentId, false, interaction);
+          const result = await uploadTorrentToGDrive(torrentId, false, false, interaction);
           
           // If the result message wasn't sent through the progressTarget, send it now
           if (result.success && result.message) {
@@ -610,10 +610,10 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
       });
     } else if (actionType === 'convert' || actionType === 'no-convert') {
       // Use the unified upload button handler for conversion choices
-      await handleUploadButtonInteraction(interaction, 'duplicate', async (torrentId: string, convert: boolean) => {
+      await handleUploadButtonInteraction(interaction, 'duplicate', async (torrentId: string, convertMp3: boolean, convertEbook: boolean) => {
         // Upload with progress updates
-        const result = await uploadTorrentToGDrive(torrentId, convert, interaction);
-        
+        const result = await uploadTorrentToGDrive(torrentId, convertMp3, convertEbook, interaction);
+
         // If the result message wasn't sent through the progressTarget, send it now
         if (result.success && result.message) {
           try {
