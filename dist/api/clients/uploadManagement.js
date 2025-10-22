@@ -262,13 +262,16 @@ class UploadManagementClient {
                     const durationSeconds = Math.round((result.duration || 0) / 1000);
                     console.log(`✅ Ebook conversion successful! Took ${durationSeconds} seconds.`);
                     sourceFiles.push(sourceFile);
-                    if (result.epubPath) {
+                    if (result.epubPath && fs_1.default.existsSync(result.epubPath)) {
                         convertedFiles.push(result.epubPath);
                         console.log(`  📗 EPUB: ${path_1.default.basename(result.epubPath)}`);
                     }
-                    if (result.mobiPath) {
+                    if (result.mobiPath && fs_1.default.existsSync(result.mobiPath)) {
                         convertedFiles.push(result.mobiPath);
                         console.log(`  📘 MOBI: ${path_1.default.basename(result.mobiPath)}`);
+                    }
+                    if (!result.epubPath && !result.mobiPath) {
+                        console.warn(`  ⚠️  No output files created from: ${path_1.default.basename(sourceFile)}`);
                     }
                 }
                 else {

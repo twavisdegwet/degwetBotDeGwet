@@ -398,13 +398,18 @@ export class UploadManagementClient {
           // Track the source file so we can remove it from upload
           sourceFiles.push(sourceFile);
 
-          if (result.epubPath) {
+          if (result.epubPath && fs.existsSync(result.epubPath)) {
             convertedFiles.push(result.epubPath);
             console.log(`  📗 EPUB: ${path.basename(result.epubPath)}`);
           }
-          if (result.mobiPath) {
+          if (result.mobiPath && fs.existsSync(result.mobiPath)) {
             convertedFiles.push(result.mobiPath);
             console.log(`  📘 MOBI: ${path.basename(result.mobiPath)}`);
+          }
+
+          // If neither file was created, log a warning
+          if (!result.epubPath && !result.mobiPath) {
+            console.warn(`  ⚠️  No output files created from: ${path.basename(sourceFile)}`);
           }
         } else {
           console.error(`❌ Ebook conversion failed: ${result.error}`);

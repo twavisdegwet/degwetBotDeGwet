@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
+import fs from 'fs';
 import { Logger } from './logger';
 
 const execAsync = promisify(exec);
@@ -80,22 +81,37 @@ export async function convertEbook(
     const epubPath = path.join(sourceDir, `${baseName}.epub`);
     const mobiPath = path.join(sourceDir, `${baseName}.mobi`);
 
-    Logger.info(`Ebook conversion completed successfully in ${duration}ms`);
-    Logger.info(`EPUB output: ${epubPath}`);
-    Logger.info(`MOBI output: ${mobiPath}`);
-
-    if (stderr) {
-      Logger.warn(`Conversion warnings: ${stderr}`);
-    }
-
+    // Log the full script output for debugging
     if (stdout) {
-      Logger.info(`Conversion output: ${stdout}`);
+      Logger.info(`Script stdout:\n${stdout}`);
+    }
+    if (stderr) {
+      Logger.warn(`Script stderr:\n${stderr}`);
     }
 
+    // Verify files actually exist before returning them
+    const epubExists = fs.existsSync(epubPath);
+    const mobiExists = fs.existsSync(mobiPath);
+
+    Logger.info(`Ebook conversion completed in ${duration}ms`);
+    Logger.info(`  Expected EPUB path: ${epubPath}`);
+    Logger.info(`  Expected MOBI path: ${mobiPath}`);
+    if (epubExists) {
+      Logger.info(`  ✅ EPUB exists: ${epubPath}`);
+    } else {
+      Logger.warn(`  ⚠️  EPUB NOT FOUND: ${epubPath}`);
+    }
+    if (mobiExists) {
+      Logger.info(`  ✅ MOBI exists: ${mobiPath}`);
+    } else {
+      Logger.warn(`  ⚠️  MOBI NOT FOUND: ${mobiPath}`);
+    }
+
+    // Only return paths for files that actually exist
     return {
       success: true,
-      epubPath,
-      mobiPath,
+      epubPath: epubExists ? epubPath : undefined,
+      mobiPath: mobiExists ? mobiPath : undefined,
       duration,
     };
 

@@ -154,10 +154,9 @@ else
 fi
 
 # --- Determine output files ---
-# Clean title for filename (remove invalid characters)
-CLEAN_TITLE=$(echo "$BOOK_TITLE" | sed 's/[<>:"/\\|?*]/-/g')
-OUTPUT_EPUB="${INPUT_DIR}/${CLEAN_TITLE}.epub"
-OUTPUT_MOBI="${INPUT_DIR}/${CLEAN_TITLE}.mobi"
+# Use the input filename (without extension) to preserve original naming
+OUTPUT_EPUB="${INPUT_DIR}/${INPUT_NAME}.epub"
+OUTPUT_MOBI="${INPUT_DIR}/${INPUT_NAME}.mobi"
 
 echo "--------------------------------------------------"
 echo "Ebook Converter"
