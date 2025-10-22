@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { DownloadManager } from '../api/clients/downloadManagement';
 import DelugeClientManager from '../api/clients/delugeClientManager';
-import { checkForMp3AndPrompt, checkForEbooksAndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
+import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
 import { getPersonality } from './badjokes';
 import { isUserPlayingGame, createPresenceBlockedMessage } from './presenceUtils';
 import { getRandomWaitingMessage, getRandomCompletionMessage } from './garfieldMessages';
@@ -111,13 +111,13 @@ export function analyzeContentType(files: Array<{path: string, size: number}>): 
 // Shared function for book search logic
 export async function handleBookSearch(interaction: CommandInteraction, bookType: 'audiobook' | 'ebook') {
   if (!interaction.isChatInputCommand()) return;
-  
+
   // Check if interaction is still valid before deferring
   if (interaction.replied || interaction.deferred) {
     console.log('Interaction already replied or deferred');
     return;
   }
-  
+
   try {
     // Defer reply immediately to prevent timeout
     await interaction.deferReply();
@@ -128,16 +128,17 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
     }
     throw error;
   }
-  
+
   // Check if the specified user is currently playing a game
   const isBlocked = await isUserPlayingGame(interaction.client);
   if (isBlocked) {
     await safeEditReply(interaction, createPresenceBlockedMessage());
     return;
   }
-  
+
   const query = interaction.options.getString('query', true);
   const limit = interaction.options.getInteger('limit') || 10;
+  const kindleEmail = interaction.options.getString('kindle_email') || undefined;
   
   // Get search field options (default to true if not specified)
   const searchTitle = interaction.options.getBoolean('search_title') ?? true;
@@ -260,7 +261,8 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
   (interaction.client as any).bookSearchResults.set(interaction.user.id, {
     results: results.slice(0, 5),
     query,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    kindleEmail
   });
   
   await safeEditReply(interaction, message);
@@ -321,30 +323,47 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
         // Check if it's ready for Google Drive upload
         if (downloadResponse.data.canUploadToGDrive) {
           duplicateMessage += `\n\n🚀 This torrent is completed and ready for Google Drive upload!`;
-          
+
           // Send as a separate message instead of editing the original to avoid button interaction issues
           await m.reply(duplicateMessage);
-          
+
+          // Build buttons array
+          const duplicateButtons: any[] = [
+            {
+              type: 2,
+              style: 1,
+              label: '☁️ Upload to Google Drive',
+              custom_id: `duplicate_upload_${downloadResponse.data.torrentId}`
+            }
+          ];
+
+          // Add "Send to Kindle" button if kindle email was provided and it's an ebook
+          if (kindleEmail && bookType === 'ebook') {
+            duplicateButtons.push({
+              type: 2,
+              style: 3,
+              label: '📧 Send to Kindle',
+              custom_id: `kindle_email_${downloadResponse.data.torrentId}_${Buffer.from(kindleEmail).toString('base64')}`
+            });
+          }
+
+          // Add cancel button
+          duplicateButtons.push({
+            type: 2,
+            style: 2,
+            label: '❌ Cancel',
+            custom_id: `duplicate_cancel_${downloadResponse.data.torrentId}`
+          });
+
           // Send the button prompt as a follow-up message
           await m.channel.send({
-            content: 'Would you like to upload this torrent to Google Drive?',
+            content: kindleEmail && bookType === 'ebook'
+              ? 'What would you like to do with this ebook?'
+              : 'Would you like to upload this torrent to Google Drive?',
             components: [
               {
                 type: 1,
-                components: [
-                  {
-                    type: 2,
-                    style: 1,
-                    label: '☁️ Upload to Google Drive',
-                    custom_id: `duplicate_upload_${downloadResponse.data.torrentId}`
-                  },
-                  {
-                    type: 2,
-                    style: 2,
-                    label: '❌ Cancel',
-                    custom_id: `duplicate_cancel_${downloadResponse.data.torrentId}`
-                  }
-                ]
+                components: duplicateButtons
               }
             ]
           });
@@ -356,10 +375,10 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
         await m.reply(`✅ Successfully added **${downloadResponse.data.torrentInfo?.name || selectedTorrent.title}** to the oven! \n \n🔄 Will automatically upload to Google Drive once it's done cooking... ${getPersonality()}`);
         
 
-        
+
         // Start monitoring for completion and auto-upload
         setTimeout(async () => {
-          await monitorAndAutoUpload(m, downloadResponse.data.torrentId, selectedTorrent.title, bookType);
+          await monitorAndAutoUpload(m, downloadResponse.data.torrentId, selectedTorrent.title, bookType, kindleEmail);
         }, 5000); // Wait 5 seconds before starting to monitor
       }
     } catch (error: any) {
@@ -384,8 +403,8 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
 }
 
 // Function to monitor torrent completion and auto-upload to Google Drive
-async function monitorAndAutoUpload(message: any, torrentId: string, torrentName: string, bookType: 'audiobook' | 'ebook') {
-  console.log(`Starting auto-upload monitoring for torrent: ${torrentId} (${torrentName}) [${bookType}]`);
+async function monitorAndAutoUpload(message: any, torrentId: string, torrentName: string, bookType: 'audiobook' | 'ebook', kindleEmail?: string) {
+  console.log(`Starting auto-upload monitoring for torrent: ${torrentId} (${torrentName}) [${bookType}]${kindleEmail ? ` with Kindle email: ${kindleEmail}` : ''}`);
   
   const maxAttempts = 120; // Monitor for up to 60 minutes (120 attempts * 30 seconds)
   let intervalId: NodeJS.Timeout | null = null;
@@ -425,51 +444,49 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
         if (!state.hasNotifiedCompletion) {
           console.log(`Torrent ${torrentId} completed! Starting upload process.`);
           state.hasNotifiedCompletion = true;
-          
-          // Start the upload process - send alert as new message
-          const conversionType = bookType === 'audiobook' ? 'MP3' : 'ebook formats';
-          await message.channel.send(`<@${message.author.id}> 🎉 **${torrentName}** is downloaded! ${getPersonality()} Checking for ${conversionType} then uploading to drive`);
 
-          // Check for conversion based on book type
-          if (bookType === 'audiobook') {
-            // Check for MP3 conversion for audiobooks
-            const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
+          // Send completion alert
+          await message.channel.send(`<@${message.author.id}> 🎉 **${torrentName}** is downloaded! ${getPersonality()}`);
 
-            if (!hasMp3Files) {
-              // If no MP3 files, proceed with upload immediately with progress updates
-              const result = await uploadTorrentToGDrive(torrentId, false, false, message);
-
-              // Send the final result message if it wasn't sent through the progressTarget
-              if (result.success && result.message) {
-                try {
-                  await message.channel.send(`<@${message.author.id}> ${result.message}`);
-                  // Send Garfield comic after successful upload with download link
-                  await sendRandomGarfieldComic(message.channel, message.author.id, 'completion');
-                } catch (error) {
-                  console.error('Error sending final upload message:', error);
-                }
-              }
+          // Show buttons for user to choose what to do with the download
+          const buttons: any[] = [
+            {
+              type: 2,
+              style: 1,
+              label: '☁️ Upload to Google Drive',
+              custom_id: `auto_upload_${torrentId}`
             }
-          } else if (bookType === 'ebook') {
-            // Check for ebook conversion for ebooks
-            const hasConvertibleEbooks = await checkForEbooksAndPrompt(torrentId, message, 'auto_upload');
+          ];
 
-            if (!hasConvertibleEbooks) {
-              // If no convertible ebooks, proceed with upload immediately with progress updates
-              const result = await uploadTorrentToGDrive(torrentId, false, false, message);
-
-              // Send the final result message if it wasn't sent through the progressTarget
-              if (result.success && result.message) {
-                try {
-                  await message.channel.send(`<@${message.author.id}> ${result.message}`);
-                  // Send Garfield comic after successful upload with download link
-                  await sendRandomGarfieldComic(message.channel, message.author.id, 'completion');
-                } catch (error) {
-                  console.error('Error sending final upload message:', error);
-                }
-              }
-            }
+          // Add "Send to Kindle" button if kindle email was provided
+          if (kindleEmail && bookType === 'ebook') {
+            buttons.push({
+              type: 2,
+              style: 3,
+              label: '📧 Send to Kindle',
+              custom_id: `kindle_email_${torrentId}_${Buffer.from(kindleEmail).toString('base64')}`
+            });
           }
+
+          // Add cancel button
+          buttons.push({
+            type: 2,
+            style: 2,
+            label: '❌ Cancel',
+            custom_id: `auto_cancel_${torrentId}`
+          });
+
+          await message.channel.send({
+            content: kindleEmail && bookType === 'ebook'
+              ? 'What would you like to do with this ebook?'
+              : 'Would you like to upload this to Google Drive?',
+            components: [
+              {
+                type: 1,
+                components: buttons
+              }
+            ]
+          });
         }
         
         return; // Exit the monitoring loop
@@ -626,6 +643,67 @@ export async function handleDuplicateUploadInteraction(interaction: any) {
         }
       });
     }
+  }
+}
+
+// Function to handle "Send to Kindle" button interactions
+export async function handleKindleEmailInteraction(interaction: any) {
+  if (!interaction.isButton()) return;
+
+  try {
+    // Parse custom_id: kindle_email_{torrentId}_{base64EncodedEmail}
+    const parts = interaction.customId.split('_');
+    if (parts.length < 4) {
+      throw new Error('Invalid button custom_id format');
+    }
+
+    const torrentId = parts[2];
+    const encodedEmail = parts.slice(3).join('_'); // Handle emails that might have underscores
+    const kindleEmail = Buffer.from(encodedEmail, 'base64').toString('utf-8');
+
+    console.log(`Sending torrent ${torrentId} to Kindle email: ${kindleEmail}`);
+
+    await interaction.deferUpdate();
+
+    // Send a status message
+    await interaction.channel?.send(`<@${interaction.user.id}> 📧 Preparing to send ebook to ${kindleEmail}...`);
+
+    // Import the sendToKindle function
+    const { sendToKindle } = await import('./emailUtils');
+
+    // Progress callback to send updates to Discord
+    const progressCallback = async (message: string) => {
+      try {
+        await interaction.channel?.send(`<@${interaction.user.id}> ${message}`);
+      } catch (error) {
+        console.error('Error sending progress message:', error);
+      }
+    };
+
+    // Send to Kindle
+    const result = await sendToKindle(torrentId, kindleEmail, progressCallback);
+
+    // Send final result
+    if (result.success) {
+      await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+
+      // Send Garfield comic after successful email
+      await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'completion');
+    } else {
+      await interaction.channel?.send(`<@${interaction.user.id}> ${result.message}`);
+    }
+
+    // Update the original button message to remove buttons
+    await safeEditReply(interaction, {
+      content: result.success
+        ? `✅ Sent to ${kindleEmail}`
+        : `❌ Failed to send to Kindle`,
+      components: []
+    });
+
+  } catch (error: any) {
+    console.error('Error handling Kindle email interaction:', error);
+    await interaction.channel?.send(`<@${interaction.user.id}> ❌ Error sending to Kindle: ${error.message}`);
   }
 }
 

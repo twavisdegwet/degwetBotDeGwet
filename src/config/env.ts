@@ -54,6 +54,12 @@ const envSchema = z.object({
   
   // Comic Image Path Configuration
   COMIC_IMAGE_PATH: z.string().min(1).default('/home/twavisdegwet/heathcliff project/comics'),
+
+  // Email Configuration (for Send to Kindle via Gmail API)
+  // Uses the same service account as Google Drive with domain-wide delegation
+  // Create a dedicated Google Workspace user (e.g., bot@yourdomain.com) for sending emails
+  // This user must be authorized in Amazon Kindle's approved email list
+  KINDLE_BOT_EMAIL: z.string().email().optional(), // The Google Workspace bot user to send emails as
 });
 
 // Define the type for our environment variables

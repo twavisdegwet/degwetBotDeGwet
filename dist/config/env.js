@@ -37,6 +37,7 @@ const envSchema = zod_1.z.object({
     HARDCOVER_API_URL: zod_1.z.string().url().default('https://api.hardcover.app/v1/graphql'),
     HARDCOVER_API_TOKEN: zod_1.z.string().min(1),
     COMIC_IMAGE_PATH: zod_1.z.string().min(1).default('/home/twavisdegwet/heathcliff project/comics'),
+    KINDLE_BOT_EMAIL: zod_1.z.string().email().optional(),
 });
 const envWithNumbers = {
     ...process.env,

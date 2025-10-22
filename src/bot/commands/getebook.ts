@@ -16,7 +16,11 @@ export const data = new SlashCommandBuilder()
       .setDescription('Search in author field (default: true).'))
   .addIntegerOption(option =>
     option.setName('limit')
-      .setDescription('The maximum number of results to return (default: 10).'));
+      .setDescription('The maximum number of results to return (default: 10).'))
+  .addStringOption(option =>
+    option.setName('kindle_email')
+      .setDescription('Optional: Your Kindle email address to send the ebook directly.')
+      .setRequired(false));
 
 export async function execute(interaction: CommandInteraction) {
   await handleBookSearch(interaction, 'ebook');

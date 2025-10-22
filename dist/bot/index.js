@@ -133,6 +133,9 @@ client.on('interactionCreate', async (interaction) => {
             else if (interaction.customId.startsWith('gdrive_upload:')) {
                 await (0, gdrive_upload_1.handleGDriveUploadInteraction)(interaction);
             }
+            else if (interaction.customId.startsWith('kindle_email_')) {
+                await (0, utils_1.handleKindleEmailInteraction)(interaction);
+            }
             else {
                 console.log(`Unhandled button interaction: ${interaction.customId}`);
                 await interaction.reply({ content: `I don't know what that button does. ${(0, badjokes_1.getPersonality)()}`, flags: 64 });

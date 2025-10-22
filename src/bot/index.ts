@@ -14,7 +14,7 @@ import * as askLibrarianCommand from './commands/asklibrarian';
 import * as expertNewsCommand from './commands/expertnews';
 import { getPersonality } from './badjokes';
 import { handleGDriveUploadInteraction } from './commands/gdrive-upload';
-import { handleAutoUploadInteraction, handleDuplicateUploadInteraction } from './utils';
+import { handleAutoUploadInteraction, handleDuplicateUploadInteraction, handleKindleEmailInteraction } from './utils';
 
 interface CustomClient extends Client {
   commands: Collection<string, any>;
@@ -105,6 +105,8 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         await handleDuplicateUploadInteraction(interaction);
       } else if (interaction.customId.startsWith('gdrive_upload:')) {
         await handleGDriveUploadInteraction(interaction);
+      } else if (interaction.customId.startsWith('kindle_email_')) {
+        await handleKindleEmailInteraction(interaction);
       } else {
         // Fallback for any other button interactions
         console.log(`Unhandled button interaction: ${interaction.customId}`);
