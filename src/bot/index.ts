@@ -99,7 +99,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
   } else if (interaction.isButton()) {
     try {
       // Use the unified upload button handler system
-      if (interaction.customId.startsWith('auto_upload:')) {
+      if (interaction.customId.startsWith('auto_upload_') || interaction.customId.startsWith('auto_upload:')) {
         await handleAutoUploadInteraction(interaction);
       } else if (interaction.customId.startsWith('duplicate_') || interaction.customId.startsWith('duplicate:')) {
         await handleDuplicateUploadInteraction(interaction);
@@ -107,6 +107,13 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         await handleGDriveUploadInteraction(interaction);
       } else if (interaction.customId.startsWith('kindle_email_')) {
         await handleKindleEmailInteraction(interaction);
+      } else if (interaction.customId.startsWith('auto_cancel_') || interaction.customId.startsWith('duplicate_cancel_')) {
+        // Handle cancel button
+        await interaction.deferUpdate();
+        await interaction.editReply({
+          content: '❌ Cancelled.',
+          components: []
+        });
       } else {
         // Fallback for any other button interactions
         console.log(`Unhandled button interaction: ${interaction.customId}`);

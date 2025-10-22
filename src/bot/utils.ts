@@ -448,45 +448,99 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
           // Send completion alert
           await message.channel.send(`<@${message.author.id}> 🎉 **${torrentName}** is downloaded! ${getPersonality()}`);
 
-          // Show buttons for user to choose what to do with the download
-          const buttons: any[] = [
-            {
-              type: 2,
-              style: 1,
-              label: '☁️ Upload to Google Drive',
-              custom_id: `auto_upload_${torrentId}`
-            }
-          ];
+          // If no Kindle email provided, automatically upload to Google Drive
+          if (!kindleEmail || bookType !== 'ebook') {
+            // Auto-upload flow: check for conversions then upload
+            const conversionType = bookType === 'audiobook' ? 'MP3' : 'ebook formats';
+            await message.channel.send(`<@${message.author.id}> Checking for ${conversionType} then uploading to drive...`);
 
-          // Add "Send to Kindle" button if kindle email was provided
-          if (kindleEmail && bookType === 'ebook') {
-            buttons.push({
-              type: 2,
-              style: 3,
-              label: '📧 Send to Kindle',
-              custom_id: `kindle_email_${torrentId}_${Buffer.from(kindleEmail).toString('base64')}`
-            });
-          }
+            // Check for conversion based on book type
+            if (bookType === 'audiobook') {
+              // Check for MP3 conversion for audiobooks
+              const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
 
-          // Add cancel button
-          buttons.push({
-            type: 2,
-            style: 2,
-            label: '❌ Cancel',
-            custom_id: `auto_cancel_${torrentId}`
-          });
+              if (!hasMp3Files) {
+                // If no MP3 files, proceed with upload immediately with progress updates
+                const result = await uploadTorrentToGDrive(torrentId, false, false, message);
 
-          await message.channel.send({
-            content: kindleEmail && bookType === 'ebook'
-              ? 'What would you like to do with this ebook?'
-              : 'Would you like to upload this to Google Drive?',
-            components: [
-              {
-                type: 1,
-                components: buttons
+                // Send the final result message if it wasn't sent through the progressTarget
+                if (result.success && result.message) {
+                  try {
+                    await message.channel.send(`<@${message.author.id}> ${result.message}`);
+                    // Send Garfield comic after successful upload with download link
+                    await sendRandomGarfieldComic(message.channel, message.author.id, 'completion');
+                  } catch (error) {
+                    console.error('Error sending final upload message:', error);
+                  }
+                }
               }
-            ]
-          });
+            } else if (bookType === 'ebook') {
+              // For ebooks without kindle email, just upload directly
+              const result = await uploadTorrentToGDrive(torrentId, false, false, message);
+
+              // Send the final result message
+              if (result.success && result.message) {
+                try {
+                  await message.channel.send(`<@${message.author.id}> ${result.message}`);
+                  await sendRandomGarfieldComic(message.channel, message.author.id, 'completion');
+                } catch (error) {
+                  console.error('Error sending final upload message:', error);
+                }
+              }
+            }
+          } else {
+            // Kindle email was provided - automatically send to Kindle first
+            await message.channel.send(`<@${message.author.id}> 📧 Preparing to send ebook to ${kindleEmail}...`);
+
+            // Import and call sendToKindle
+            const { sendToKindle } = await import('./emailUtils');
+
+            // Progress callback to send updates to Discord
+            const progressCallback = async (progressMessage: string) => {
+              try {
+                await message.channel.send(`<@${message.author.id}> ${progressMessage}`);
+              } catch (error) {
+                console.error('Error sending progress message:', error);
+              }
+            };
+
+            // Send to Kindle
+            const result = await sendToKindle(torrentId, kindleEmail, progressCallback);
+
+            // Send final result
+            if (result.success) {
+              await message.channel.send(`<@${message.author.id}> ${result.message}`);
+
+              // Send Garfield comic after successful email
+              await sendRandomGarfieldComic(message.channel, message.author.id, 'completion');
+
+              // Now ask if they also want to upload to Google Drive
+              await message.channel.send({
+                content: 'Would you also like to upload this to Google Drive?',
+                components: [
+                  {
+                    type: 1,
+                    components: [
+                      {
+                        type: 2,
+                        style: 1,
+                        label: '☁️ Upload to Google Drive',
+                        custom_id: `auto_upload_${torrentId}`
+                      },
+                      {
+                        type: 2,
+                        style: 2,
+                        label: '❌ No Thanks',
+                        custom_id: `auto_cancel_${torrentId}`
+                      }
+                    ]
+                  }
+                ]
+              });
+            } else {
+              await message.channel.send(`<@${message.author.id}> ${result.message}`);
+            }
+          }
         }
         
         return; // Exit the monitoring loop

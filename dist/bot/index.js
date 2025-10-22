@@ -124,7 +124,7 @@ client.on('interactionCreate', async (interaction) => {
     }
     else if (interaction.isButton()) {
         try {
-            if (interaction.customId.startsWith('auto_upload:')) {
+            if (interaction.customId.startsWith('auto_upload_') || interaction.customId.startsWith('auto_upload:')) {
                 await (0, utils_1.handleAutoUploadInteraction)(interaction);
             }
             else if (interaction.customId.startsWith('duplicate_') || interaction.customId.startsWith('duplicate:')) {
@@ -135,6 +135,13 @@ client.on('interactionCreate', async (interaction) => {
             }
             else if (interaction.customId.startsWith('kindle_email_')) {
                 await (0, utils_1.handleKindleEmailInteraction)(interaction);
+            }
+            else if (interaction.customId.startsWith('auto_cancel_') || interaction.customId.startsWith('duplicate_cancel_')) {
+                await interaction.deferUpdate();
+                await interaction.editReply({
+                    content: '❌ Cancelled.',
+                    components: []
+                });
             }
             else {
                 console.log(`Unhandled button interaction: ${interaction.customId}`);
