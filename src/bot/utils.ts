@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { DownloadManager } from '../api/clients/downloadManagement';
 import DelugeClientManager from '../api/clients/delugeClientManager';
-import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
+import { checkForMp3AndPrompt, checkForEbooksAndPrompt, uploadTorrentToGDrive, handleUploadButtonInteraction } from './uploadUtils';
 import { getPersonality } from './badjokes';
 import { isUserPlayingGame, createPresenceBlockedMessage } from './presenceUtils';
 import { getRandomWaitingMessage, getRandomCompletionMessage } from './garfieldMessages';
@@ -359,7 +359,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
         
         // Start monitoring for completion and auto-upload
         setTimeout(async () => {
-          await monitorAndAutoUpload(m, downloadResponse.data.torrentId, selectedTorrent.title);
+          await monitorAndAutoUpload(m, downloadResponse.data.torrentId, selectedTorrent.title, bookType);
         }, 5000); // Wait 5 seconds before starting to monitor
       }
     } catch (error: any) {
@@ -384,8 +384,8 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
 }
 
 // Function to monitor torrent completion and auto-upload to Google Drive
-async function monitorAndAutoUpload(message: any, torrentId: string, torrentName: string) {
-  console.log(`Starting auto-upload monitoring for torrent: ${torrentId} (${torrentName})`);
+async function monitorAndAutoUpload(message: any, torrentId: string, torrentName: string, bookType: 'audiobook' | 'ebook') {
+  console.log(`Starting auto-upload monitoring for torrent: ${torrentId} (${torrentName}) [${bookType}]`);
   
   const maxAttempts = 120; // Monitor for up to 60 minutes (120 attempts * 30 seconds)
   let intervalId: NodeJS.Timeout | null = null;
@@ -427,23 +427,46 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
           state.hasNotifiedCompletion = true;
           
           // Start the upload process - send alert as new message
-          await message.channel.send(`<@${message.author.id}> 🎉 **${torrentName}** is downloaded! ${getPersonality()} Checking for MP3 then uploading to drive`);
-          
-          // Use the new unified upload system
-          const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
-          
-          if (!hasMp3Files) {
-            // If no MP3 files, proceed with upload immediately with progress updates
-            const result = await uploadTorrentToGDrive(torrentId, false, message);
-            
-            // Send the final result message if it wasn't sent through the progressTarget
-            if (result.success && result.message) {
-              try {
-                await message.channel.send(`<@${message.author.id}> ${result.message}`);
-                // Send Garfield comic after successful upload with download link
-                await sendRandomGarfieldComic(message.channel, message.author.id, 'completion');
-              } catch (error) {
-                console.error('Error sending final upload message:', error);
+          const conversionType = bookType === 'audiobook' ? 'MP3' : 'ebook formats';
+          await message.channel.send(`<@${message.author.id}> 🎉 **${torrentName}** is downloaded! ${getPersonality()} Checking for ${conversionType} then uploading to drive`);
+
+          // Check for conversion based on book type
+          if (bookType === 'audiobook') {
+            // Check for MP3 conversion for audiobooks
+            const hasMp3Files = await checkForMp3AndPrompt(torrentId, message, 'auto_upload');
+
+            if (!hasMp3Files) {
+              // If no MP3 files, proceed with upload immediately with progress updates
+              const result = await uploadTorrentToGDrive(torrentId, false, message);
+
+              // Send the final result message if it wasn't sent through the progressTarget
+              if (result.success && result.message) {
+                try {
+                  await message.channel.send(`<@${message.author.id}> ${result.message}`);
+                  // Send Garfield comic after successful upload with download link
+                  await sendRandomGarfieldComic(message.channel, message.author.id, 'completion');
+                } catch (error) {
+                  console.error('Error sending final upload message:', error);
+                }
+              }
+            }
+          } else if (bookType === 'ebook') {
+            // Check for ebook conversion for ebooks
+            const hasConvertibleEbooks = await checkForEbooksAndPrompt(torrentId, message, 'auto_upload');
+
+            if (!hasConvertibleEbooks) {
+              // If no convertible ebooks, proceed with upload immediately with progress updates
+              const result = await uploadTorrentToGDrive(torrentId, false, message);
+
+              // Send the final result message if it wasn't sent through the progressTarget
+              if (result.success && result.message) {
+                try {
+                  await message.channel.send(`<@${message.author.id}> ${result.message}`);
+                  // Send Garfield comic after successful upload with download link
+                  await sendRandomGarfieldComic(message.channel, message.author.id, 'completion');
+                } catch (error) {
+                  console.error('Error sending final upload message:', error);
+                }
               }
             }
           }

@@ -63,12 +63,13 @@ export interface UploadResult {
  * Unified upload function that handles all upload scenarios with real-time progress updates
  */
 export async function uploadTorrentToGDrive(
-  torrentId: string, 
-  convert: boolean = false,
+  torrentId: string,
+  convertMp3: boolean = false,
+  convertEbook: boolean = false,
   progressTarget?: any
 ): Promise<UploadResult> {
   return await retryUploadOperation(
-    () => uploadTorrentWithProgress(torrentId, convert, progressTarget),
+    () => uploadTorrentWithProgress(torrentId, convertMp3, convertEbook, progressTarget),
     3,
     2000,
     `Upload torrent ${torrentId}`
@@ -80,7 +81,8 @@ export async function uploadTorrentToGDrive(
  */
 async function uploadTorrentWithProgress(
   torrentId: string,
-  convert: boolean,
+  convertMp3: boolean,
+  convertEbook: boolean,
   progressTarget: any
 ): Promise<UploadResult> {
   try {
@@ -139,7 +141,8 @@ async function uploadTorrentWithProgress(
     
     // Upload with progress callback
     const result = await uploadClient.uploadTorrent(torrentObject, {
-      convertMp3ToM4b: convert,
+      convertMp3ToM4b: convertMp3,
+      convertEbooks: convertEbook,
       createSubfolder: true,
       progressCallback
     });
@@ -398,7 +401,7 @@ export async function checkForEbooksAndPrompt(
             });
 
             // Trigger the upload with ebook conversion enabled
-            const result = await uploadTorrentToGDrive(torrentId, false, replyTarget);
+            const result = await uploadTorrentToGDrive(torrentId, false, true, replyTarget);
 
             // Send completion message
             const userId = replyTarget.user?.id || replyTarget.author?.id;
