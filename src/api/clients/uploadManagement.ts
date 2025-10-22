@@ -366,35 +366,37 @@ export class UploadManagementClient {
   /**
    * Convert ebooks to EPUB and MOBI formats
    */
-  private async convertEbooksImproved(tempDir: string, torrentName: string): Promise<string[]> {
+  private async convertEbooksImproved(tempDir: string, _torrentName: string): Promise<{
+    convertedFiles: string[];
+    sourceFiles: string[];
+  }> {
     try {
       // Check if directory has convertible ebooks
       const ebookCheck = await hasConvertibleEbooks(tempDir);
       if (!ebookCheck.hasConvertible) {
         console.log(`📚 No ebook conversion needed: ${ebookCheck.reason}`);
-        return [];
+        return { convertedFiles: [], sourceFiles: [] };
       }
 
       console.log(`📚 Converting ebooks to EPUB + MOBI... This is more work than I usually do in a week!`);
       console.log(`Found ${ebookCheck.files.length} file(s) to convert: ${ebookCheck.reason}`);
 
-      // Extract metadata from torrent name
-      const metadata = this.extractMetadataFromName(torrentName);
-      console.log('📖 Extracted metadata for ebook conversion:', metadata);
-
       const convertedFiles: string[] = [];
+      const sourceFiles: string[] = [];
 
       // Convert each ebook file
       for (const sourceFile of ebookCheck.files) {
+        // Don't pass title/author - let the script preserve the original filename
         const result = await convertEbook(sourceFile, {
-          title: metadata.title,
-          author: metadata.author,
           autoApprove: true
         });
 
         if (result.success) {
           const durationSeconds = Math.round((result.duration || 0) / 1000);
           console.log(`✅ Ebook conversion successful! Took ${durationSeconds} seconds.`);
+
+          // Track the source file so we can remove it from upload
+          sourceFiles.push(sourceFile);
 
           if (result.epubPath) {
             convertedFiles.push(result.epubPath);
@@ -413,10 +415,10 @@ export class UploadManagementClient {
         console.log(`✅ Ebook conversion completed! Created ${convertedFiles.length} file(s).`);
       }
 
-      return convertedFiles;
+      return { convertedFiles, sourceFiles };
     } catch (error) {
       console.error('❌ Error in ebook conversion:', error);
-      return [];
+      return { convertedFiles: [], sourceFiles: [] };
     }
   }
 
@@ -593,18 +595,19 @@ export class UploadManagementClient {
         console.log(ebookConversionMessage);
         if (progressCallback) progressCallback(ebookConversionMessage);
 
-        const convertedEbookFiles = await this.convertEbooksImproved(tempSessionDir, torrentObject.name);
+        const ebookResult = await this.convertEbooksImproved(tempSessionDir, torrentObject.name);
 
-        if (convertedEbookFiles.length > 0) {
-          // Add converted ebooks to the upload list
-          // Remove source PDFs if they were converted
-          const pdfFiles = copiedFiles.filter(file => file.toLowerCase().endsWith('.pdf'));
-          if (pdfFiles.length > 0) {
-            filesToUpload = filesToUpload.filter(file => !file.toLowerCase().endsWith('.pdf'));
+        if (ebookResult.convertedFiles.length > 0) {
+          // Remove all source files that were converted from the upload list
+          // This includes PDFs, EPUBs, and MOBIs that were used as source
+          for (const sourceFile of ebookResult.sourceFiles) {
+            filesToUpload = filesToUpload.filter(file => file !== sourceFile);
+            console.log(`  🗑️  Removing source file from upload: ${path.basename(sourceFile)}`);
           }
 
           // Add all converted ebook files
-          filesToUpload.push(...convertedEbookFiles);
+          filesToUpload.push(...ebookResult.convertedFiles);
+          console.log(`  ✅ Added ${ebookResult.convertedFiles.length} converted file(s) to upload`);
         }
       }
 
