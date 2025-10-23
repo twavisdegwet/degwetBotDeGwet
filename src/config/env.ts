@@ -19,10 +19,9 @@ const envSchema = z.object({
   DELUGE_URL: z.string().min(1),
   
   // MyAnonaMouse Configuration
-  MAM_ID: z.string().min(1),
+  MAM_ID: z.string().min(1), // The mam_id cookie value
   MAM_USERNAME: z.string().min(1),
   MAM_PASSWORD: z.string().min(1),
-  MAM_COOKIE: z.string().min(1),
   MAM_BASE_URL: z.string().url().default('https://www.myanonamouse.net'),
   
   // Download Directory Configuration

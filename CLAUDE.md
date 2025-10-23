@@ -128,9 +128,9 @@ The bot requires extensive configuration in `.env.local`. Key environment variab
 ### Discord
 - `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`
 
-### MyAnonaMouse 
-- `MAM_ID` (cookie value for authentication)
-- `MAM_USERNAME`, `MAM_PASSWORD`, `MAM_COOKIE`
+### MyAnonaMouse
+- `MAM_ID` (mam_id cookie value for authentication)
+- `MAM_USERNAME`, `MAM_PASSWORD`
 
 ### Deluge
 - `DELUGE_URL`, `DELUGE_PASSWORD`

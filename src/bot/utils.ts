@@ -201,14 +201,11 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
   // Add additional MAM search parameters to match the URL structure
   searchParams.browseFlagsHideVsShow = 0;
   searchParams.minSize = 0;
-  searchParams.maxSize = 0;
+  // Don't set maxSize, maxSeeders, maxLeechers, maxSnatched - let them be undefined so they don't filter results
   searchParams.unit = 1;
   searchParams.minSeeders = 0;
-  searchParams.maxSeeders = 0;
   searchParams.minLeechers = 0;
-  searchParams.maxLeechers = 0;
   searchParams.minSnatched = 0;
-  searchParams.maxSnatched = 0;
   searchParams.sortType = 'default';
   searchParams.startNumber = 0;
   

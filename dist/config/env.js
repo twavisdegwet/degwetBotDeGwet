@@ -19,7 +19,6 @@ const envSchema = zod_1.z.object({
     MAM_ID: zod_1.z.string().min(1),
     MAM_USERNAME: zod_1.z.string().min(1),
     MAM_PASSWORD: zod_1.z.string().min(1),
-    MAM_COOKIE: zod_1.z.string().min(1),
     MAM_BASE_URL: zod_1.z.string().url().default('https://www.myanonamouse.net'),
     DOWNLOADS_DIRECTORY: zod_1.z.string().min(1).default('/mnt/nas/nzbget/nzb/completed/torrent'),
     HTTP_PORT: zod_1.z.number().default(3000),
