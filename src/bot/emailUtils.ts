@@ -97,7 +97,7 @@ export async function sendToKindle(
     }
 
     if (progressCallback) {
-      await progressCallback(`📧 Sending ${filesToSend.length} file(s) (${totalSizeMB}MB) to ${kindleEmail}...`);
+      await progressCallback(`📧 Sending ${filesToSend.length} file(s) (${totalSizeMB}MB) to Kindle...`);
     }
 
     // Set up Gmail API with service account
@@ -180,7 +180,7 @@ export async function sendToKindle(
     const sentFileNames = filesToSend.map(f => path.basename(f));
     return {
       success: true,
-      message: `✅ Successfully sent ${sentFileNames.length} file(s) to ${kindleEmail}! Check your Kindle library in a few minutes.`,
+      message: `✅ Successfully sent ${sentFileNames.length} file(s) to Kindle! Check your Kindle library in a few minutes.`,
       sentFiles: sentFileNames,
       convertedFiles: convertedFiles.length > 0 ? convertedFiles.map(f => path.basename(f)) : undefined,
     };

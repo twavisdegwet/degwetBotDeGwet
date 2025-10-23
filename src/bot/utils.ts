@@ -9,7 +9,7 @@ import { checkForMp3AndPrompt, uploadTorrentToGDrive, handleUploadButtonInteract
 import { getPersonality } from './badjokes';
 import { isUserPlayingGame, createPresenceBlockedMessage } from './presenceUtils';
 import { getRandomWaitingMessage, getRandomCompletionMessage } from './garfieldMessages';
-import { env } from '../config/env';
+import { env, kindleEmailMappings } from '../config/env';
 
 // Helper function to safely edit interaction replies
 async function safeEditReply(interaction: CommandInteraction, content: any): Promise<boolean> {
@@ -138,7 +138,16 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
 
   const query = interaction.options.getString('query', true);
   const limit = interaction.options.getInteger('limit') || 10;
-  const kindleEmail = interaction.options.getString('kindle_email') || undefined;
+
+  // Get kindle_email from parameter, or auto-lookup from Discord ID mapping
+  let kindleEmail = interaction.options.getString('kindle_email') || undefined;
+  if (!kindleEmail && bookType === 'ebook') {
+    const userId = interaction.user.id;
+    if (kindleEmailMappings[userId]) {
+      kindleEmail = kindleEmailMappings[userId];
+      console.log(`Auto-resolved Kindle email for user ${userId} from mapping`);
+    }
+  }
   
   // Get search field options (default to true if not specified)
   const searchTitle = interaction.options.getBoolean('search_title') ?? true;
@@ -490,7 +499,8 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
             }
           } else {
             // Kindle email was provided - automatically send to Kindle first
-            await message.channel.send(`<@${message.author.id}> 📧 Preparing to send ebook to ${kindleEmail}...`);
+            const botEmail = env.KINDLE_BOT_EMAIL || 'the bot email';
+            await message.channel.send(`<@${message.author.id}> 📧 Preparing to send ebook to Kindle...\n💡 Make sure **${botEmail}** is in your Amazon approved senders list: https://www.amazon.com/hz/mycd/preferences/myx#/home/settings/payment`);
 
             // Import and call sendToKindle
             const { sendToKindle } = await import('./emailUtils');
@@ -720,7 +730,8 @@ export async function handleKindleEmailInteraction(interaction: any) {
     await interaction.deferUpdate();
 
     // Send a status message
-    await interaction.channel?.send(`<@${interaction.user.id}> 📧 Preparing to send ebook to ${kindleEmail}...`);
+    const botEmail = env.KINDLE_BOT_EMAIL || 'the bot email';
+    await interaction.channel?.send(`<@${interaction.user.id}> 📧 Preparing to send ebook to Kindle...\n💡 Make sure **${botEmail}** is in your Amazon approved senders list: https://www.amazon.com/hz/mycd/preferences/myx#/home/settings/payment`);
 
     // Import the sendToKindle function
     const { sendToKindle } = await import('./emailUtils');
@@ -750,7 +761,7 @@ export async function handleKindleEmailInteraction(interaction: any) {
     // Update the original button message to remove buttons
     await safeEditReply(interaction, {
       content: result.success
-        ? `✅ Sent to ${kindleEmail}`
+        ? `✅ Sent to Kindle`
         : `❌ Failed to send to Kindle`,
       components: []
     });

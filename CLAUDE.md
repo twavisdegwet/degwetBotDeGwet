@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Discord Media Bot that automates audiobook and ebook downloading from MyAnonaMouse (MAM) private tracker, using Deluge torrent client and Google Drive for storage. The bot provides Discord slash commands for searching, downloading, and managing media content with intelligent processing features like MP3→M4B conversion and duplicate detection.
+This is a Discord Media Bot that automates audiobook and ebook downloading from MyAnonaMouse (MAM) private tracker, using Deluge torrent client and Google Drive for storage. The bot provides Discord slash commands for searching, downloading, and managing media content with intelligent processing features like MP3→M4B conversion, duplicate detection, and Send to Kindle email integration.
 
 ## Development Commands
 
@@ -51,10 +51,13 @@ The codebase is organized into three main layers:
 ### 2. Discord Bot Layer (`src/bot/`)
 - **Entry point**: `src/bot/index.ts` - Discord client setup and command registration
 - **Commands**: Slash commands in `commands/` directory, each exports `data` and `execute`
-- **Core utilities**: `utils.ts` contains unified upload system and interaction handlers
+- **Core utilities**:
+  - `utils.ts` - Unified upload system and interaction handlers
+  - `uploadUtils.ts` - Google Drive upload implementation with conversion support
+  - `emailUtils.ts` - Send to Kindle email functionality via Gmail API
 - **AI Integration**: Advanced Ollama-powered expert consultation and librarian systems
   - `ollamautils.ts` - Core Ollama API client with server failover
-  - `agenticutils.ts` - Agentic chat system with tool calling capabilities 
+  - `agenticutils.ts` - Agentic chat system with tool calling capabilities
   - `personalities.ts` - Expert personality system with 5+ character types
   - `personalities/librarian.ts` - Specialized librarian agent with MAM integration
 
@@ -76,6 +79,16 @@ All Discord button interactions are routed through standardized handlers:
 - `handleAutoUploadInteraction()` - For automatic uploads after download completion
 - `handleDuplicateUploadInteraction()` - For uploading existing completed torrents
 - `handleGDriveUploadInteraction()` - For manual upload commands
+- `handleKindleEmailInteraction()` - For Send to Kindle email delivery
+
+### Send to Kindle System
+The bot features automated ebook delivery via email using Gmail API:
+- **OAuth2 Authentication**: Uses same service account as Google Drive with domain-wide delegation
+- **Bot User Impersonation**: Service account impersonates dedicated bot user (`degwetbot@degwet.com`)
+- **Automatic Format Conversion**: Uses `ebookconvert.sh` to convert PDF/MOBI to EPUB format
+- **Smart Auto-Send**: When `kindle_email` parameter provided, automatically sends to Kindle then offers Drive upload
+- **File Size Validation**: Enforces Amazon's 50MB limit for Send to Kindle
+- **Progress Notifications**: Real-time Discord updates during conversion and sending
 
 ### Client Management
 External service clients use consistent patterns:
@@ -127,6 +140,11 @@ The bot requires extensive configuration in `.env.local`. Key environment variab
 - `GOOGLE_SERVICE_ACCOUNT_PATH` (path to JSON credentials)
 - `GOOGLE_DRIVE_FOLDER_ID` (shared drive ID)
 
+### Send to Kindle (Gmail API)
+- `KINDLE_BOT_EMAIL` (Google Workspace bot user email for sending, e.g., `degwetbot@degwet.com`)
+- Uses same service account as Google Drive via domain-wide delegation
+- Requires Gmail API enabled and domain-wide delegation configured with `gmail.send` scope
+
 ### File System
 - `DOWNLOADS_DIRECTORY` (default: `/mnt/nas/nzbget/nzb/completed/torrent`)
 
@@ -147,14 +165,21 @@ The project uses Jest with TypeScript:
 ## Integration Dependencies
 
 ### External Files in `samplefiles/`
-- `discord-468217-313c7eccba67.json` - Google Drive service account credentials
+- `discord-468217-313c7eccba67.json` - Service account credentials for Google Drive and Gmail API
 - `mp3tom4b.sh` - MP3 to M4B conversion script (requires ffmpeg)
+- `ebookconvert.sh` - Ebook format conversion script (requires Calibre's ebook-convert)
 
 ### Service Requirements
 - Deluge daemon with Web UI enabled
-- MyAnonaMouse account with API access and freeleech capability  
+- MyAnonaMouse account with API access and freeleech capability
 - Google Drive shared drive with service account permissions
+- Gmail API with domain-wide delegation configured:
+  - Service account Client ID: `108279638122666000589`
+  - OAuth scope: `https://www.googleapis.com/auth/gmail.send`
+  - Bot user account: `degwetbot@degwet.com`
+  - Bot email approved in Amazon Kindle's Personal Document Settings
 - Ollama server(s) with AI models for expert consultation and librarian features
+- Calibre (for ebook-convert command)
 
 ## Development Notes
 

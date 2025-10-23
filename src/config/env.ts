@@ -60,6 +60,11 @@ const envSchema = z.object({
   // Create a dedicated Google Workspace user (e.g., bot@yourdomain.com) for sending emails
   // This user must be authorized in Amazon Kindle's approved email list
   KINDLE_BOT_EMAIL: z.string().email().optional(), // The Google Workspace bot user to send emails as
+
+  // Kindle Email Mappings (Discord ID to Kindle Email)
+  // JSON string mapping Discord user IDs to their Kindle email addresses
+  // Example: '{"214899404627378176":"travistreed_cf4fc8@kindle.com"}'
+  KINDLE_EMAIL_MAPPINGS: z.string().optional(),
 });
 
 // Define the type for our environment variables
@@ -81,3 +86,33 @@ if (!parsedEnv.success) {
 }
 
 export const env = parsedEnv.data;
+
+// Parse and export Kindle email mappings
+export const kindleEmailMappings: Record<string, string> = (() => {
+  if (!env.KINDLE_EMAIL_MAPPINGS) {
+    return {};
+  }
+
+  try {
+    const mappings = JSON.parse(env.KINDLE_EMAIL_MAPPINGS);
+
+    // Validate that it's an object with string keys and values
+    if (typeof mappings !== 'object' || mappings === null || Array.isArray(mappings)) {
+      console.error('KINDLE_EMAIL_MAPPINGS must be a JSON object');
+      return {};
+    }
+
+    // Validate all entries are strings
+    for (const [key, value] of Object.entries(mappings)) {
+      if (typeof key !== 'string' || typeof value !== 'string') {
+        console.error('KINDLE_EMAIL_MAPPINGS must have string keys and values');
+        return {};
+      }
+    }
+
+    return mappings as Record<string, string>;
+  } catch (error) {
+    console.error('Failed to parse KINDLE_EMAIL_MAPPINGS:', error);
+    return {};
+  }
+})();

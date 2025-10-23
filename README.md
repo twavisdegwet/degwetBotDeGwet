@@ -8,7 +8,9 @@ A comprehensive Discord bot that integrates with MyAnonaMouse (MAM) private trac
 - 🔍 **Smart Search**: Search MyAnonaMouse for audiobooks and ebooks with advanced filtering
 - 📥 **Automatic Downloads**: Seamless torrent downloading to Deluge with duplicate detection
 - ☁️ **Google Drive Integration**: Automatic upload to Google Drive with intelligent folder organization (unified upload system for all pathways)
+- 📧 **Send to Kindle**: Automatic email delivery of ebooks directly to your Kindle device via Gmail API
 - 🎵 **MP3→M4B Conversion**: Automatic audiobook format conversion for better compatibility
+- 📚 **Ebook Format Conversion**: PDF/MOBI to EPUB conversion for Kindle compatibility
 - 💎 **VIP/Freeleech Management**: Automatic freeleech setting for VIP torrents
 - 🔄 **Duplicate Handling**: Smart duplicate detection with upload options for completed torrents (uses unified upload system)
 - 🤖 **Discord Bot**: Intuitive slash commands with interactive button interfaces
@@ -27,7 +29,10 @@ A comprehensive Discord bot that integrates with MyAnonaMouse (MAM) private trac
 - Node.js 18+
 - MyAnonaMouse account with API access
 - Deluge torrent client with Web UI enabled
-- Google Drive API service account (for cloud uploads)
+- Google Workspace account with:
+  - Google Drive API service account (for cloud uploads)
+  - Gmail API with domain-wide delegation (for Send to Kindle)
+  - Bot user account (e.g., `degwetbot@degwet.com`)
 - Discord bot token and server permissions
 - FFmpeg (for MP3→M4B audiobook conversion)
 - Calibre (for ebook format conversion - PDF/EPUB/MOBI)
@@ -69,12 +74,15 @@ DELUGE_PASSWORD=your_deluge_password
 
 # Google Drive (place service account JSON in samplefiles/)
 GOOGLE_DRIVE_SHARED_DRIVE_ID=your_shared_drive_id
+
+# Send to Kindle (Gmail API - uses same service account)
+KINDLE_BOT_EMAIL=degwetbot@degwet.com
 ```
 
 ### Setup Files
 
 Place these files in the `samplefiles/` directory:
-- `discord-468217-313c7eccba67.json` - Google Drive service account credentials
+- `discord-468217-313c7eccba67.json` - Service account credentials (for Google Drive and Gmail API)
 - `mp3tom4b.sh` - MP3 to M4B conversion script (requires FFmpeg)
 - `ebookconvert.sh` - Ebook format conversion script (requires Calibre)
 
@@ -109,9 +117,23 @@ Search and download audiobooks from MyAnonaMouse.
 ```
 
 #### `/getebook`
-Search and download ebooks from MyAnonaMouse.
+Search and download ebooks from MyAnonaMouse with optional Send to Kindle.
 
-**Parameters:** Same as `/getaudiobook` but for ebook categories
+**Parameters:**
+- `query` (required) - Book title, author, or keyword
+- `kindle_email` (optional) - Your Kindle email address for automatic delivery
+- `author`, `format`, `freeleech`, `limit` - Same as `/getaudiobook`
+
+**Examples:**
+```
+# Download and upload to Google Drive
+/getebook query:Foundation author:Isaac Asimov
+
+# Download and send directly to Kindle
+/getebook query:Foundation kindle_email:yourname@kindle.com
+```
+
+**Note:** When `kindle_email` is provided, the bot automatically sends the ebook to your Kindle device and then offers to also upload to Google Drive.
 
 #### `/gdrive-upload`
 Manually upload completed torrents to Google Drive (uses the same unified upload system as automatic uploads).
@@ -225,6 +247,60 @@ sudo dnf install calibre
 sudo apt install calibre
 ```
 
+## 📧 Send to Kindle
+
+### Automatic Email Delivery
+The bot can automatically send ebooks directly to your Kindle device via email:
+
+### How It Works
+1. **Download**: Ebook downloads from MyAnonaMouse to Deluge
+2. **Format Check**: Bot checks for EPUB files (Kindle-compatible)
+3. **Auto-Convert**: Converts PDF/MOBI to EPUB if needed using Calibre
+4. **Email Delivery**: Sends via Gmail API to your Kindle email address
+5. **Confirmation**: Bot notifies you when email is sent successfully
+
+### Setup Requirements
+1. **Google Workspace**: Gmail API with domain-wide delegation configured
+2. **Service Account**: Same account used for Google Drive (`discord-468217-313c7eccba67.json`)
+3. **Bot User**: Dedicated bot account (e.g., `degwetbot@degwet.com`)
+4. **Amazon Approval**: Add bot email to Kindle's approved sender list
+
+### Amazon Kindle Configuration
+1. Go to https://www.amazon.com/sendtokindle
+2. Navigate to **Personal Document Settings**
+3. Under **Approved Personal Document E-mail List**, add: `degwetbot@degwet.com`
+4. Click **Add Address**
+
+### Usage Flow
+
+**Without Kindle Email (Default):**
+```
+/getebook query:"book title"
+→ Downloads → Auto-uploads to Google Drive
+```
+
+**With Kindle Email:**
+```
+/getebook query:"book title" kindle_email:yourname@kindle.com
+→ Downloads → Auto-sends to Kindle → Offers Google Drive upload
+```
+
+### Features
+- **Automatic Conversion**: PDF/MOBI → EPUB for best Kindle compatibility
+- **Size Validation**: Checks Amazon's 50MB limit before sending
+- **Progress Updates**: Real-time notifications during conversion and sending
+- **Dual Delivery**: Option to send to Kindle AND upload to Google Drive
+- **Format Support**: EPUB (direct), PDF (converts), MOBI (converts)
+
+### Gmail API Setup
+The bot uses OAuth2 with domain-wide delegation (not app passwords):
+
+1. **Enable Gmail API** in Google Cloud Console
+2. **Configure Domain-Wide Delegation** in Google Workspace Admin:
+   - Client ID: `108279638122666000589` (from service account JSON)
+   - OAuth Scope: `https://www.googleapis.com/auth/gmail.send`
+3. **Set Environment Variable**: `KINDLE_BOT_EMAIL=degwetbot@degwet.com`
+
 ## 🛠️ API Endpoints
 
 ### Health Check
@@ -292,10 +368,14 @@ npm test
 ### 🔧 System Requirements
 
 **Service Dependencies:**
-- Google Drive service account with shared drive access
+- Google Workspace with service account:
+  - Google Drive API with shared drive access
+  - Gmail API with domain-wide delegation
+  - Bot user account for sending emails
 - MyAnonaMouse account with sufficient wedges for freeleech
 - Deluge daemon with Web UI enabled
 - Discord bot with appropriate server permissions
+- Amazon Kindle with bot email on approved sender list
 
 **File System:**
 - Torrent download path: `/mnt/nas/nzb/completed/torrent`
@@ -332,6 +412,21 @@ npm test
 4. Generate JSON credentials
 5. Share target drive with service account email
 6. Place JSON file in `samplefiles/` directory
+
+### Gmail API Setup (Send to Kindle)
+1. **Enable Gmail API** in Google Cloud Console (same project as Drive)
+2. **Create Bot User** in Google Workspace Admin:
+   - Go to Users → Add new user
+   - Create account (e.g., `degwetbot@degwet.com`)
+3. **Configure Domain-Wide Delegation** in Admin Console:
+   - Security → API Controls → Domain-wide Delegation
+   - Add service account Client ID: `108279638122666000589`
+   - OAuth Scope: `https://www.googleapis.com/auth/gmail.send`
+   - Click Authorize
+4. **Configure Amazon Kindle**:
+   - Go to https://www.amazon.com/sendtokindle
+   - Add `degwetbot@degwet.com` to approved senders
+5. **Set Environment Variable**: `KINDLE_BOT_EMAIL=degwetbot@degwet.com`
 
 ### Deluge Configuration
 Ensure Deluge Web UI is accessible and configured with:
@@ -382,6 +477,15 @@ Ensure Deluge Web UI is accessible and configured with:
 - Installation: `dnf install calibre` (Fedora) or `apt install calibre` (Ubuntu)
 - Check `ebookconvert.sh` script exists and is executable
 - Ensure sufficient disk space for conversion
+
+**Send to Kindle Fails:**
+- Verify `KINDLE_BOT_EMAIL` is set in `.env.local`
+- Check Gmail API is enabled in Google Cloud Console
+- Verify domain-wide delegation is configured with correct Client ID (`108279638122666000589`)
+- Ensure OAuth scope `https://www.googleapis.com/auth/gmail.send` is added
+- Check bot email (`degwetbot@degwet.com`) is on Amazon Kindle's approved list
+- Verify file size is under 50MB (Amazon's limit)
+- Common error: "unauthorized_client" means domain-wide delegation not configured correctly
 
 ### Debug Commands
 
