@@ -139,7 +139,7 @@ client.on('interactionCreate', async (interaction) => {
             else if (interaction.customId.startsWith('auto_cancel_') || interaction.customId.startsWith('duplicate_cancel_')) {
                 await interaction.deferUpdate();
                 await interaction.editReply({
-                    content: '❌ Cancelled.',
+                    content: 'good we\'ve already gotten our lasagna- the rest can fend for themselves',
                     components: []
                 });
             }

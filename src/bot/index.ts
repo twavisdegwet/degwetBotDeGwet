@@ -111,7 +111,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         // Handle cancel button
         await interaction.deferUpdate();
         await interaction.editReply({
-          content: '❌ Cancelled.',
+          content: 'good we\'ve already gotten our lasagna- the rest can fend for themselves',
           components: []
         });
       } else {
