@@ -17,9 +17,13 @@ export const data = new SlashCommandBuilder()
   .addIntegerOption(option =>
     option.setName('limit')
       .setDescription('The maximum number of results to return (default: 10).'))
+  .addBooleanOption(option =>
+    option.setName('kindle')
+      .setDescription('Send to your registered Kindle email (must be set up in bot config).')
+      .setRequired(false))
   .addStringOption(option =>
     option.setName('kindle_email')
-      .setDescription('Optional: Your Kindle email address to send the ebook directly.')
+      .setDescription('Optional: Specify a Kindle email address to send the ebook directly.')
       .setRequired(false));
 
 export async function execute(interaction: CommandInteraction) {

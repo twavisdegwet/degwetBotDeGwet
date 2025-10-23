@@ -139,14 +139,25 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
   const query = interaction.options.getString('query', true);
   const limit = interaction.options.getInteger('limit') || 10;
 
-  // Get kindle_email from parameter, or auto-lookup from Discord ID mapping
-  let kindleEmail = interaction.options.getString('kindle_email') || undefined;
-  if (!kindleEmail && bookType === 'ebook') {
+  // Determine kindle email to use
+  let kindleEmail: string | undefined = undefined;
+
+  // Priority 1: If kindle_email parameter is explicitly provided, use that
+  const explicitKindleEmail = interaction.options.getString('kindle_email');
+  if (explicitKindleEmail) {
+    kindleEmail = explicitKindleEmail;
+  }
+  // Priority 2: If kindle boolean is true, look up from mapping
+  else if (interaction.options.getBoolean('kindle') === true && bookType === 'ebook') {
     const userId = interaction.user.id;
-    if (kindleEmailMappings[userId]) {
-      kindleEmail = kindleEmailMappings[userId];
-      console.log(`Auto-resolved Kindle email for user ${userId} from mapping`);
+    kindleEmail = kindleEmailMappings[userId];
+
+    if (!kindleEmail) {
+      await safeEditReply(interaction, `❌ No Kindle email found for your Discord account. Please ask the bot admin to add your Kindle email to the configuration, or use the \`kindle_email\` parameter to specify your email directly. ${getPersonality()}`);
+      return;
     }
+
+    console.log(`Using mapped Kindle email for user ${userId}`);
   }
   
   // Get search field options (default to true if not specified)
