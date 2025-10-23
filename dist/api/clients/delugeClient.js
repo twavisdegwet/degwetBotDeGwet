@@ -23,7 +23,7 @@ class DelugeClient {
         this.password = password;
         this.axiosInstance = axios_1.default.create({
             baseURL: baseUrl.endsWith('/') ? baseUrl : baseUrl + '/',
-            timeout: 10000,
+            timeout: 30000,
             headers: {
                 'Content-Type': 'application/json'
             }
