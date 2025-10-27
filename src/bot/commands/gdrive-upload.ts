@@ -115,9 +115,9 @@ export async function execute(interaction: CommandInteraction) {
         const statusMessage = `🚀 Now uploading **${selectedTorrent.name}** to Google Drive. ${getPersonality()}`;
         await m.reply(statusMessage);
         
-        // Upload with progress updates
-        const result = await uploadTorrentToGDrive(selectedTorrent.id, false, m);
-        
+        // Upload with progress updates (pass m as progressTarget, the 4th parameter)
+        const result = await uploadTorrentToGDrive(selectedTorrent.id, false, false, m);
+
         // Send the final result message if it wasn't sent through the progressTarget
         if (result.success && result.message) {
           try {
@@ -138,8 +138,27 @@ export async function execute(interaction: CommandInteraction) {
 
 export async function handleGDriveUploadInteraction(interaction: any) {
   // Use the new unified upload button handler
-  await handleUploadButtonInteraction(interaction, 'gdrive_upload', async (torrentId: string, convert: boolean) => {
-    // Upload with progress updates - no need to store result as it handles messaging internally
-    await uploadTorrentToGDrive(torrentId, convert, interaction);
+  await handleUploadButtonInteraction(interaction, 'gdrive_upload', async (torrentId: string, convertMp3: boolean, convertEbook: boolean) => {
+    // Upload with progress updates - pass interaction as the 4th parameter (progressTarget)
+    const result = await uploadTorrentToGDrive(torrentId, convertMp3, convertEbook, interaction);
+
+    // Send the final result message
+    if (result.success && result.message) {
+      try {
+        const userId = interaction.user?.id || interaction.author?.id;
+        await interaction.channel.send(`<@${userId}> ${result.message}`);
+        // Send Garfield comic after successful upload with download link
+        await sendRandomGarfieldComic(interaction.channel, userId, 'completion');
+      } catch (error) {
+        console.error('Error sending final upload message:', error);
+      }
+    } else if (!result.success && result.error) {
+      try {
+        const userId = interaction.user?.id || interaction.author?.id;
+        await interaction.channel.send(`<@${userId}> ${result.message}`);
+      } catch (error) {
+        console.error('Error sending error message:', error);
+      }
+    }
   });
 }

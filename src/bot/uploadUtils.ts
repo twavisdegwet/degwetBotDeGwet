@@ -115,16 +115,18 @@ async function uploadTorrentWithProgress(
       try {
         // Log all messages to console for debugging
         console.log(`Progress: ${message}`);
-        
-        // Only send key messages to Discord, not every progress update
-        const shouldNotify = message.includes('Content analysis:') || 
-                           message.includes('Converting MP3') || 
-                           message.includes('Uploaded') || 
+
+        // Only send key messages to Discord if progressTarget is provided, not every progress update
+        const shouldNotify = message.includes('Content analysis:') ||
+                           message.includes('Converting MP3') ||
+                           message.includes('Uploaded') ||
                            message.includes('Cleaned up temp directory');
-        
-        if (shouldNotify) {
+
+        if (shouldNotify && progressTarget && progressTarget.channel) {
           const userId = progressTarget.user?.id || progressTarget.author?.id;
-          await progressTarget.channel?.send(`<@${userId}> ${message}`);
+          if (userId) {
+            await progressTarget.channel.send(`<@${userId}> ${message}`);
+          }
         }
       } catch (error) {
         console.error('Error sending progress message:', error);
