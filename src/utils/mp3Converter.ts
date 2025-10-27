@@ -62,7 +62,7 @@ export async function convertMp3ToM4b(
     
     // Execute the conversion
     const { stdout, stderr } = await execAsync(command, {
-      maxBuffer: 1024 * 1024 * 10, // 10MB buffer for large outputs
+      maxBuffer: 1024 * 1024 * 100, // 100MB buffer for large audiobooks with verbose ffmpeg output
       timeout: 90 * 60 * 1000, // 90 minute timeout for large audiobooks
     });
     
