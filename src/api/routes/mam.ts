@@ -67,7 +67,8 @@ const formatTorrentResults = (data: any[], mamClient: MamClient) => {
       author: formatted.author,
       narrator: formatted.narrator,
       series: formatted.series,
-      tags: torrent.tags
+      tags: torrent.tags,
+      numfiles: torrent.numfiles
     };
   });
 };
@@ -198,23 +199,31 @@ router.post('/download', async (req: Request, res: Response) => {
         
         const duplicateHash = (error as any).hash;
         console.log(`Duplicate torrent detected: ${duplicateHash || 'unknown hash'}`);
-        
-        // Find the existing torrent in Deluge
-        const existingTorrents = await delugeClient.getTorrents();
-        console.log(`Total torrents in Deluge: ${existingTorrents.length}`);
-        console.log(`Looking for torrent with hash: ${duplicateHash}`);
-        console.log(`Looking for torrent with name containing: ${torrentName}`);
-        
+
         let existingTorrent = null;
-        
+
+        // If we have the hash, use direct lookup (much faster than getting all torrents)
         if (duplicateHash) {
-          existingTorrent = existingTorrents.find((t: any) => t.id === duplicateHash);
-          console.log(`Found by hash: ${existingTorrent ? existingTorrent.name : 'not found'}`);
+          console.log(`Looking for torrent with hash: ${duplicateHash}`);
+          const torrentStatus = await delugeClient.getTorrentStatus(duplicateHash);
+          if (torrentStatus.id) {
+            existingTorrent = {
+              id: torrentStatus.id,
+              name: torrentStatus.name,
+              state: torrentStatus.state,
+              progress: torrentStatus.progress
+            };
+            console.log(`Found by hash: ${existingTorrent.name}`);
+          }
         }
-        
-        // If not found by hash, try to find by name
+
+        // Fallback: If no hash or not found by hash, search by name
         if (!existingTorrent && torrentName) {
-          existingTorrent = existingTorrents.find((t: any) => 
+          console.log(`Hash lookup failed, falling back to name search`);
+          console.log(`Looking for torrent with name containing: ${torrentName}`);
+          const existingTorrents = await delugeClient.getTorrents();
+          console.log(`Total torrents in Deluge: ${existingTorrents.length}`);
+          existingTorrent = existingTorrents.find((t: any) =>
             t.name && t.name.toLowerCase().includes(torrentName.toLowerCase().substring(0, 20))
           );
           console.log(`Found by name: ${existingTorrent ? existingTorrent.name : 'not found'}`);
@@ -259,8 +268,14 @@ router.post('/download', async (req: Request, res: Response) => {
     }
     
     // If we reach this point, the torrent was successfully added (no duplicate error thrown)
-    const existingTorrents = await delugeClient.getTorrents();
-    const torrentInfo = existingTorrents.find((t: any) => t.id === torrentId);
+    // Use direct lookup by ID instead of getting all torrents (much faster)
+    const torrentStatus = await delugeClient.getTorrentStatus(torrentId);
+    const torrentInfo = torrentStatus.id ? {
+      id: torrentStatus.id,
+      name: torrentStatus.name,
+      state: torrentStatus.state,
+      progress: torrentStatus.progress
+    } : null;
     
     return res.json({
       torrentId,

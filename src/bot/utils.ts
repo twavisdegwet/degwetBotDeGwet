@@ -254,7 +254,7 @@ export async function handleBookSearch(interaction: CommandInteraction, bookType
       message += `   📚 ${torrent.series}\n`;
     }
     
-    message += `   📁 ${torrent.catname} | 💾 ${torrent.size} | 🌱 ${torrent.seeders} seeders\n`;
+    message += `   📁 ${torrent.catname} | 💾 ${torrent.size} | 📄 ${torrent.numfiles} files | 🌱 ${torrent.seeders} seeders\n`;
     message += `   🆔 ID: ${torrent.id} | Free: ${torrent.isFree ? '✅' : '❌'} | VIP: ${torrent.isVip ? '✅' : '❌'}\n`;
     
     // Add format if available
