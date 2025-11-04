@@ -270,22 +270,20 @@ router.post('/download', async (req: Request, res: Response) => {
     // If we reach this point, the torrent was successfully added (no duplicate error thrown)
     // Use direct lookup by ID instead of getting all torrents (much faster)
     const torrentStatus = await delugeClient.getTorrentStatus(torrentId);
-    const torrentInfo = torrentStatus.id ? {
-      id: torrentStatus.id,
-      name: torrentStatus.name,
-      state: torrentStatus.state,
-      progress: torrentStatus.progress
-    } : null;
-    
+
+    // Check if torrent was actually found in Deluge (not dummy data)
+    const torrentFoundInDeluge = torrentStatus.state !== 'Not Found' && torrentStatus.name !== 'Torrent not found';
+
     return res.json({
       torrentId,
       isDuplicate: false, // Successfully added, not a duplicate
       isDuplicateError: false,
-      torrentInfo: torrentInfo ? {
-        name: torrentInfo.name,
-        state: torrentInfo.state,
-        progress: torrentInfo.progress || 0
-      } : undefined,
+      torrentInfo: {
+        // Use torrentName from MAM as fallback if Deluge doesn't have it indexed yet
+        name: torrentFoundInDeluge ? torrentStatus.name : (torrentName || 'Unknown'),
+        state: torrentFoundInDeluge ? torrentStatus.state : 'Downloading',
+        progress: torrentFoundInDeluge ? (torrentStatus.progress || 0) : 0
+      },
       canUploadToGDrive: false, // Newly added torrents are not ready for upload yet
       message: 'Torrent added successfully to Deluge'
     });

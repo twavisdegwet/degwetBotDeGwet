@@ -239,21 +239,16 @@ router.post('/download', async (req, res) => {
             }
         }
         const torrentStatus = await delugeClient.getTorrentStatus(torrentId);
-        const torrentInfo = torrentStatus.id ? {
-            id: torrentStatus.id,
-            name: torrentStatus.name,
-            state: torrentStatus.state,
-            progress: torrentStatus.progress
-        } : null;
+        const torrentFoundInDeluge = torrentStatus.state !== 'Not Found' && torrentStatus.name !== 'Torrent not found';
         return res.json({
             torrentId,
             isDuplicate: false,
             isDuplicateError: false,
-            torrentInfo: torrentInfo ? {
-                name: torrentInfo.name,
-                state: torrentInfo.state,
-                progress: torrentInfo.progress || 0
-            } : undefined,
+            torrentInfo: {
+                name: torrentFoundInDeluge ? torrentStatus.name : (torrentName || 'Unknown'),
+                state: torrentFoundInDeluge ? torrentStatus.state : 'Downloading',
+                progress: torrentFoundInDeluge ? (torrentStatus.progress || 0) : 0
+            },
             canUploadToGDrive: false,
             message: 'Torrent added successfully to Deluge'
         });
