@@ -580,7 +580,8 @@ export class UploadManagementClient {
       const mp3Files = copiedFiles.filter(file => file.endsWith('.mp3'));
       let filesToUpload = copiedFiles;
 
-      if (options.convertMp3ToM4b && mp3Files.length > 0) {
+      // Only convert if there are multiple MP3 files (no point converting a single MP3)
+      if (options.convertMp3ToM4b && mp3Files.length > 1) {
         const conversionStartMessage = 'Converting MP3 files to M4B (this will take like 30 minutes per half GB)...';
         console.log(conversionStartMessage);
         if (progressCallback) progressCallback(conversionStartMessage);
@@ -592,6 +593,10 @@ export class UploadManagementClient {
           filesToUpload.push(m4bFile);
           convertedFile = path.basename(m4bFile);
         }
+      } else if (options.convertMp3ToM4b && mp3Files.length === 1) {
+        // Single MP3 file - skip conversion and upload as-is
+        console.log('📀 Single MP3 file detected - skipping conversion and uploading as-is. Even I know when to take a shortcut.');
+        if (progressCallback) progressCallback('Single MP3 file - uploading without conversion');
       }
 
       // Check if we should convert ebooks
