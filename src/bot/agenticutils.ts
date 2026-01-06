@@ -74,7 +74,7 @@ export async function agenticChat(
   const requestOptions = { ...defaultOptions, ...options };
 
   const server = await getAvailableOllamaServer();
-  console.log(`Making agentic chat request to ${server.name} server (${server.host}) with model ${server.model}`);
+  console.log(`Making agentic chat request to ${server.name} server (${server.host}) with model ${server.model} using ${server.type} API`);
 
   let messages: OllamaMessage[] = [
     { role: 'system', content: systemPrompt },
@@ -83,22 +83,43 @@ export async function agenticChat(
 
   let iteration = 0;
   while (iteration < (requestOptions.max_iterations ?? 5)) {
-    const response = await axios.post(`${server.host}/api/chat`, {
-      model: server.model,
-      messages,
-      tools: tools.length > 0 ? tools : undefined,
-      stream: false,
-      options: {
+    let response;
+    
+    if (server.type === 'openai') {
+      // OpenAI-compatible API (llama.cpp, llama-swap)
+      response = await axios.post(`${server.host}/v1/chat/completions`, {
+        model: server.model,
+        messages,
+        tools: tools.length > 0 ? tools : undefined,
         temperature: requestOptions.temperature,
-        repeat_penalty: requestOptions.repeat_penalty,
         top_p: requestOptions.top_p,
-        top_k: requestOptions.top_k
-      }
-    }, {
-      timeout: 420000 // 5 minute timeout
-    });
+        stream: false
+      }, {
+        timeout: 420000
+      });
+    } else {
+      // Ollama native API
+      response = await axios.post(`${server.host}/api/chat`, {
+        model: server.model,
+        messages,
+        tools: tools.length > 0 ? tools : undefined,
+        stream: false,
+        options: {
+          temperature: requestOptions.temperature,
+          repeat_penalty: requestOptions.repeat_penalty,
+          top_p: requestOptions.top_p,
+          top_k: requestOptions.top_k
+        }
+      }, {
+        timeout: 420000
+      });
+    }
 
-    const assistantMessage = response.data.message as OllamaMessage;
+    // Parse response based on server type
+    const assistantMessage: OllamaMessage = server.type === 'openai'
+      ? response.data.choices?.[0]?.message
+      : response.data.message;
+    
     messages.push(assistantMessage);
 
     if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {

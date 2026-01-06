@@ -18,6 +18,7 @@ export interface OllamaServer {
   host: string;
   model: string;
   name: string;
+  type: 'ollama' | 'openai';
 }
 
 export interface OllamaRequestOptions {
@@ -51,13 +52,15 @@ export async function getAvailableOllamaServer(): Promise<OllamaServer> {
   const primaryServer: OllamaServer = {
     host: env.OLLAMA_PRIMARY_HOST,
     model: env.OLLAMA_PRIMARY_MODEL,
-    name: 'primary'
+    name: 'primary',
+    type: env.OLLAMA_PRIMARY_TYPE
   };
   
   const secondaryServer: OllamaServer = {
     host: env.OLLAMA_SECONDARY_HOST,
     model: env.OLLAMA_SECONDARY_MODEL,
-    name: 'secondary'
+    name: 'secondary',
+    type: env.OLLAMA_SECONDARY_TYPE
   };
 
   // Test primary server first
@@ -100,38 +103,72 @@ export async function makeOllamaRequest(
 
   const requestOptions = { ...defaultOptions, ...options };
 
-  console.log(`Making Ollama request to ${server.name} server (${server.host}) with model ${server.model}`);
+  console.log(`Making request to ${server.name} server (${server.host}) with model ${server.model} using ${server.type} API`);
   console.log(`Prompt length: ${prompt.length} characters`);
   
   // Log the complete prompt right before making the API call
-  console.log('Final Ollama prompt being sent to ollamautils:', prompt);
+  console.log('Final prompt being sent to ollamautils:', prompt);
   
   const startTime = Date.now();
   const startDate = new Date(startTime).toLocaleString();
   console.log(`Prompt processing started at ${startDate} (epoch ${startTime}) - Length: ${prompt.length} characters`);
   
-  const response = await axios.post(`${server.host}/api/generate`, {
-    model: server.model,
-    prompt: prompt,
-    stream: false,
-    options: {
-      ...requestOptions,
-      num_ctx: 12384 
-    }
-  }, {
-    timeout: 420000 // 5 minute timeout for complex prompts
-  });
+  let response;
+  
+  if (server.type === 'openai') {
+    // OpenAI-compatible API (llama.cpp, llama-swap)
+    response = await axios.post(`${server.host}/v1/completions`, {
+      model: server.model,
+      prompt: prompt,
+      temperature: requestOptions.temperature,
+      top_p: requestOptions.top_p,
+      max_tokens: -1, // Let the model decide
+      stream: false
+    }, {
+      timeout: 420000
+    });
+  } else {
+    // Ollama native API
+    response = await axios.post(`${server.host}/api/generate`, {
+      model: server.model,
+      prompt: prompt,
+      stream: false,
+      options: {
+        ...requestOptions,
+        num_ctx: 12384 
+      }
+    }, {
+      timeout: 420000
+    });
+  }
 
   const endTime = Date.now();
   const endDate = new Date(endTime).toLocaleString();
   const durationSec = (endTime - startTime) / 1000;
-  const totalTokens = (response.data.eval_count ?? 0) + (response.data.prompt_eval_count ?? 0);
-  const tokensPerSec = durationSec > 0 ? (totalTokens / durationSec).toFixed(2) : 'N/A';
-  console.log(`Ollama response received at ${endDate} (epoch ${endTime}) - Tokens: ${response.data.eval_count} (eval), ${response.data.prompt_eval_count} (prompt)`);
-  console.log(`Tokens per second: ${tokensPerSec}`);
-  console.log('Ollama response received successfully');
   
-  // Return the response data along with timing information
+  // Parse response based on server type
+  let responseText: string;
+  let evalCount: number | undefined;
+  let promptEvalCount: number | undefined;
+  
+  if (server.type === 'openai') {
+    // OpenAI format: { choices: [{ text: "..." }], usage: { completion_tokens, prompt_tokens } }
+    responseText = response.data.choices?.[0]?.text || '';
+    evalCount = response.data.usage?.completion_tokens;
+    promptEvalCount = response.data.usage?.prompt_tokens;
+  } else {
+    // Ollama format: { response: "..." }
+    responseText = typeof response.data === 'string' ? response.data : response.data.response;
+    evalCount = response.data.eval_count;
+    promptEvalCount = response.data.prompt_eval_count;
+  }
+  
+  const totalTokens = (evalCount ?? 0) + (promptEvalCount ?? 0);
+  const tokensPerSec = durationSec > 0 ? (totalTokens / durationSec).toFixed(2) : 'N/A';
+  console.log(`Response received at ${endDate} (epoch ${endTime}) - Tokens: ${evalCount} (eval), ${promptEvalCount} (prompt)`);
+  console.log(`Tokens per second: ${tokensPerSec}`);
+  console.log('Response received successfully');
+  
   // Format the created_at timestamp to something more readable
   const createdAt = response.data.created_at 
     ? new Date(response.data.created_at).toLocaleString() 
@@ -140,14 +177,12 @@ export async function makeOllamaRequest(
   console.log(`Response created at: ${createdAt}`);
 
   return {
-    response: typeof response.data === 'string' 
-      ? response.data 
-      : response.data.response,
+    response: responseText,
     total_duration: response.data.total_duration,
     load_duration: response.data.load_duration,
-    prompt_eval_count: response.data.prompt_eval_count,
+    prompt_eval_count: promptEvalCount,
     prompt_eval_duration: response.data.prompt_eval_duration,
-    eval_count: response.data.eval_count,
+    eval_count: evalCount,
     eval_duration: response.data.eval_duration,
     created_at: createdAt,
     context: response.data.context
