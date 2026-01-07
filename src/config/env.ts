@@ -48,6 +48,7 @@ const envSchema = z.object({
   OLLAMA_SECONDARY_HOST: z.string().min(1),
   OLLAMA_SECONDARY_MODEL: z.string().min(1),
   OLLAMA_SECONDARY_TYPE: z.enum(['ollama', 'openai']).default('ollama'),
+  OLLAMA_APPEND_NOTHINK: z.string().optional().default('false').transform(val => val === 'true'),
   
   // Hardcover API Configuration
   HARDCOVER_API_URL: z.string().url().default('https://api.hardcover.app/v1/graphql'),

@@ -106,12 +106,19 @@ export async function makeOllamaRequest(
   console.log(`Making request to ${server.name} server (${server.host}) with model ${server.model} using ${server.type} API`);
   console.log(`Prompt length: ${prompt.length} characters`);
   
+  // Append /nothink if configured to disable thinking tags
+  let finalPrompt = prompt;
+  if (env.OLLAMA_APPEND_NOTHINK) {
+    finalPrompt = prompt + '/nothink';
+    console.log('Appending /nothink to disable thinking tags');
+  }
+  
   // Log the complete prompt right before making the API call
-  console.log('Final prompt being sent to ollamautils:', prompt);
+  console.log('Final prompt being sent to ollamautils:', finalPrompt);
   
   const startTime = Date.now();
   const startDate = new Date(startTime).toLocaleString();
-  console.log(`Prompt processing started at ${startDate} (epoch ${startTime}) - Length: ${prompt.length} characters`);
+  console.log(`Prompt processing started at ${startDate} (epoch ${startTime}) - Length: ${finalPrompt.length} characters`);
   
   let response;
   
@@ -119,7 +126,7 @@ export async function makeOllamaRequest(
     // OpenAI-compatible API (llama.cpp, llama-swap)
     response = await axios.post(`${server.host}/v1/completions`, {
       model: server.model,
-      prompt: prompt,
+      prompt: finalPrompt,
       temperature: requestOptions.temperature,
       top_p: requestOptions.top_p,
       max_tokens: -1, // Let the model decide
@@ -131,7 +138,7 @@ export async function makeOllamaRequest(
     // Ollama native API
     response = await axios.post(`${server.host}/api/generate`, {
       model: server.model,
-      prompt: prompt,
+      prompt: finalPrompt,
       stream: false,
       options: {
         ...requestOptions,

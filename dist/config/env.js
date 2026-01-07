@@ -35,6 +35,7 @@ const envSchema = zod_1.z.object({
     OLLAMA_SECONDARY_HOST: zod_1.z.string().min(1),
     OLLAMA_SECONDARY_MODEL: zod_1.z.string().min(1),
     OLLAMA_SECONDARY_TYPE: zod_1.z.enum(['ollama', 'openai']).default('ollama'),
+    OLLAMA_APPEND_NOTHINK: zod_1.z.string().optional().default('false').transform(val => val === 'true'),
     HARDCOVER_API_URL: zod_1.z.string().url().default('https://api.hardcover.app/v1/graphql'),
     HARDCOVER_API_TOKEN: zod_1.z.string().min(1),
     COMIC_IMAGE_PATH: zod_1.z.string().min(1).default('/home/twavisdegwet/heathcliff project/comics'),
