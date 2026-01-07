@@ -179,7 +179,11 @@ Now, give us your editorial news wrap - what's your skewed take on today's key s
         const { emoji, name } = getPersonalityFormatting(selectedExpert);
         // Filter out command execution complete message if it exists
         let filteredResponse = response.response.replace(/\[COMMAND EXECUTION COMPLETE\]/g, '');
-        // Filter out think tags and their content (both <think> and <nothink>)
+        // Filter out everything before and including the first </think> or </nothink> tag
+        // This handles models that output thinking text before the opening tag
+        filteredResponse = filteredResponse.replace(/^[\s\S]*?<\/think>\s*/g, '');
+        filteredResponse = filteredResponse.replace(/^[\s\S]*?<\/nothink>\s*/g, '');
+        // Also remove any remaining think/nothink tag pairs (in case there are multiple)
         filteredResponse = filteredResponse.replace(/<think>[\s\S]*?<\/think>/g, '');
         filteredResponse = filteredResponse.replace(/<nothink>[\s\S]*?<\/nothink>/g, '');
         const cleanedResponse = filteredResponse.replace(/\n\n+/g, '\n');

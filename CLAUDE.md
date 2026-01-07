@@ -104,6 +104,9 @@ The bot features an advanced AI consultation system powered by Ollama:
 - **Server Failover**: Automatic failover between primary/secondary Ollama servers
 - **Character Consistency**: Personality-driven responses maintain character throughout interactions
 - **Discord Integration**: Responses formatted specifically for Discord's 2000-character limit
+- **Response Sanitization**: Automatically removes `<think>` and `<nothink>` tags from AI responses
+- **Smart Truncation**: When responses exceed Discord's 2000-character limit, truncates at sentence boundaries rather than mid-sentence
+- **Thinking Tag Control**: Optional `/nothink` suffix prevents thinking tags at the source via `OLLAMA_APPEND_NOTHINK` env variable
 
 ### Librarian Agent System  
 Specialized agentic AI for book discovery and recommendations:
@@ -150,7 +153,10 @@ The bot requires extensive configuration in `.env.local`. Key environment variab
 
 ### Ollama AI Services
 - `OLLAMA_PRIMARY_HOST`, `OLLAMA_PRIMARY_MODEL` (primary AI server)
+- `OLLAMA_PRIMARY_TYPE` - Server type: `'ollama'` for native Ollama, `'openai'` for OpenAI-compatible (llama-swap, llama.cpp)
 - `OLLAMA_SECONDARY_HOST`, `OLLAMA_SECONDARY_MODEL` (failover server)
+- `OLLAMA_SECONDARY_TYPE` - Server type for failover
+- `OLLAMA_APPEND_NOTHINK` - Boolean (true/false) to append `/nothink` suffix to prompts (disables thinking tags at source)
 
 ### API Server
 - `HTTP_PORT` (default: 3000) - Express server port
