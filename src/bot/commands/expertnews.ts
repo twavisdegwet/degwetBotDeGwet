@@ -179,8 +179,9 @@ Now, give us your editorial news wrap - what's your skewed take on today's key s
         const { emoji, name } = getPersonalityFormatting(selectedExpert);
         // Filter out command execution complete message if it exists
         let filteredResponse = response.response.replace(/\[COMMAND EXECUTION COMPLETE\]/g, '');
-        // Filter out think tags and their content
+        // Filter out think tags and their content (both <think> and <nothink>)
         filteredResponse = filteredResponse.replace(/<think>[\s\S]*?<\/think>/g, '');
+        filteredResponse = filteredResponse.replace(/<nothink>[\s\S]*?<\/nothink>/g, '');
         const cleanedResponse = filteredResponse.replace(/\n\n+/g, '\n');
         const formattedResponse = `**${emoji} ${name}'s Newswrap:**\n${cleanedResponse}`;
         

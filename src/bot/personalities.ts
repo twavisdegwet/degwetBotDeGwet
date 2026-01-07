@@ -32,15 +32,29 @@ export function formatExpertResponse(personality: Personality, question: string,
   const { emoji, name } = getPersonalityFormatting(personality);
   // Filter out command execution complete message if it exists
   let filteredResponse = response.replace(/\[COMMAND EXECUTION COMPLETE\]/g, '');
-  // Filter out think tags and their content
+  // Filter out think tags and their content (both <think> and <nothink>)
   filteredResponse = filteredResponse.replace(/<think>[\s\S]*?<\/think>/g, '');
+  filteredResponse = filteredResponse.replace(/<nothink>[\s\S]*?<\/nothink>/g, '');
   // Filter out excessive whitespace - replace double+ newlines with single newlines
   const cleanedResponse = filteredResponse.replace(/\n\n+/g, '\n');
   let formattedResponse = `**Question:** ${question}\n**${emoji} ${name}'s Response:**\n${cleanedResponse}`;
   
   // Check if response is too long for Discord (2000 character limit)
+  // Try to truncate at a sentence boundary instead of mid-sentence
   if (formattedResponse.length > 2000) {
-    formattedResponse = formattedResponse.substring(0, 1997) + '...';
+    const maxLength = 1997;
+    const truncated = formattedResponse.substring(0, maxLength);
+    
+    // Find the last sentence boundary (. ! ?) before the truncation point
+    const lastSentenceMatch = truncated.match(/[.!?](?=[^.!?]*$)/);
+    
+    if (lastSentenceMatch && lastSentenceMatch.index && lastSentenceMatch.index > maxLength * 0.5) {
+      // If we found a sentence boundary and it's not too early in the text
+      formattedResponse = formattedResponse.substring(0, lastSentenceMatch.index + 1) + '...';
+    } else {
+      // Fall back to simple truncation if no good sentence boundary found
+      formattedResponse = truncated + '...';
+    }
   }
   
   return formattedResponse;

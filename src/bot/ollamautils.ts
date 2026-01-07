@@ -163,6 +163,11 @@ export async function makeOllamaRequest(
     promptEvalCount = response.data.prompt_eval_count;
   }
   
+  // Log the raw API response text for debugging
+  console.log('Raw API response text (first 500 chars):', responseText.substring(0, 500));
+  console.log('Raw API response text (last 500 chars):', responseText.substring(Math.max(0, responseText.length - 500)));
+  console.log('Total response length:', responseText.length);
+  
   const totalTokens = (evalCount ?? 0) + (promptEvalCount ?? 0);
   const tokensPerSec = durationSec > 0 ? (totalTokens / durationSec).toFixed(2) : 'N/A';
   console.log(`Response received at ${endDate} (epoch ${endTime}) - Tokens: ${evalCount} (eval), ${promptEvalCount} (prompt)`);
