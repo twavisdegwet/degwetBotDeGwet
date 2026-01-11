@@ -57,13 +57,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         }
 
         // Fetch Bluesky posts separately if skeets query is provided
-        let blueskyPostsContent: string | null = null;
         if (skeetsQuery) {
             try {
                 console.log(`Searching Bluesky posts for: "${skeetsQuery}"`);
                 const blueskyPosts = await searchBlueskyPosts(skeetsQuery, 20);
                 if (blueskyPosts.length > 0) {
-                    blueskyPostsContent = formatBlueskyPostsForPromptAnonymous(blueskyPosts);
+                    const blueskyPostsContent = formatBlueskyPostsForPromptAnonymous(blueskyPosts);
+                    // TODO: Use blueskyPostsContent in the expert prompt
                 }
             } catch (error) {
                 console.error(`Failed to search Bluesky for "${skeetsQuery}":`, error);

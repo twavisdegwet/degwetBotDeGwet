@@ -22,9 +22,7 @@ async function scheduleAlbumZipping(): Promise<void> {
   setTimeout(async () => {
     try {
       Logger.info('Starting album zipping process...');
-      // Update this path to match where albumzipper.sh is deployed on your target machine
-      const scriptPath = '/home/discordBot/albumzipper.sh'; // Adjust path as needed for deployment
-      const { stdout, stderr } = await execAsync(`bash "${scriptPath}"`);
+      const { stdout, stderr } = await execAsync('npm run zip-albums');
       Logger.info('Album zipping completed successfully');
       if (stdout) Logger.debug('Album zipper output:', stdout);
       if (stderr) Logger.debug('Album zipper stderr:', stderr);
