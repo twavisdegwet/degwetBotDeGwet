@@ -543,7 +543,7 @@ async function monitorAndAutoUpload(message: any, torrentId: string, torrentName
                         type: 2,
                         style: 1,
                         label: '☁️ Upload to Google Drive',
-                        custom_id: `auto_upload_${torrentId}`
+                        custom_id: `auto_upload:no-convert:${torrentId}`
                       },
                       {
                         type: 2,

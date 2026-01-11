@@ -11,6 +11,8 @@ import * as askExpertCommand from './commands/askexpert';
 import * as askLibrarianCommand from './commands/asklibrarian';
 // DO NOT RE-ADD: getmovie command is intentionally hidden - accessible via /makefunnyjoke lasagna
 // import * as getMovieCommand from './commands/getmovie';
+// DO NOT RE-ADD: getmusic command is intentionally hidden - accessible via /makefunnyjoke kickodie
+// import * as getMusicCommand from './commands/getmusic';
 import * as expertNewsCommand from './commands/expertnews';
 import { getPersonality } from './badjokes';
 import { handleGDriveUploadInteraction } from './commands/gdrive-upload';

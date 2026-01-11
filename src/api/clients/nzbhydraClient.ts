@@ -120,6 +120,33 @@ export class NZBHydraClient {
     });
   }
 
+  async searchMusic(query: string): Promise<NZBHydraSearchResult[]> {
+    try {
+      const params = {
+        t: 'search',
+        q: query.trim(),
+        cat: '3000', // Audio category
+        limit: '50'
+      };
+
+      const response = await this.client.get('/api', { params });
+      const items = await this.parseSearchResults(response.data);
+
+      // Filter to only include audio/MP3 category results
+      const musicItems = items.filter(item => 
+        item.category.includes('Audio') || 
+        item.downloadType.includes('Audio') ||
+        item.category.includes('MP3') ||
+        item.downloadType.includes('MP3')
+      );
+
+      return musicItems;
+    } catch (error) {
+      Logger.error('NZBHydra music search failed:', error);
+      throw new Error('Failed to search NZBHydra for music');
+    }
+  }
+
   async getNzbUrl(guid: string): Promise<string> {
     return `${env.NZBHYDRA_URL}/getnzb/api/${guid}?apikey=${env.NZBHYDRA_API_KEY}`;
   }
