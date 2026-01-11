@@ -1,17 +1,38 @@
-import { 
-  SlashCommandBuilder, 
-  ChatInputCommandInteraction, 
-  EmbedBuilder, 
-  ActionRowBuilder, 
+import {
+  SlashCommandBuilder,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  ActionRowBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   StringSelectMenuInteraction
 } from 'discord.js';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { NZBHydraClient } from '../../api/clients/nzbhydraClient';
 import { SABnzbdClient } from '../../api/clients/sabnzbdClient';
 import { Logger } from '../../utils/logger';
 import { isUserPlayingGame, createPresenceBlockedMessage } from '../presenceUtils';
 import { sendRandomGarfieldComic } from '../utils';
+
+const execAsync = promisify(exec);
+
+// Function to zip albums after a 5-minute delay
+async function scheduleAlbumZipping(): Promise<void> {
+  setTimeout(async () => {
+    try {
+      Logger.info('Starting album zipping process...');
+      // Update this path to match where albumzipper.sh is deployed on your target machine
+      const scriptPath = '/home/discordBot/albumzipper.sh'; // Adjust path as needed for deployment
+      const { stdout, stderr } = await execAsync(`bash "${scriptPath}"`);
+      Logger.info('Album zipping completed successfully');
+      if (stdout) Logger.debug('Album zipper output:', stdout);
+      if (stderr) Logger.debug('Album zipper stderr:', stderr);
+    } catch (error) {
+      Logger.error('Failed to execute album zipping script:', error);
+    }
+  }, 5 * 60 * 1000); // 5 minutes in milliseconds
+}
 
 export const data = new SlashCommandBuilder()
   .setName('getmusic')
@@ -114,7 +135,10 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
             
             const nzbUrl = await hydra.getNzbUrl(selectedGuid);
             await sabnzbd.addNzb(nzbUrl, 'audio');
-            
+
+            // Schedule album zipping to run in 5 minutes
+            scheduleAlbumZipping();
+
             // Send 5 Garfield comics as reading material
             for (let comicIndex = 0; comicIndex < 5; comicIndex++) {
               await sendRandomGarfieldComic(i.channel, i.user.id, 'completion');
@@ -219,7 +243,10 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
                           
                           const nzbUrl = await hydra.getNzbUrl(selectedGuid);
                           await sabnzbd.addNzb(nzbUrl, 'audio');
-                          
+
+                          // Schedule album zipping to run in 5 minutes
+                          scheduleAlbumZipping();
+
                           // Send 5 Garfield comics as reading material
                           for (let comicIndex = 0; comicIndex < 5; comicIndex++) {
                             await sendRandomGarfieldComic(retryI.channel, retryI.user.id, 'completion');

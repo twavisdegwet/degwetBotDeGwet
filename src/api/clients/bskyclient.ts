@@ -151,7 +151,7 @@ export async function fetchBlueskyPosts(): Promise<BlueskyPost[]> {
     
     for (const account of BLUESKY_ACCOUNTS) {
         try {
-            const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${account}&limit=5&filter=posts_no_replies`;
+            const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${account}&limit=10&filter=posts_no_replies`;
             const response = await fetch(url);
             
             if (!response.ok) {

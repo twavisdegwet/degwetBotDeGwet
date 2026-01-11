@@ -90,7 +90,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         let posts;
         if (topic) {
             console.log(`Searching Bluesky posts for topic: "${topic}"`);
-            posts = await searchBlueskyPosts(topic, 15);
+            posts = await searchBlueskyPosts(topic, 30);
         } else {
             console.log('Fetching latest Bluesky posts...');
             posts = await fetchBlueskyPosts();
@@ -128,10 +128,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         let expertTask: string;
         
         if (topic) {
-            expertTask = `You're hosting a special report segment on "${topic}", delivering in-depth insights and analysis in your unique character style, similar to a Daily Show or Tonight Show special feature. Draw from the anonymous field reports below to provide thoughtful insights, patterns, and connections without direct citations or references to specific sources. Focus on building a narrative that's engaging, opinionated, and revealing.
+            expertTask = `You're hosting a special report segment on "${topic}", delivering in-depth insights and analysis in your unique character style, similar to a Daily Show or Tonight Show special feature.
+
+Your task: Deliver a special report on ${topic} - what's the deeper story here?
 
 As the host, you should:
-
 1. Open with a charismatic introduction to the special report, infused with your personality's flair.
 2. Synthesize the reports into key insights about ${topic}, highlighting emerging patterns and deeper implications.
 3. Provide your expert take, drawing connections and offering analysis that's more than surface-level.
@@ -144,15 +145,19 @@ Remember: Emphasize insights and your character's perspective over quoting sourc
 
 CRITICAL: Keep your entire response under 5000 characters. Be engaging, insightful, and true to your character.
 
+===== IMPORTANT: READ ALL SOCIAL MEDIA POSTS BELOW =====
+The following are recent social media posts related to "${topic}". You MUST read through ALL of these posts to provide informed analysis and insights for your report above. These posts are your primary source material:
+
 FIELD REPORTS ON "${topic.toUpperCase()}":
 ${postsContent}
 
-Now, deliver your special report on ${topic} - what's the deeper story here?`;
+===== END OF SOCIAL MEDIA POSTS =====`;
         } else {
-            expertTask = `You're anchoring a PBS-style news wrap-up with a heavy editorial skew, delivered in your distinctive character voice like a Daily Show or Tonight Show host providing opinionated commentary. Use the anonymous social media insights below to summarize key stories, providing deep insights, editorial opinions, and connections without direct citations. Focus on 3-5 major topics, weaving in your personality's take with humor, satire, or sharp analysis.
+            expertTask = `You're anchoring a PBS-style news wrap-up with a heavy editorial skew, delivered in your distinctive character voice like a Daily Show or Tonight Show host providing opinionated commentary.
+
+Your task: Give us your editorial news wrap - what's your skewed take on today's key stories?
 
 As the anchor, you should:
-
 1. Start with an opening that sets a thoughtful yet skewed tone, reflecting your character's style.
 2. Select 3-5 key stories from the insights, providing summaries enriched with your editorial insights.
 3. For each, offer in-depth analysis, opinions, and connections to broader contexts.
@@ -165,10 +170,13 @@ This should feel like a sophisticated news wrap with strong personality-driven e
 
 CRITICAL: Keep your entire response under 5000 characters. Be opinionated, insightful, and character-focused.
 
+===== IMPORTANT: READ ALL SOCIAL MEDIA POSTS BELOW =====
+The following are recent social media posts from various sources. You MUST read through ALL of these posts to provide informed analysis and commentary for your news wrap above. These posts are your primary source material:
+
 TODAY'S FIELD REPORTS:
 ${postsContent}
 
-Now, give us your editorial news wrap - what's your skewed take on today's key stories?`;
+===== END OF SOCIAL MEDIA POSTS =====`;
         }
         
         // Get prompt and make Ollama request

@@ -49,27 +49,24 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             messages = await interaction.channel.messages.fetch({ limit: contextLimit });
         }
 
-        // Prepare message context
+        // Prepare message context (without Bluesky posts)
         let messageContext = `[COMMAND ISSUED BY: ${interaction.user.username}]\n\n`;
         if (messages && contextLimit > 0) {
             const messageArray = Array.from(messages.values());
             messageContext += messageArray.map(msg => `${msg.author.username}: ${msg.content}`).reverse().join('\n');
         }
 
-        // Add Bluesky context if skeets query is provided
+        // Fetch Bluesky posts separately if skeets query is provided
+        let blueskyPostsContent: string | null = null;
         if (skeetsQuery) {
             try {
                 console.log(`Searching Bluesky posts for: "${skeetsQuery}"`);
-                const blueskyPosts = await searchBlueskyPosts(skeetsQuery, 10);
+                const blueskyPosts = await searchBlueskyPosts(skeetsQuery, 20);
                 if (blueskyPosts.length > 0) {
-                    const formattedPosts = formatBlueskyPostsForPromptAnonymous(blueskyPosts);
-                    messageContext += `\n\nContext from Bluesky search for "${skeetsQuery}":\n${formattedPosts}`;
-                } else {
-                    messageContext += `\n\nBluesky search for "${skeetsQuery}" returned no results.`;
+                    blueskyPostsContent = formatBlueskyPostsForPromptAnonymous(blueskyPosts);
                 }
             } catch (error) {
                 console.error(`Failed to search Bluesky for "${skeetsQuery}":`, error);
-                messageContext += `\n\nBluesky search for "${skeetsQuery}" failed due to technical issues.`;
             }
         }
 
