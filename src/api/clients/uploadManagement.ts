@@ -342,8 +342,10 @@ export class UploadManagementClient {
       console.log('📖 Extracted metadata like a detective. I\'m basically Sherlock Holmes, but lazier:', metadata);
 
       // Use the improved converter
+      // IMPORTANT: Always pass a title to prevent bash script from auto-detecting from directory name
+      // The bash script's auto-detection converts underscores to spaces, which breaks filename matching
       const result = await convertMp3ToM4b(tempDir, {
-        title: metadata.title,
+        title: metadata.title || torrentName,
         author: metadata.author,
         autoApprove: true // Always auto-approve for automated uploads
       });
