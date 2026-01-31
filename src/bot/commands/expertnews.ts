@@ -143,7 +143,7 @@ As the host, you should:
 
 Remember: Emphasize insights and your character's perspective over quoting sources. Keep it character-driven, like a late-night show special.
 
-CRITICAL: Keep your entire response under 5000 characters. Be engaging, insightful, and true to your character.
+CRITICAL: Keep your entire response under 10000 characters. Be engaging, insightful, and true to your character.
 
 ===== IMPORTANT: READ ALL SOCIAL MEDIA POSTS BELOW =====
 The following are recent social media posts related to "${topic}". You MUST read through ALL of these posts to provide informed analysis and insights for your report above. These posts are your primary source material:
@@ -168,7 +168,7 @@ As the anchor, you should:
 
 This should feel like a sophisticated news wrap with strong personality-driven editorializing, not just facts.
 
-CRITICAL: Keep your entire response under 5000 characters. Be opinionated, insightful, and character-focused.
+CRITICAL: Keep your entire response under 10000 characters. Be opinionated, insightful, and character-focused.
 
 ===== IMPORTANT: READ ALL SOCIAL MEDIA POSTS BELOW =====
 The following are recent social media posts from various sources. You MUST read through ALL of these posts to provide informed analysis and commentary for your news wrap above. These posts are your primary source material:
