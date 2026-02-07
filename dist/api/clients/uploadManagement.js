@@ -223,7 +223,7 @@ class UploadManagementClient {
             const metadata = this.extractMetadataFromName(torrentName);
             console.log('📖 Extracted metadata like a detective. I\'m basically Sherlock Holmes, but lazier:', metadata);
             const result = await (0, mp3Converter_1.convertMp3ToM4b)(tempDir, {
-                title: metadata.title,
+                title: metadata.title || torrentName,
                 author: metadata.author,
                 autoApprove: true
             });

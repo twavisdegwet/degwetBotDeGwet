@@ -85,7 +85,26 @@ export async function agenticChat(
   while (iteration < (requestOptions.max_iterations ?? 5)) {
     let response;
     
-    if (server.type === 'openai') {
+    if (server.type === 'nvidia') {
+      // NVIDIA API uses OpenAI-compatible format with Bearer auth
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${server.apiKey}`,
+        'Content-Type': 'application/json'
+      };
+
+      response = await axios.post(`${server.host}/v1/chat/completions`, {
+        model: server.model,
+        messages,
+        tools: tools.length > 0 ? tools : undefined,
+        temperature: requestOptions.temperature,
+        top_p: requestOptions.top_p,
+        max_tokens: 4096, // NVIDIA has limits
+        stream: false
+      }, {
+        headers,
+        timeout: 420000
+      });
+    } else if (server.type === 'openai') {
       // OpenAI-compatible API (llama.cpp, llama-swap)
       response = await axios.post(`${server.host}/v1/chat/completions`, {
         model: server.model,

@@ -18,7 +18,8 @@ export interface OllamaServer {
   host: string;
   model: string;
   name: string;
-  type: 'ollama' | 'openai';
+  type: 'ollama' | 'openai' | 'nvidia';
+  apiKey?: string;
 }
 
 export interface OllamaRequestOptions {
@@ -49,13 +50,36 @@ export interface ErrorMessages {
 }
 
 export async function getAvailableOllamaServer(): Promise<OllamaServer> {
+  // Check if NVIDIA is configured - try it first
+  if (env.NVIDIA_API_KEY) {
+    const nvidiaServer: OllamaServer = {
+      host: 'https://integrate.api.nvidia.com',
+      model: env.NVIDIA_MODEL,
+      name: 'nvidia',
+      type: 'nvidia',
+      apiKey: env.NVIDIA_API_KEY
+    };
+
+    try {
+      console.log('Testing NVIDIA API connectivity...');
+      await axios.get(`${nvidiaServer.host}/v1/models`, {
+        headers: { 'Authorization': `Bearer ${nvidiaServer.apiKey}` },
+        timeout: 10000
+      });
+      console.log('NVIDIA API is available');
+      return nvidiaServer;
+    } catch (error) {
+      console.log('NVIDIA API unavailable, falling back to Ollama servers...');
+    }
+  }
+
   const primaryServer: OllamaServer = {
     host: env.OLLAMA_PRIMARY_HOST,
     model: env.OLLAMA_PRIMARY_MODEL,
     name: 'primary',
     type: env.OLLAMA_PRIMARY_TYPE
   };
-  
+
   const secondaryServer: OllamaServer = {
     host: env.OLLAMA_SECONDARY_HOST,
     model: env.OLLAMA_SECONDARY_MODEL,
@@ -63,7 +87,7 @@ export async function getAvailableOllamaServer(): Promise<OllamaServer> {
     type: env.OLLAMA_SECONDARY_TYPE
   };
 
-  // Test primary server first
+  // Test primary server
   try {
     console.log('Testing primary Ollama server connectivity...');
     await axios.get(`${primaryServer.host}`, { timeout: 5000 });
@@ -71,14 +95,14 @@ export async function getAvailableOllamaServer(): Promise<OllamaServer> {
     return primaryServer;
   } catch (error) {
     console.log('Primary server unavailable, testing secondary server...');
-    
+
     // Test secondary server
     try {
       await axios.get(`${secondaryServer.host}`, { timeout: 5000 });
       console.log('Secondary server is available');
       return secondaryServer;
     } catch (secondaryError) {
-      console.error('Both servers unavailable, defaulting to primary');
+      console.error('All servers unavailable, defaulting to primary');
       // Return primary as fallback even if it's down - let the main error handling deal with it
       return primaryServer;
     }
@@ -122,7 +146,25 @@ export async function makeOllamaRequest(
   
   let response;
   
-  if (server.type === 'openai') {
+  if (server.type === 'nvidia') {
+    // NVIDIA API uses OpenAI-compatible format with Bearer auth
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${server.apiKey}`,
+      'Content-Type': 'application/json'
+    };
+
+    response = await axios.post(`${server.host}/v1/completions`, {
+      model: server.model,
+      prompt: finalPrompt,
+      temperature: requestOptions.temperature,
+      top_p: requestOptions.top_p,
+      max_tokens: 4096, // NVIDIA has limits
+      stream: false
+    }, {
+      headers,
+      timeout: 420000
+    });
+  } else if (server.type === 'openai') {
     // OpenAI-compatible API (llama.cpp, llama-swap)
     response = await axios.post(`${server.host}/v1/completions`, {
       model: server.model,
@@ -142,7 +184,7 @@ export async function makeOllamaRequest(
       stream: false,
       options: {
         ...requestOptions,
-        num_ctx: 12384 
+        num_ctx: 12384
       }
     }, {
       timeout: 420000
@@ -157,8 +199,8 @@ export async function makeOllamaRequest(
   let responseText: string;
   let evalCount: number | undefined;
   let promptEvalCount: number | undefined;
-  
-  if (server.type === 'openai') {
+
+  if (server.type === 'nvidia' || server.type === 'openai') {
     // OpenAI format: { choices: [{ text: "..." }], usage: { completion_tokens, prompt_tokens } }
     responseText = response.data.choices?.[0]?.text || '';
     evalCount = response.data.usage?.completion_tokens;

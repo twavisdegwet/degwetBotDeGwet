@@ -41,6 +41,10 @@ const envSchema = z.object({
   GOOGLE_SERVICE_ACCOUNT_PATH: z.string().min(1),
   GOOGLE_DRIVE_FOLDER_ID: z.string().min(1),
   
+  // NVIDIA API Configuration (Optional - tried first if configured)
+  NVIDIA_API_KEY: z.string().optional(),
+  NVIDIA_MODEL: z.string().optional().default('meta/llama-3.1-70b-instruct'),
+
   // Ollama Configuration
   OLLAMA_PRIMARY_HOST: z.string().min(1),
   OLLAMA_PRIMARY_MODEL: z.string().min(1),

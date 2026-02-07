@@ -29,6 +29,8 @@ const envSchema = zod_1.z.object({
     SABNZBD_API_KEY: zod_1.z.string(),
     GOOGLE_SERVICE_ACCOUNT_PATH: zod_1.z.string().min(1),
     GOOGLE_DRIVE_FOLDER_ID: zod_1.z.string().min(1),
+    NVIDIA_API_KEY: zod_1.z.string().optional(),
+    NVIDIA_MODEL: zod_1.z.string().optional().default('meta/llama-3.1-70b-instruct'),
     OLLAMA_PRIMARY_HOST: zod_1.z.string().min(1),
     OLLAMA_PRIMARY_MODEL: zod_1.z.string().min(1),
     OLLAMA_PRIMARY_TYPE: zod_1.z.enum(['ollama', 'openai']).default('ollama'),
