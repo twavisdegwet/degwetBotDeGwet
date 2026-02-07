@@ -147,15 +147,15 @@ export async function makeOllamaRequest(
   let response;
   
   if (server.type === 'nvidia') {
-    // NVIDIA API uses OpenAI-compatible format with Bearer auth
+    // NVIDIA API uses OpenAI-compatible chat completions format with Bearer auth
     const headers: Record<string, string> = {
       'Authorization': `Bearer ${server.apiKey}`,
       'Content-Type': 'application/json'
     };
 
-    response = await axios.post(`${server.host}/v1/completions`, {
+    response = await axios.post(`${server.host}/v1/chat/completions`, {
       model: server.model,
-      prompt: finalPrompt,
+      messages: [{ role: 'user', content: finalPrompt }],
       temperature: requestOptions.temperature,
       top_p: requestOptions.top_p,
       max_tokens: 4096, // NVIDIA has limits
@@ -200,8 +200,13 @@ export async function makeOllamaRequest(
   let evalCount: number | undefined;
   let promptEvalCount: number | undefined;
 
-  if (server.type === 'nvidia' || server.type === 'openai') {
-    // OpenAI format: { choices: [{ text: "..." }], usage: { completion_tokens, prompt_tokens } }
+  if (server.type === 'nvidia') {
+    // NVIDIA uses chat completions format: { choices: [{ message: { content: "..." } }], usage: { completion_tokens, prompt_tokens } }
+    responseText = response.data.choices?.[0]?.message?.content || '';
+    evalCount = response.data.usage?.completion_tokens;
+    promptEvalCount = response.data.usage?.prompt_tokens;
+  } else if (server.type === 'openai') {
+    // OpenAI completions format: { choices: [{ text: "..." }], usage: { completion_tokens, prompt_tokens } }
     responseText = response.data.choices?.[0]?.text || '';
     evalCount = response.data.usage?.completion_tokens;
     promptEvalCount = response.data.usage?.prompt_tokens;
