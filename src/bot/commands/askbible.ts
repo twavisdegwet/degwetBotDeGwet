@@ -189,11 +189,21 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         const versesContent = verses.join('\n\n');
 
+        // Send the verse(s) to Discord first, before the LLM responds
+        const verseLines = verses.map(v => {
+            // v is formatted as: "Book Chapter:Verse - "text""
+            const dashIndex = v.indexOf(' - ');
+            const ref = v.substring(0, dashIndex);
+            const text = v.substring(dashIndex + 3);
+            return `📖 **${ref}**\n${text}`;
+        });
+        await interaction.editReply({ content: verseLines.join('\n\n') });
+
         const server = await getAvailableOllamaServer();
         console.log(`Using ${server.name} Ollama server with model ${server.model}`);
 
         let selectedExpert: Personality;
-        
+
         if (expertChoice === 'random') {
             selectedExpert = personalities[Math.floor(Math.random() * personalities.length)];
         } else if (personalities.includes(expertChoice as Personality)) {
@@ -204,30 +214,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         console.log(`Consulting ${selectedExpert} on Bible verses: ${queryDescription}`);
 
-        const expertTask = `You're a witty Bible scholar with a sense of humor, known for making scripture relatable through the lens of Garfield the Cat's eternal quest for lasagna.
+        const expertTask = `You are a Bible expert who has been asked to counsel Garfield the Cat using the following scripture. The verse${verses.length > 1 ? 's have' : ' has'} already been shown to the user — do NOT repeat or quote them.
 
-Your task: Provide insights on the following Bible verse${verses.length > 1 ? 's' : ''}: ${queryDescription}
+Your job: Give commentary on this scripture as direct advice to Garfield. Explain what the teaching means AND how Garfield should apply it to his life — all woven together as one piece of counsel. Do not separate "what the verse means" from "the Garfield application" — they should be one unified voice, as if you are genuinely advising Garfield using the wisdom of scripture.
 
-REQUIREMENTS:
-1. FIRST, print the actual verse${verses.length > 1 ? 's' : ''} text exactly as provided below
-2. THEN, briefly explain what the verse${verses.length > 1 ? 's' : ' '} mean${verses.length > 1 ? '' : 's'} in 1-2 sentences
-3. FINALLY, and THIS IS CRITICAL - explain how Garfield the Cat could APPLY the lesson from these verse${verses.length > 1 ? 's' : ' '} to his never-ending quest for more lasagna. 
+Garfield's defining traits: obsession with lasagna, disdain for Mondays, love of sleeping, contempt for diets, and his long-suffering owner Jon. Work these into the advice naturally.
 
-Think creatively! For example:
-- If the verse is about patience, explain how Garfield would need patience to wait for his lasagna to cool
-- If the verse is about temptation, explain how Garfield resists the temptation of diet food
-- If the verse is about perseverance, explain how Garfield keeps searching for lasagna even when the fridge is empty
-- If the verse is about sacrifice, explain what Garfield would sacrifice for lasagna (everything)
-- If the verse is about wisdom, explain how Garfield uses wisdom to locate hidden lasagna
+Be creative, be hilarious, and stay in character. Keep it under 1500 characters.
 
-Be specific, be creative, and make it hilarious! The funnier the connection, the better.
-
-===== BIBLE VERSES TO ANALYZE =====
+===== SCRIPTURE =====
 ${versesContent}
-
-===== END OF VERSES =====
-
-Remember: You MUST print the verse text first, give a brief explanation, then end with a hilarious explanation of how Garfield would apply this lesson to get more lasagna. Keep it under 8000 characters.`;
+===== END =====`;
 
         const messageContext = `[COMMAND ISSUED BY: ${interaction.user.username}]`;
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);
@@ -240,12 +237,12 @@ Remember: You MUST print the verse text first, give a brief explanation, then en
         filteredResponse = filteredResponse.replace(/<think>[\s\S]*?<\/think>/g, '');
         filteredResponse = filteredResponse.replace(/<nothink>[\s\S]*?<\/nothink>/g, '');
         const cleanedResponse = filteredResponse.replace(/\n\n+/g, '\n');
-        const formattedResponse = `**${emoji} ${name}'s Biblical Wisdom on "${queryDescription}":**\n${cleanedResponse}`;
+        const formattedResponse = `**${emoji} ${name}'s Counsel for Garfield on "${queryDescription}":**\n${cleanedResponse}`;
 
         const messageParts = splitMessageAtSentence(formattedResponse);
-        
-        await interaction.editReply({ content: messageParts[0] });
-        
+
+        await interaction.followUp({ content: messageParts[0] });
+
         for (let i = 1; i < messageParts.length; i++) {
             await interaction.followUp({ content: messageParts[i] });
         }
