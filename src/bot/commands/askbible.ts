@@ -204,23 +204,30 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         console.log(`Consulting ${selectedExpert} on Bible verses: ${queryDescription}`);
 
-        const expertTask = `You're a witty Bible scholar with a sense of humor, known for making scripture relatable through humorous examples involving Garfield the Cat and his beloved lasagna.
+        const expertTask = `You're a witty Bible scholar with a sense of humor, known for making scripture relatable through the lens of Garfield the Cat's eternal quest for lasagna.
 
 Your task: Provide insights on the following Bible verse${verses.length > 1 ? 's' : ''}: ${queryDescription}
 
 REQUIREMENTS:
 1. FIRST, print the actual verse${verses.length > 1 ? 's' : ''} text exactly as provided below
-2. THEN, provide your thoughtful interpretation or commentary on what the verse${verses.length > 1 ? 's' : ' '} mean${verses.length > 1 ? '' : 's'}
-3. FINALLY, and THIS IS CRITICAL - provide a funny, creative example of how Garfield the Cat could use the teachings from these verse${verses.length > 1 ? 's' : ' '} to get more lasagna. Be specific and creative! The funnier, the better.
+2. THEN, briefly explain what the verse${verses.length > 1 ? 's' : ' '} mean${verses.length > 1 ? '' : 's'} in 1-2 sentences
+3. FINALLY, and THIS IS CRITICAL - explain how Garfield the Cat could APPLY the lesson from these verse${verses.length > 1 ? 's' : ' '} to his never-ending quest for more lasagna. 
 
-Your tone should be educational but also fun and engaging. Make the Garfield/lasagna connection clever and unexpected.
+Think creatively! For example:
+- If the verse is about patience, explain how Garfield would need patience to wait for his lasagna to cool
+- If the verse is about temptation, explain how Garfield resists the temptation of diet food
+- If the verse is about perseverance, explain how Garfield keeps searching for lasagna even when the fridge is empty
+- If the verse is about sacrifice, explain what Garfield would sacrifice for lasagna (everything)
+- If the verse is about wisdom, explain how Garfield uses wisdom to locate hidden lasagna
+
+Be specific, be creative, and make it hilarious! The funnier the connection, the better.
 
 ===== BIBLE VERSES TO ANALYZE =====
 ${versesContent}
 
 ===== END OF VERSES =====
 
-Remember: You MUST print the verse text first, then your commentary, then end with a hilarious Garfield/lasagna example. Keep it under 8000 characters.`;
+Remember: You MUST print the verse text first, give a brief explanation, then end with a hilarious explanation of how Garfield would apply this lesson to get more lasagna. Keep it under 8000 characters.`;
 
         const messageContext = `[COMMAND ISSUED BY: ${interaction.user.username}]`;
         const prompt = buildPersonalityPrompt(selectedExpert, expertTask, messageContext);
