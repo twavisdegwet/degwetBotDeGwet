@@ -150,6 +150,32 @@ function splitMessageAtSentence(text: string, maxLength: number = 1800): string[
     return messages;
 }
 
+const PRE_VERSE_MESSAGES = [
+    "📜 Alright, hold onto your lasagna — here's your verse for today!",
+    "🕊️ The Good Book has spoken! Feast your eyes on this holy wisdom:",
+    "✨ Fresh from the scriptures, piping hot like a Monday morning lasagna:",
+    "📖 Gather 'round, Garfield fans — the Bible has something to say:",
+    "🔔 Ding ding ding! Your verse has arrived. Bless this message:",
+    "🙏 The Lord works in mysterious ways — and today, those ways brought you this:",
+    "📜 Roll up, roll up! Step right up for your daily dose of scripture:",
+    "⚡ Zap! The Bible strikes again with a verse just for you:",
+    "🌟 Our scholars have combed the Good Book and found this gem:",
+    "🎺 Hear ye, hear ye! The scripture reads as follows:",
+];
+
+const POST_VERSE_MESSAGES = [
+    "Wow! That's a thinker! 🤔 Let's see what our expert thinks Garfield can learn from it!",
+    "Heavy stuff! 😮 Stand by while our expert figures out what this means for Garfield...",
+    "Now THAT is some scripture! 📿 Our expert is already applying it to Garfield's life...",
+    "Powerful words! ✨ Let's see if our expert can explain this to a lasagna-obsessed cat...",
+    "Whoa, deep! 🌊 Hang tight — our expert is consulting the Good Book on Garfield's behalf...",
+    "Incredible verse! 🎯 Our expert is now translating this ancient wisdom for Garfield...",
+    "That'll make you think! 💭 Our expert is busy figuring out what Garfield should do about this...",
+    "Biblical wisdom! 📖 Stay tuned as our expert breaks down what this means for everyone's favorite cat...",
+    "The scripture has spoken! 🔔 Now let's hear what our expert has to say to Garfield about it...",
+    "Profound! 😲 Our expert is warming up their theological engine to explain this to Garfield...",
+];
+
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
 
@@ -158,7 +184,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     try {
         const expertChoice = interaction.options.getString('expert') || 'random';
         const reference = interaction.options.getString('reference');
-        const count = interaction.options.getInteger('count') || 1;
+        const count = interaction.options.getInteger('count') || 5;
 
         let verses: string[];
         let queryDescription: string;
@@ -197,7 +223,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             const text = v.substring(dashIndex + 3);
             return `📖 **${ref}**\n${text}`;
         });
-        await interaction.editReply({ content: verseLines.join('\n\n') });
+        const preMessage = PRE_VERSE_MESSAGES[Math.floor(Math.random() * PRE_VERSE_MESSAGES.length)];
+        await interaction.editReply({ content: `${preMessage}\n\n${verseLines.join('\n\n')}` });
+
+        const postMessage = POST_VERSE_MESSAGES[Math.floor(Math.random() * POST_VERSE_MESSAGES.length)];
+        await interaction.followUp({ content: postMessage });
 
         const server = await getAvailableOllamaServer();
         console.log(`Using ${server.name} Ollama server with model ${server.model}`);
