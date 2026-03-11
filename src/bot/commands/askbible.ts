@@ -96,26 +96,49 @@ function lookupVerses(bookName: string, chapter: number, verseStart: number, ver
     return verses;
 }
 
-function getRandomVerses(count: number): string[] {
+function getConsecutiveRandomVerses(count: number): string[] {
+    // Find a valid random starting point (skip empty books/chapters)
+    let bookIdx: number;
+    let chapterIdx: number;
+    do {
+        bookIdx = Math.floor(Math.random() * bible.books.length);
+        chapterIdx = Math.floor(Math.random() * bible.books[bookIdx].chapters.length);
+    } while (
+        !bible.books[bookIdx].chapters.length ||
+        !bible.books[bookIdx].chapters[chapterIdx].verses.length
+    );
+
+    const startChapter = bible.books[bookIdx].chapters[chapterIdx];
+    const verseIdx = Math.floor(Math.random() * startChapter.verses.length);
+
     const verses: string[] = [];
-    const addedVerses = new Set<string>();
-    
+    let curBookIdx = bookIdx;
+    let curChapterIdx = chapterIdx;
+    let curVerseIdx = verseIdx;
+    const startKey = `${bookIdx}-${chapterIdx}-${verseIdx}`;
+
     while (verses.length < count) {
-        const randomBook = bible.books[Math.floor(Math.random() * bible.books.length)];
-        if (!randomBook.chapters.length) continue;
-        
-        const randomChapter = randomBook.chapters[Math.floor(Math.random() * randomBook.chapters.length)];
-        if (!randomChapter.verses.length) continue;
-        
-        const randomVerse = randomChapter.verses[Math.floor(Math.random() * randomChapter.verses.length)];
-        const verseKey = `${randomBook.name}-${randomChapter.chapter}-${randomVerse.verse}`;
-        
-        if (!addedVerses.has(verseKey)) {
-            addedVerses.add(verseKey);
-            verses.push(`${randomBook.name} ${randomChapter.chapter}:${randomVerse.verse} - "${randomVerse.text}"`);
+        const curBook = bible.books[curBookIdx];
+        const curChapter = curBook.chapters[curChapterIdx];
+        const curVerse = curChapter.verses[curVerseIdx];
+
+        verses.push(`${curBook.name} ${curChapter.chapter}:${curVerse.verse} - "${curVerse.text}"`);
+
+        // Advance to next verse
+        curVerseIdx++;
+        if (curVerseIdx >= curChapter.verses.length) {
+            curVerseIdx = 0;
+            curChapterIdx++;
+            if (curChapterIdx >= curBook.chapters.length) {
+                curChapterIdx = 0;
+                curBookIdx = (curBookIdx + 1) % bible.books.length;
+            }
         }
+
+        // Safety: if we've wrapped all the way back to start, stop
+        if (`${curBookIdx}-${curChapterIdx}-${curVerseIdx}` === startKey) break;
     }
-    
+
     return verses;
 }
 
@@ -209,7 +232,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             
             queryDescription = reference;
         } else {
-            verses = getRandomVerses(count);
+            verses = getConsecutiveRandomVerses(count);
             queryDescription = `${count} random verse${count > 1 ? 's' : ''}`;
         }
 
