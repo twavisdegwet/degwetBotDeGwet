@@ -14,6 +14,7 @@ import * as askLibrarianCommand from './commands/asklibrarian';
 // DO NOT RE-ADD: getmusic command is intentionally hidden - accessible via /makefunnyjoke kickodie
 // import * as getMusicCommand from './commands/getmusic';
 import * as expertNewsCommand from './commands/expertnews';
+import * as askBibleCommand from './commands/askbible';
 import { getPersonality } from './badjokes';
 import { handleGDriveUploadInteraction } from './commands/gdrive-upload';
 import { handleAutoUploadInteraction, handleDuplicateUploadInteraction, handleKindleEmailInteraction } from './utils';
@@ -42,6 +43,7 @@ client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 client.commands.set(askExpertCommand.data.name, askExpertCommand);
 client.commands.set(askLibrarianCommand.data.name, askLibrarianCommand);
 client.commands.set(expertNewsCommand.data.name, expertNewsCommand);
+client.commands.set(askBibleCommand.data.name, askBibleCommand);
 
 const commands = [
   getAudiobookCommand.data,
@@ -53,7 +55,8 @@ const commands = [
   makeBadJokeCommand.data,
   askExpertCommand.data,
   askLibrarianCommand.data,
-  expertNewsCommand.data
+  expertNewsCommand.data,
+  askBibleCommand.data
 ];
 
 const rest = new REST({ version: '10' }).setToken(env.DISCORD_TOKEN);

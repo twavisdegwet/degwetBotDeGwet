@@ -46,6 +46,7 @@ const makeBadJokeCommand = __importStar(require("./commands/makebadjoke"));
 const askExpertCommand = __importStar(require("./commands/askexpert"));
 const askLibrarianCommand = __importStar(require("./commands/asklibrarian"));
 const expertNewsCommand = __importStar(require("./commands/expertnews"));
+const askBibleCommand = __importStar(require("./commands/askbible"));
 const badjokes_1 = require("./badjokes");
 const gdrive_upload_1 = require("./commands/gdrive-upload");
 const utils_1 = require("./utils");
@@ -69,6 +70,7 @@ client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 client.commands.set(askExpertCommand.data.name, askExpertCommand);
 client.commands.set(askLibrarianCommand.data.name, askLibrarianCommand);
 client.commands.set(expertNewsCommand.data.name, expertNewsCommand);
+client.commands.set(askBibleCommand.data.name, askBibleCommand);
 const commands = [
     getAudiobookCommand.data,
     getEbookCommand.data,
@@ -79,7 +81,8 @@ const commands = [
     makeBadJokeCommand.data,
     askExpertCommand.data,
     askLibrarianCommand.data,
-    expertNewsCommand.data
+    expertNewsCommand.data,
+    askBibleCommand.data
 ];
 const rest = new discord_js_1.REST({ version: '10' }).setToken(env_1.env.DISCORD_TOKEN);
 async function registerCommands() {
