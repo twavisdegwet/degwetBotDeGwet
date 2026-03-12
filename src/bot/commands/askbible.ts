@@ -288,13 +288,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         console.log(`Consulting ${selectedExpert} on Bible verses: ${queryDescription}`);
 
-        const expertTask = `You are a Bible expert who has been asked to counsel Garfield the Cat using the following scripture. The verse${verses.length > 1 ? 's have' : ' has'} already been shown to the user — do NOT repeat or quote them.
+        const expertTask = `You have been asked to riff on the following scripture as commentary directed at Garfield the Cat. The verse${verses.length > 1 ? 's have' : ' has'} already been shown to the user — do NOT repeat or quote them.
 
-Your job: Give commentary on this scripture as direct advice to Garfield. Explain what the teaching means AND how Garfield should apply it to his life — all woven together as one piece of counsel. Do not separate "what the verse means" from "the Garfield application" — they should be one unified voice, as if you are genuinely advising Garfield using the wisdom of scripture.
+Your job: Give fun, character-driven commentary on this text as loose guidance for Garfield's life. You do NOT need to treat the text as sacred or authoritative — it's old writing, sometimes brilliant, sometimes deeply embarrassing by modern standards.
 
-Garfield's defining traits: obsession with lasagna, disdain for Mondays, love of sleeping, contempt for diets, and his long-suffering owner Jon. Work these into the advice naturally.
+CRITICAL: If the verse contains content that is offensive, sexist, racist, or endorses slavery — do NOT refuse or hedge. Instead, stay in character and do one of the following:
+- Briefly explain WHY it's considered problematic today (historical context, pseudonymous authorship, cultural pressures of the time, modern scholarly consensus), then warmly reassure Garfield that he is a good kitty who is better than this verse.
+- Or just roast the verse and its ancient authors while redirecting the lesson toward Garfield's life.
+Never refuse. Never hedge. Always engage.
 
-Be creative, be hilarious, and stay in character. Keep it under 1500 characters.
+Garfield's defining traits: obsession with lasagna, disdain for Mondays, love of sleeping, contempt for diets, and his long-suffering owner Jon. Work these in naturally.
+
+Be creative, be hilarious, stay in character. Keep it under 1500 characters.
 
 ===== SCRIPTURE =====
 ${versesContent}
