@@ -199,10 +199,37 @@ const POST_VERSE_MESSAGES = [
     "Profound! 😲 Our expert is warming up their theological engine to explain this to Garfield...",
 ];
 
+function groupConsecutiveVerses(verses: string[]): string[] {
+    const parsed = verses.map(v => {
+        const match = v.match(/^(.+)\s+(\d+):(\d+)\s+-\s+"(.*)"/);
+        if (!match) return null;
+        return { book: match[1], chapter: parseInt(match[2], 10), verse: parseInt(match[3], 10), text: match[4], raw: v };
+    });
+
+    const groups: { book: string; chapter: number; startVerse: number; endVerse: number; texts: string[] }[] = [];
+
+    for (const p of parsed) {
+        if (!p) continue;
+        const last = groups[groups.length - 1];
+        if (last && last.book === p.book && last.chapter === p.chapter && p.verse === last.endVerse + 1) {
+            last.endVerse = p.verse;
+            last.texts.push(p.text);
+        } else {
+            groups.push({ book: p.book, chapter: p.chapter, startVerse: p.verse, endVerse: p.verse, texts: [p.text] });
+        }
+    }
+
+    return groups.map(g => {
+        const ref = g.startVerse === g.endVerse
+            ? `${g.book} ${g.chapter}:${g.startVerse}`
+            : `${g.book} ${g.chapter}:${g.startVerse}-${g.endVerse}`;
+        const textBlock = g.texts.map(t => `"${t}"`).join('\n\n');
+        return `📖 **${ref}**\n${textBlock}`;
+    });
+}
+
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
-
-    await sendRandomGarfieldComic(interaction.channel, interaction.user.id, 'waiting');
 
     try {
         const expertChoice = interaction.options.getString('expert') || 'random';
@@ -239,13 +266,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const versesContent = verses.join('\n\n');
 
         // Send the verse(s) to Discord first, before the LLM responds
-        const verseLines = verses.map(v => {
-            // v is formatted as: "Book Chapter:Verse - "text""
-            const dashIndex = v.indexOf(' - ');
-            const ref = v.substring(0, dashIndex);
-            const text = v.substring(dashIndex + 3);
-            return `📖 **${ref}**\n${text}`;
-        });
+        const verseLines = groupConsecutiveVerses(verses);
         const preMessage = PRE_VERSE_MESSAGES[Math.floor(Math.random() * PRE_VERSE_MESSAGES.length)];
         await interaction.editReply({ content: `${preMessage}\n\n${verseLines.join('\n\n')}` });
 
