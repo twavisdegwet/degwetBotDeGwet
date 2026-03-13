@@ -32,22 +32,16 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const uploadManagement_1 = require("../clients/uploadManagement");
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
 const router = (0, express_1.Router)();
-const serviceAccountPath = process.env.GOOGLE_SERVICE_ACCOUNT_PATH ||
-    path_1.default.join(__dirname, '../../../samplefiles/discord-468217-313c7eccba67.json');
-const driveFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '1v7E_LESO6hE-vFFXcBE5WDjLocdbZ6nQ';
-const uploadClient = new uploadManagement_1.UploadManagementClient(serviceAccountPath, driveFolderId);
+const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '';
+const driveFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '';
+const uploadClient = new uploadManagement_1.UploadManagementClient(serviceAccountJson, driveFolderId);
 router.get('/status', async (_req, res) => {
     try {
-        const serviceAccountExists = fs_1.default.existsSync(serviceAccountPath);
+        const serviceAccountConfigured = !!serviceAccountJson;
         const isAuthenticated = await uploadClient.isAuthenticated();
         let userInfo = null;
         if (isAuthenticated) {
@@ -60,7 +54,7 @@ router.get('/status', async (_req, res) => {
         }
         res.json({
             success: true,
-            serviceAccountFileExists: serviceAccountExists,
+            serviceAccountConfigured,
             authenticated: isAuthenticated,
             folderId: driveFolderId,
             user: userInfo?.user || null,

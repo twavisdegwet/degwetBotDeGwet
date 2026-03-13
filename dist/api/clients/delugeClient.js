@@ -156,7 +156,7 @@ class DelugeClient {
                             'Cookie': cookie.startsWith('mam_id=') ? cookie : `mam_id=${cookie}`,
                             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                             'Accept': 'application/x-bittorrent, */*',
-                            'Referer': 'https://www.myanonamouse.net/'
+                            'Referer': `${process.env.TORRENT_BASE_URL || 'https://www.myanonamouse.net'}/`
                         },
                         responseType: 'arraybuffer',
                         timeout: 30000,

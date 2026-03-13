@@ -45,8 +45,8 @@ class UploadManagementClient {
     drive;
     parentFolderId;
     tempDir = '/tmp/discord-bot-uploads';
-    constructor(serviceAccountPath, parentFolderId) {
-        const credentials = JSON.parse(fs_1.default.readFileSync(serviceAccountPath, 'utf8'));
+    constructor(serviceAccountJson, parentFolderId) {
+        const credentials = JSON.parse(serviceAccountJson);
         this.auth = new google_auth_library_1.JWT({
             email: credentials.client_email,
             key: credentials.private_key,

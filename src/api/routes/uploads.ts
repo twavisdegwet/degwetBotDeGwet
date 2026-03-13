@@ -1,16 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { UploadManagementClient } from '../clients/uploadManagement';
-import fs from 'fs';
-import path from 'path';
 
 const router = Router();
 
 // Initialize upload client with service account
-const serviceAccountPath = process.env.GOOGLE_SERVICE_ACCOUNT_PATH || 
-  path.join(__dirname, '../../../samplefiles/discord-468217-313c7eccba67.json');
-const driveFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '1v7E_LESO6hE-vFFXcBE5WDjLocdbZ6nQ';
+const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '';
+const driveFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '';
 
-const uploadClient = new UploadManagementClient(serviceAccountPath, driveFolderId);
+const uploadClient = new UploadManagementClient(serviceAccountJson, driveFolderId);
 
 
 /**
@@ -19,12 +16,12 @@ const uploadClient = new UploadManagementClient(serviceAccountPath, driveFolderI
  */
 router.get('/status', async (_req: Request, res: Response) => {
   try {
-    // Check if service account file exists
-    const serviceAccountExists = fs.existsSync(serviceAccountPath);
-    
+    // Check if service account JSON is configured
+    const serviceAccountConfigured = !!serviceAccountJson;
+
     // Test Google Drive API access
     const isAuthenticated = await uploadClient.isAuthenticated();
-    
+
     // Get user info from Google Drive
     let userInfo = null;
     if (isAuthenticated) {
@@ -34,10 +31,10 @@ router.get('/status', async (_req: Request, res: Response) => {
         console.error('Error getting user info:', error);
       }
     }
-    
-    res.json({ 
+
+    res.json({
       success: true,
-      serviceAccountFileExists: serviceAccountExists,
+      serviceAccountConfigured,
       authenticated: isAuthenticated,
       folderId: driveFolderId,
       user: userInfo?.user || null,

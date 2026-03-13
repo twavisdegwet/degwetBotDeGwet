@@ -72,11 +72,11 @@ const formatTorrentResults = (data, mamClient) => {
 router.post('/search', async (req, res) => {
     try {
         const validatedRequest = SearchRequestSchema.parse(req.body);
-        const { MAM_BASE_URL, MAM_ID } = process.env;
+        const { TORRENT_BASE_URL, MAM_ID } = process.env;
         if (!MAM_ID) {
             return res.status(500).json({ error: 'MAM_ID is not configured' });
         }
-        const mamClient = new mamClient_1.MamClient(MAM_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
+        const mamClient = new mamClient_1.MamClient(TORRENT_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
         const searchParams = {
             text: validatedRequest.text,
             srchIn: validatedRequest.srchIn || ['title', 'author'],
@@ -122,7 +122,7 @@ router.post('/search', async (req, res) => {
 router.post('/download', async (req, res) => {
     try {
         const validatedRequest = DownloadRequestSchema.parse(req.body);
-        const { DELUGE_URL, DELUGE_PASSWORD, MAM_BASE_URL, MAM_ID } = process.env;
+        const { DELUGE_URL, DELUGE_PASSWORD, TORRENT_BASE_URL, MAM_ID } = process.env;
         if (!DELUGE_URL || !DELUGE_PASSWORD) {
             return res.status(500).json({ error: 'Deluge configuration is missing' });
         }
@@ -132,11 +132,11 @@ router.post('/download', async (req, res) => {
         const delugeManager = delugeClientManager_1.default.getInstance();
         delugeManager.initialize(DELUGE_URL, DELUGE_PASSWORD);
         const delugeClient = await delugeManager.getClient();
-        const mamClient = new mamClient_1.MamClient(MAM_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
+        const mamClient = new mamClient_1.MamClient(TORRENT_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
         let downloadUrl;
         let torrentName;
         if (validatedRequest.dlHash) {
-            downloadUrl = `${MAM_BASE_URL}/tor/download.php/${validatedRequest.dlHash}`;
+            downloadUrl = `${TORRENT_BASE_URL}/tor/download.php/${validatedRequest.dlHash}`;
         }
         else if (validatedRequest.id) {
             try {
@@ -145,7 +145,7 @@ router.post('/download', async (req, res) => {
                 torrentName = torrentDetails.title;
             }
             catch (error) {
-                downloadUrl = `${MAM_BASE_URL}/tor/download.php?tid=${validatedRequest.id}`;
+                downloadUrl = `${TORRENT_BASE_URL}/tor/download.php?tid=${validatedRequest.id}`;
             }
         }
         else {
@@ -261,11 +261,11 @@ router.post('/download', async (req, res) => {
 router.post('/freeleech', async (req, res) => {
     try {
         const validatedRequest = FreeleechRequestSchema.parse(req.body);
-        const { MAM_BASE_URL, MAM_ID } = process.env;
+        const { TORRENT_BASE_URL, MAM_ID } = process.env;
         if (!MAM_ID) {
             return res.status(500).json({ error: 'MAM_ID is not configured' });
         }
-        const mamClient = new mamClient_1.MamClient(MAM_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
+        const mamClient = new mamClient_1.MamClient(TORRENT_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
         const result = await mamClient.setFreeleech(validatedRequest.id);
         if (result.success) {
             return res.json({
@@ -294,7 +294,7 @@ router.post('/freeleech', async (req, res) => {
 router.post('/check-duplicate', async (req, res) => {
     try {
         const validatedRequest = DuplicateCheckRequestSchema.parse(req.body);
-        const { DELUGE_URL, DELUGE_PASSWORD, MAM_BASE_URL, MAM_ID } = process.env;
+        const { DELUGE_URL, DELUGE_PASSWORD, TORRENT_BASE_URL, MAM_ID } = process.env;
         if (!DELUGE_URL || !DELUGE_PASSWORD) {
             return res.status(500).json({ error: 'Deluge configuration is missing' });
         }
@@ -304,7 +304,7 @@ router.post('/check-duplicate', async (req, res) => {
         const delugeManager = delugeClientManager_1.default.getInstance();
         delugeManager.initialize(DELUGE_URL, DELUGE_PASSWORD);
         const delugeClient = await delugeManager.getClient();
-        const mamClient = new mamClient_1.MamClient(MAM_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
+        const mamClient = new mamClient_1.MamClient(TORRENT_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
         let torrentName;
         try {
             const torrentDetails = await mamClient.getTorrentDetails(validatedRequest.torrentId.toString());
@@ -350,11 +350,11 @@ router.post('/check-duplicate', async (req, res) => {
 });
 router.get('/test-connection', async (_req, res) => {
     try {
-        const { MAM_BASE_URL, MAM_ID } = process.env;
+        const { TORRENT_BASE_URL, MAM_ID } = process.env;
         if (!MAM_ID) {
             return res.status(500).json({ error: 'MAM_ID is not configured' });
         }
-        const mamClient = new mamClient_1.MamClient(MAM_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
+        const mamClient = new mamClient_1.MamClient(TORRENT_BASE_URL || 'https://www.myanonamouse.net', MAM_ID);
         try {
             const testResults = await mamClient.searchTorrents({
                 text: 'test',

@@ -22,20 +22,50 @@ A comprehensive Discord bot that integrates with MyAnonaMouse (MAM) private trac
 - 🔗 **Direct Links**: Clickable Google Drive folder links in success messages
 - 📊 **Detailed Status**: Comprehensive upload status with file counts and sizes
 
+## 🔌 External Service Dependencies
+
+### Required
+
+**Discord** — Bot platform. Create an application and bot token at https://discord.com/developers/applications. You'll need `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, and `DISCORD_GUILD_ID`.
+
+**MyAnonaMouse (MAM)** — Private tracker for audiobooks and ebooks. The bot authenticates via your `mam_id` session cookie. Requires an active account with API access at https://www.myanonamouse.net.
+
+**Deluge** — BitTorrent client that receives downloads. The bot communicates with Deluge's JSON-RPC Web UI (default port 8112). Any networked Deluge instance works; set `DELUGE_URL`, `DELUGE_HOST`, and `DELUGE_PASSWORD`.
+
+**Google Drive** — Cloud storage for uploaded files. Requires a Google Cloud service account with Drive API access and a shared drive. Create a project and service account at https://console.cloud.google.com, then paste the credentials JSON into `GOOGLE_SERVICE_ACCOUNT_JSON`.
+
+**Gmail API** — Used for Send to Kindle email delivery. Enabled in the same Google Cloud project as Drive, with domain-wide delegation configured so the service account can send email as a dedicated bot user. Setup: https://console.cloud.google.com → APIs & Services → Gmail API.
+
+### AI (choose one or both)
+
+**Ollama** — Local LLM server used for the `/askexpert` and related commands. Run any compatible model locally or on another host. Download and model docs at https://ollama.com. Set `OLLAMA_PRIMARY_HOST` and `OLLAMA_PRIMARY_MODEL`.
+
+**llama-swap / llama.cpp** — Alternative OpenAI-compatible inference server. Set `OLLAMA_PRIMARY_TYPE=openai` to use any server that exposes an OpenAI-compatible `/v1/chat/completions` endpoint (llama-swap, llama.cpp server, vLLM, etc.).
+
+**NVIDIA API** *(optional)* — Cloud-hosted LLM fallback via NVIDIA's inference API. If `NVIDIA_API_KEY` is set it is tried before Ollama. Get a key at https://build.nvidia.com.
+
+### Optional
+
+**NZBHydra2** — Usenet indexer aggregator used by hidden music/media commands. Web UI and API key at `http://your-host:5076`. Docs: https://github.com/theotherp/nzbhydra2.
+
+**SABnzbd** — Usenet download client paired with NZBHydra2. API key found in SABnzbd Settings → General. Docs: https://sabnzbd.org.
+
+**Bluesky** *(optional)* — Social posting integration. Uses standard Bluesky app passwords (not your main password). Generate one at https://bsky.app → Settings → App Passwords.
+
+### Local tools (must be installed on the bot server)
+
+**FFmpeg** — Required for MP3→M4B audiobook conversion. `sudo apt install ffmpeg` / `sudo dnf install ffmpeg`.
+
+**Calibre** — Required for ebook format conversion (PDF/MOBI→EPUB). `sudo apt install calibre` / `sudo dnf install calibre`.
+
+---
+
 ## 🎯 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
-- MyAnonaMouse account with API access
-- Deluge torrent client with Web UI enabled
-- Google Workspace account with:
-  - Google Drive API service account (for cloud uploads)
-  - Gmail API with domain-wide delegation (for Send to Kindle)
-  - Bot user account (e.g., `degwetbot@degwet.com`)
-- Discord bot token and server permissions
-- FFmpeg (for MP3→M4B audiobook conversion)
-- Calibre (for ebook format conversion - PDF/EPUB/MOBI)
+- At minimum: Discord bot token, MAM account, Deluge instance, Google Cloud service account
 
 ### Installation
 
@@ -66,25 +96,28 @@ DISCORD_GUILD_ID=your_guild_id
 
 # MyAnonaMouse
 MAM_ID=your_mam_cookie_value
-MAM_BASE_URL=https://www.myanonamouse.net
+TORRENT_BASE_URL=https://www.myanonamouse.net
 
 # Deluge Configuration
-DELUGE_URL=http://192.168.2.124:8112/json
+DELUGE_URL=http://192.168.x.x:8112/json
 DELUGE_PASSWORD=your_deluge_password
 
-# Google Drive (place service account JSON in samplefiles/)
-GOOGLE_DRIVE_SHARED_DRIVE_ID=your_shared_drive_id
+# Google Drive (paste entire service account JSON as a single-line string)
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
+GOOGLE_DRIVE_FOLDER_ID=your_shared_drive_id
 
 # Send to Kindle (Gmail API - uses same service account)
-KINDLE_BOT_EMAIL=degwetbot@degwet.com
+KINDLE_BOT_EMAIL=bot@yourdomain.com
+TORRENT_BASE_URL=https://www.myanonamouse.net
 ```
 
 ### Setup Files
 
 Place these files in the `samplefiles/` directory:
-- `discord-468217-313c7eccba67.json` - Service account credentials (for Google Drive and Gmail API)
 - `mp3tom4b.sh` - MP3 to M4B conversion script (requires FFmpeg)
 - `ebookconvert.sh` - Ebook format conversion script (requires Calibre)
+
+The Google service account credentials go directly in `.env.local` as `GOOGLE_SERVICE_ACCOUNT_JSON` (minify with `jq -c . service-account.json`).
 
 ### Running
 
@@ -261,14 +294,14 @@ The bot can automatically send ebooks directly to your Kindle device via email:
 
 ### Setup Requirements
 1. **Google Workspace**: Gmail API with domain-wide delegation configured
-2. **Service Account**: Same account used for Google Drive (`discord-468217-313c7eccba67.json`)
-3. **Bot User**: Dedicated bot account (e.g., `degwetbot@degwet.com`)
+2. **Service Account**: Same account used for Google Drive (`discord-service-account.json`)
+3. **Bot User**: Dedicated bot account (e.g., `bot@yourdomain.com`)
 4. **Amazon Approval**: Add bot email to Kindle's approved sender list
 
 ### Amazon Kindle Configuration
 1. Go to https://www.amazon.com/sendtokindle
 2. Navigate to **Personal Document Settings**
-3. Under **Approved Personal Document E-mail List**, add: `degwetbot@degwet.com`
+3. Under **Approved Personal Document E-mail List**, add: `bot@yourdomain.com`
 4. Click **Add Address**
 
 ### Usage Flow
@@ -297,9 +330,10 @@ The bot uses OAuth2 with domain-wide delegation (not app passwords):
 
 1. **Enable Gmail API** in Google Cloud Console
 2. **Configure Domain-Wide Delegation** in Google Workspace Admin:
-   - Client ID: `108279638122666000589` (from service account JSON)
+   - Client ID: `YOUR_SERVICE_ACCOUNT_CLIENT_ID` (from service account JSON)
    - OAuth Scope: `https://www.googleapis.com/auth/gmail.send`
-3. **Set Environment Variable**: `KINDLE_BOT_EMAIL=degwetbot@degwet.com`
+3. **Set Environment Variable**: `KINDLE_BOT_EMAIL=bot@yourdomain.com
+TORRENT_BASE_URL=https://www.myanonamouse.net`
 
 ## 🛠️ API Endpoints
 
@@ -380,7 +414,7 @@ npm test
 **File System:**
 - Torrent download path: `/mnt/nas/nzb/completed/torrent`
 - Temporary processing space for conversions
-- Service account JSON: `samplefiles/discord-468217-313c7eccba67.json`
+- Service account JSON: `samplefiles/discord-service-account.json` (copy from `discord-service-account.example.json`)
 
 ## 🎯 Usage Examples
 
@@ -417,16 +451,17 @@ npm test
 1. **Enable Gmail API** in Google Cloud Console (same project as Drive)
 2. **Create Bot User** in Google Workspace Admin:
    - Go to Users → Add new user
-   - Create account (e.g., `degwetbot@degwet.com`)
+   - Create account (e.g., `bot@yourdomain.com`)
 3. **Configure Domain-Wide Delegation** in Admin Console:
    - Security → API Controls → Domain-wide Delegation
-   - Add service account Client ID: `108279638122666000589`
+   - Add service account Client ID: `YOUR_SERVICE_ACCOUNT_CLIENT_ID`
    - OAuth Scope: `https://www.googleapis.com/auth/gmail.send`
    - Click Authorize
 4. **Configure Amazon Kindle**:
    - Go to https://www.amazon.com/sendtokindle
-   - Add `degwetbot@degwet.com` to approved senders
-5. **Set Environment Variable**: `KINDLE_BOT_EMAIL=degwetbot@degwet.com`
+   - Add `bot@yourdomain.com` to approved senders
+5. **Set Environment Variable**: `KINDLE_BOT_EMAIL=bot@yourdomain.com
+TORRENT_BASE_URL=https://www.myanonamouse.net`
 
 ### Deluge Configuration
 Ensure Deluge Web UI is accessible and configured with:
@@ -481,9 +516,9 @@ Ensure Deluge Web UI is accessible and configured with:
 **Send to Kindle Fails:**
 - Verify `KINDLE_BOT_EMAIL` is set in `.env.local`
 - Check Gmail API is enabled in Google Cloud Console
-- Verify domain-wide delegation is configured with correct Client ID (`108279638122666000589`)
+- Verify domain-wide delegation is configured with correct Client ID (`YOUR_SERVICE_ACCOUNT_CLIENT_ID`)
 - Ensure OAuth scope `https://www.googleapis.com/auth/gmail.send` is added
-- Check bot email (`degwetbot@degwet.com`) is on Amazon Kindle's approved list
+- Check bot email (`bot@yourdomain.com`) is on Amazon Kindle's approved list
 - Verify file size is under 50MB (Amazon's limit)
 - Common error: "unauthorized_client" means domain-wide delegation not configured correctly
 

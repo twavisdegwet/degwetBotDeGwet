@@ -2,3 +2,5 @@ node_modules
 node_modules/.env.local
 dist/
 .env.local
+samplefiles/*.json
+plan.md

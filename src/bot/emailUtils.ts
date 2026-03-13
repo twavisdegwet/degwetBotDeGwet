@@ -28,8 +28,8 @@ export async function sendToKindle(
 ): Promise<KindleEmailResult> {
   try {
     // Validate email configuration
-    if (!env.GOOGLE_SERVICE_ACCOUNT_PATH || !env.KINDLE_BOT_EMAIL) {
-      throw new Error('Email configuration missing. Please set GOOGLE_SERVICE_ACCOUNT_PATH and KINDLE_BOT_EMAIL in .env.local');
+    if (!env.GOOGLE_SERVICE_ACCOUNT_JSON || !env.KINDLE_BOT_EMAIL) {
+      throw new Error('Email configuration missing. Please set GOOGLE_SERVICE_ACCOUNT_JSON and KINDLE_BOT_EMAIL in .env.local');
     }
 
     // Log progress
@@ -102,7 +102,7 @@ export async function sendToKindle(
 
     // Set up Gmail API with service account
     const auth = new google.auth.GoogleAuth({
-      keyFile: env.GOOGLE_SERVICE_ACCOUNT_PATH,
+      credentials: JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_JSON),
       scopes: ['https://www.googleapis.com/auth/gmail.send'],
       clientOptions: {
         subject: env.KINDLE_BOT_EMAIL, // Domain-wide delegation: send as this user

@@ -8,7 +8,6 @@ import * as helpCommand from './commands/help';
 import * as makeFunnyJokeCommand from './commands/makefunnyjoke';
 import * as makeBadJokeCommand from './commands/makebadjoke';
 import * as askExpertCommand from './commands/askexpert';
-import * as askLibrarianCommand from './commands/asklibrarian';
 // DO NOT RE-ADD: getmovie command is intentionally hidden - accessible via /makefunnyjoke lasagna
 // import * as getMovieCommand from './commands/getmovie';
 // DO NOT RE-ADD: getmusic command is intentionally hidden - accessible via /makefunnyjoke kickodie
@@ -41,7 +40,6 @@ client.commands.set(helpCommand.data.name, helpCommand);
 client.commands.set(makeFunnyJokeCommand.data.name, makeFunnyJokeCommand);
 client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 client.commands.set(askExpertCommand.data.name, askExpertCommand);
-client.commands.set(askLibrarianCommand.data.name, askLibrarianCommand);
 client.commands.set(expertNewsCommand.data.name, expertNewsCommand);
 client.commands.set(askBibleCommand.data.name, askBibleCommand);
 
@@ -54,7 +52,6 @@ const commands = [
   makeFunnyJokeCommand.data,
   makeBadJokeCommand.data,
   askExpertCommand.data,
-  askLibrarianCommand.data,
   expertNewsCommand.data,
   askBibleCommand.data
 ];

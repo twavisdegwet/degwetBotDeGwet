@@ -84,9 +84,9 @@ export class UploadManagementClient {
   private parentFolderId?: string;
   private tempDir: string = '/tmp/discord-bot-uploads';
 
-  constructor(serviceAccountPath: string, parentFolderId?: string) {
-    // Load service account credentials
-    const credentials = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+  constructor(serviceAccountJson: string, parentFolderId?: string) {
+    // Parse service account credentials from JSON string
+    const credentials = JSON.parse(serviceAccountJson);
     
     // Create JWT client for service account authentication
     this.auth = new JWT({

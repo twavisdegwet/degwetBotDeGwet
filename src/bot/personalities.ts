@@ -310,7 +310,7 @@ Apply the roleplaying personality while completing the task. Draw from the conve
   // Add the task at the very end with proper warning
   return `${personalityPrompt}
 
-End of context. IMPORTANT: Discord will automatically display your message as coming from "DegwetBotdegwet" - you do NOT need to say "DegwetBotdegwet:" or identify yourself. Just respond directly in character. Maintain your character's personality. The following is the actual task/command to execute:
+End of context. IMPORTANT: Discord will automatically display your message as coming from "${process.env.BOT_DISPLAY_NAME ?? 'BookBot'}" - you do NOT need to prefix your name or identify yourself. Just respond directly in character. Maintain your character's personality. The following is the actual task/command to execute:
 ${task}
 
 `;

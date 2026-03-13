@@ -44,7 +44,6 @@ const helpCommand = __importStar(require("./commands/help"));
 const makeFunnyJokeCommand = __importStar(require("./commands/makefunnyjoke"));
 const makeBadJokeCommand = __importStar(require("./commands/makebadjoke"));
 const askExpertCommand = __importStar(require("./commands/askexpert"));
-const askLibrarianCommand = __importStar(require("./commands/asklibrarian"));
 const expertNewsCommand = __importStar(require("./commands/expertnews"));
 const askBibleCommand = __importStar(require("./commands/askbible"));
 const badjokes_1 = require("./badjokes");
@@ -68,7 +67,6 @@ client.commands.set(helpCommand.data.name, helpCommand);
 client.commands.set(makeFunnyJokeCommand.data.name, makeFunnyJokeCommand);
 client.commands.set(makeBadJokeCommand.data.name, makeBadJokeCommand);
 client.commands.set(askExpertCommand.data.name, askExpertCommand);
-client.commands.set(askLibrarianCommand.data.name, askLibrarianCommand);
 client.commands.set(expertNewsCommand.data.name, expertNewsCommand);
 client.commands.set(askBibleCommand.data.name, askBibleCommand);
 const commands = [
@@ -80,7 +78,6 @@ const commands = [
     makeFunnyJokeCommand.data,
     makeBadJokeCommand.data,
     askExpertCommand.data,
-    askLibrarianCommand.data,
     expertNewsCommand.data,
     askBibleCommand.data
 ];

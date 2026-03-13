@@ -88,14 +88,12 @@ async function uploadTorrentWithProgress(
   try {
     // Import the upload management client directly
     const { UploadManagementClient } = await import('../api/clients/uploadManagement');
-    const path = await import('path');
     
     // Initialize upload client
-    const serviceAccountPath = process.env.GOOGLE_SERVICE_ACCOUNT_PATH || 
-      path.join(__dirname, '../../samplefiles/discord-468217-313c7eccba67.json');
-    const driveFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '1v7E_LESO6hE-vFFXcBE5WDjLocdbZ6nQ';
-    
-    const uploadClient = new UploadManagementClient(serviceAccountPath, driveFolderId);
+    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '';
+    const driveFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '';
+
+    const uploadClient = new UploadManagementClient(serviceAccountJson, driveFolderId);
     
     // Get torrent details
     const clientManager = DelugeClientManager.getInstance();

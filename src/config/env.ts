@@ -22,7 +22,7 @@ const envSchema = z.object({
   MAM_ID: z.string().min(1), // The mam_id cookie value
   MAM_USERNAME: z.string().min(1),
   MAM_PASSWORD: z.string().min(1),
-  MAM_BASE_URL: z.string().url().default('https://www.myanonamouse.net'),
+  TORRENT_BASE_URL: z.string().url().default('https://www.myanonamouse.net'),
   
   // Download Directory Configuration
   DOWNLOADS_DIRECTORY: z.string().min(1).default('/mnt/nas/nzbget/nzb/completed/torrent'),
@@ -38,7 +38,8 @@ const envSchema = z.object({
   SABNZBD_API_KEY: z.string(),
 
   // Google Drive Configuration (Service Account)
-  GOOGLE_SERVICE_ACCOUNT_PATH: z.string().min(1),
+  // Paste the entire service account JSON as a single-line string
+  GOOGLE_SERVICE_ACCOUNT_JSON: z.string().min(1),
   GOOGLE_DRIVE_FOLDER_ID: z.string().min(1),
   
   // NVIDIA API Configuration (Optional - tried first if configured)
@@ -54,12 +55,11 @@ const envSchema = z.object({
   OLLAMA_SECONDARY_TYPE: z.enum(['ollama', 'openai']).default('ollama'),
   OLLAMA_APPEND_NOTHINK: z.string().optional().default('false').transform(val => val === 'true'),
   
-  // Hardcover API Configuration
-  HARDCOVER_API_URL: z.string().url().default('https://api.hardcover.app/v1/graphql'),
-  HARDCOVER_API_TOKEN: z.string().min(1),
-  
   // Comic Image Path Configuration
-  COMIC_IMAGE_PATH: z.string().min(1).default('/home/twavisdegwet/heathcliff project/comics'),
+  COMIC_IMAGE_PATH: z.string().min(1).default('/path/to/comics'),
+
+  // Bot Display Name (shown in AI personality prompts)
+  BOT_DISPLAY_NAME: z.string().optional().default('BookBot'),
 
   // Email Configuration (for Send to Kindle via Gmail API)
   // Uses the same service account as Google Drive with domain-wide delegation
@@ -69,7 +69,7 @@ const envSchema = z.object({
 
   // Kindle Email Mappings (Discord ID to Kindle Email)
   // JSON string mapping Discord user IDs to their Kindle email addresses
-  // Example: '{"214899404627378176":"travistreed_cf4fc8@kindle.com"}'
+  // Example: '{"YOUR_DISCORD_USER_ID":"yourname@kindle.com"}'
   KINDLE_EMAIL_MAPPINGS: z.string().optional(),
 });
 
