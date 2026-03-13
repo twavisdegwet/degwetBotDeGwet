@@ -90,7 +90,7 @@ function lookupVerses(bookName: string, chapter: number, verseStart: number, ver
     for (let v = verseStart; v <= verseEnd && v <= chapterData.verses.length; v++) {
         const verse = chapterData.verses.find(vs => vs.verse === v);
         if (verse) {
-            verses.push(`${book.name} ${chapter}:${verse.verse} - "${verse.text}"`);
+            verses.push(`${book.name} ${chapter}:${verse.verse} - ${verse.text}`);
         }
     }
     return verses;
@@ -201,7 +201,7 @@ const POST_VERSE_MESSAGES = [
 
 function groupConsecutiveVerses(verses: string[]): string[] {
     const parsed = verses.map(v => {
-        const match = v.match(/^(.+)\s+(\d+):(\d+)\s+-\s+"(.*)"/);
+        const match = v.match(/^(.+)\s+(\d+):(\d+)\s+-\s+(.*)/);
         if (!match) return null;
         return { book: match[1], chapter: parseInt(match[2], 10), verse: parseInt(match[3], 10), text: match[4], raw: v };
     });
@@ -223,8 +223,8 @@ function groupConsecutiveVerses(verses: string[]): string[] {
         const ref = g.startVerse === g.endVerse
             ? `${g.book} ${g.chapter}:${g.startVerse}`
             : `${g.book} ${g.chapter}:${g.startVerse}-${g.endVerse}`;
-        const textBlock = g.texts.map(t => `"${t}"`).join('\n\n');
-        return `📖 **${ref}**\n${textBlock}`;
+        const textBlock = g.texts.join(' ');
+        return `📖 **${ref}**\n\`\`\`\n${textBlock}\n\`\`\``;
     });
 }
 
