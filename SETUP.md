@@ -2,11 +2,14 @@
 
 This guide covers all installation, configuration, and setup requirements for the Discord Media Bot.
 
+> ⚠️ **CRITICAL: Deluge is REQUIRED** - This bot cannot function without Deluge. Unlike optional services, Deluge is mandatory - all torrent downloads flow through it. Ensure Deluge is installed, configured, and running before starting the bot.
+
 ## 📋 Table of Contents
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [External Service Dependencies](#external-service-dependencies)
+- [AI Personalities Configuration](#ai-personalities-configuration)
 - [Configuration](#configuration)
 - [Running the Bot](#running-the-bot)
 - [Troubleshooting](#troubleshooting)
@@ -336,6 +339,55 @@ Get a key at https://build.nvidia.com and set:
 **Required Environment Variables:**
 - `BLUESKY_HANDLE` - Your Bluesky handle
 - `BLUESKY_PASSWORD` - Your app password
+
+---
+
+## AI Personalities Configuration
+
+The bot includes 6 expert personalities for AI consultation commands (`/askexpert`, `/askbible`, `/makebadjoke`). Each personality defines how the AI responds - tone, speech patterns, character traits, and response style.
+
+### Available Personalities
+
+| Personality | Emoji | Description |
+|-------------|-------|-------------|
+| `trump` | 🇺🇸 | Brash, confident, uses superlatives, name-drops achievements |
+| `clyde` | 🤖 | Former Discord AI, overly enthusiastic, eager to prove itself |
+| `cuddy` | 😡 | Grumpy former member, complains while helping, colorful language |
+| `emperor` | 👑 | Warhammer 40K Emperor, divine gravitas, epic ceremonial tone |
+| `foghorn` | 🐓 | Foghorn Leghorn, bombastic Southern rooster, "I say, I say..." |
+| `bonzo` | 🤖 | Direct, concise, no-nonsense assistant |
+
+### Editing Personalities
+
+**File:** `src/bot/personalities.ts`
+
+Each personality is defined in the `buildPersonalityPrompt()` function (lines 99-317). To modify a personality:
+
+1. **Core Traits** - Define the character's key characteristics
+2. **Speech Patterns** - Add catchphrases and speaking style
+3. **Answer Style** - Specify how responses should be formatted
+
+### Adding a New Personality
+
+1. Add the personality name to the `personalities` array at `src/bot/personalities.ts:1`:
+   ```typescript
+   export const personalities = ['trump', 'clyde', 'cuddy', 'emperor', 'foghorn', 'bonzo', 'yournewpersona'] as const;
+   ```
+
+2. Add a case in `buildPersonalityPrompt()` with the character's definition
+
+3. Add emoji/name mapping in `getPersonalityFormatting()` (lines 11-28)
+
+### LLM Compatibility Notes
+
+**Tested and working:**
+- **GLM** series models - Handles personalities well
+- **Minimax M2.5** - Excellent roleplay adherence
+
+**Not recommended:**
+- **Qwen** - Frequently breaks character and refuses to stay in role; the personalities don't stick
+
+> **Tip:** When adding new personalities, test with your chosen LLM first. Some models are more cooperative with roleplay than others - you may need to adjust the prompt intensity based on the model's tendency to break character.
 
 ---
 

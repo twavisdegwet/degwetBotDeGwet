@@ -20,6 +20,21 @@ npm run dev
 
 For detailed setup instructions, see **[SETUP.md](SETUP.md)**.
 
+## ⚠️ Critical Requirements
+
+> **Deluge is REQUIRED** - This bot relies on Deluge torrent client for all downloads. It must be running and accessible before starting the bot. See [Deluge Setup in SETUP.md](#deluge-bit-torrent-client) for configuration details.
+
+### Required Services
+
+| Service | Status | Notes |
+|---------|--------|-------|
+| Deluge | **Required** | Torrent client with Web UI enabled |
+| Discord Bot | Required | Create at Discord Developer Portal |
+| MyAnonaMouse | Required | Private tracker account |
+| Google Drive | Required | Service account with shared drive access |
+| FFmpeg | Required | For MP3→M4B audiobook conversion |
+| Calibre | Required | For ebook format conversion |
+
 ## ✨ Key Features
 
 - **Search & Download**: Search MyAnonaMouse and download torrents via Deluge
@@ -87,6 +102,60 @@ npm run format
 - FFmpeg (for audiobook conversion)
 - Calibre (for ebook conversion)
 - Linux/Unix environment
+
+---
+
+## 🎭 Admin Features (Hidden)
+
+These features are not shown in the public help but are available to deployed administrators:
+
+### Hidden Commands
+
+| Command | Description |
+|---------|-------------|
+| `/makefunnyjoke lasagna` | Search and download movies from MAM |
+| `/makefunnyjoke kickodie` | Search and download music from MAM |
+
+> **Note:** These are intentionally hidden from regular users - the bot pretends these commands don't exist. Use them directly to access full search/download for movies and music.
+
+---
+
+## 🤖 AI Personalities
+
+The bot includes 6 configurable expert personalities for the `/askexpert`, `/askbible`, and `/makebadjoke` commands:
+
+| Personality | Description |
+|-------------|-------------|
+| `trump` | Brash, confident, name-drops achievements |
+| `clyde` | Former Discord AI, overly enthusiastic |
+| `cuddy` | Grumpy former member, complains while helping |
+| `emperor` | Warhammer 40K Emperor, divine gravitas |
+| `foghorn` | Foghorn Leghorn, bombastic Southern rooster |
+| `bonzo` | Direct, concise, no-nonsense assistant |
+
+### Customizing Personalities
+
+**Location:** `src/bot/personalities.ts`
+
+Each personality is defined in the `buildPersonalityPrompt()` function with:
+- Core traits and characteristics
+- Speech patterns and catchphrases
+- Answer style guidelines
+
+**LLM Compatibility:**
+
+Tested and working well with:
+- **GLM** series models
+- **Minimax M2.5**
+
+Not recommended:
+- **Qwen** - Tends to break character and refuses roleplay; the personalities don't stick
+
+To add a new personality:
+1. Add it to the `personalities` array in `src/bot/personalities.ts:1`
+2. Add a case in `buildPersonalityPrompt()` defining the character
+3. Add emoji/name mapping in `getPersonalityFormatting()`
+4. Test thoroughly - some models refuse to stay in character!
 
 ## 🤝 Contributing
 
