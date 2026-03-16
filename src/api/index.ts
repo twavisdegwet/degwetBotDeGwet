@@ -3,7 +3,7 @@ import cors from 'cors';
 import { env } from '../config/env';
 
 // Import Discord bot (will start automatically if configured)
-import '../bot/index';
+import '../discord/index';
 
 // Create Express app
 const app = express();

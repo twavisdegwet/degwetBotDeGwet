@@ -7,7 +7,7 @@ exports.server = exports.app = void 0;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const env_1 = require("../config/env");
-require("../bot/index");
+require("../discord/index");
 const app = (0, express_1.default)();
 exports.app = app;
 const PORT = env_1.env.HTTP_PORT || 3000;
