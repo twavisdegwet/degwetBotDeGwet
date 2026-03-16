@@ -78,7 +78,7 @@ router.post('/torrent', async (req, res) => {
                 error: 'Torrent ID is required'
             });
         }
-        const { uploadTorrentToGDrive } = await Promise.resolve().then(() => __importStar(require('../../bot/uploadUtils')));
+        const { uploadTorrentToGDrive } = await Promise.resolve().then(() => __importStar(require('../../discord/uploadUtils')));
         const result = await uploadTorrentToGDrive(torrentId, convertMp3ToM4b);
         if (result.success) {
             return res.json({

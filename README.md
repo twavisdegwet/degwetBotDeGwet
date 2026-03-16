@@ -135,7 +135,7 @@ The bot includes 6 configurable expert personalities for the `/askexpert`, `/ask
 
 ### Customizing Personalities
 
-**Location:** `src/bot/personalities.ts`
+**Location:** `src/discord/personalities.ts`
 
 Each personality is defined in the `buildPersonalityPrompt()` function with:
 - Core traits and characteristics
@@ -152,7 +152,7 @@ Not recommended:
 - **Qwen** - Tends to break character and refuses roleplay; the personalities don't stick
 
 To add a new personality:
-1. Add it to the `personalities` array in `src/bot/personalities.ts:1`
+1. Add it to the `personalities` array in `src/discord/personalities.ts:1`
 2. Add a case in `buildPersonalityPrompt()` defining the character
 3. Add emoji/name mapping in `getPersonalityFormatting()`
 4. Test thoroughly - some models refuse to stay in character!

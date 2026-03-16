@@ -10,8 +10,8 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const child_process_1 = require("child_process");
 const util_1 = require("util");
-const mp3Converter_1 = require("../../utils/mp3Converter");
-const ebookConverter_1 = require("../../utils/ebookConverter");
+const mp3Converter_1 = require("../../converters/mp3Converter");
+const ebookConverter_1 = require("../../converters/ebookConverter");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 async function retryWithBackoff(operation, maxRetries = 3, baseDelay = 1000, operationName = 'operation') {
     let lastError;

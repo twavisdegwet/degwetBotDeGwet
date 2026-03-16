@@ -66,7 +66,7 @@ router.post('/torrent', async (req: Request, res: Response) => {
 
     // Use the unified upload function to ensure consistency across all upload pathways
     // Import the unified upload function dynamically to avoid circular dependencies
-    const { uploadTorrentToGDrive } = await import('../../bot/uploadUtils');
+    const { uploadTorrentToGDrive } = await import('../../discord/uploadUtils');
 
     // Upload to Google Drive using the unified function (without progress target for API calls)
     const result = await uploadTorrentToGDrive(torrentId, convertMp3ToM4b);

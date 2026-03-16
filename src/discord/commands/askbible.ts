@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { getAvailableOllamaServer, makeOllamaRequest, getOllamaErrorMessage, ErrorMessages } from '../ollamautils';
 import { buildPersonalityPrompt, Personality, personalities, getPersonalityFormatting } from '../personalities';
 import { sendRandomGarfieldComic } from '../utils';
-import bibleData from '../../../books/bible.json';
+import bibleData from '../../../data/bible.json';
 
 interface Verse {
     id: number;

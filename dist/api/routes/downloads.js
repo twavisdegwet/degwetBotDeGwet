@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const downloadManagement_1 = require("../clients/downloadManagement");
 const delugeClientManager_1 = __importDefault(require("../clients/delugeClientManager"));
-const uploadUtils_1 = require("../../bot/uploadUtils");
+const uploadUtils_1 = require("../../discord/uploadUtils");
 const router = (0, express_1.Router)();
 const getDelugeClient = async () => {
     const clientManager = delugeClientManager_1.default.getInstance();

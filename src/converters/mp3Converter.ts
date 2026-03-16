@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
-import { Logger } from './logger';
+import { Logger } from '../shared/logger';
 
 const execAsync = promisify(exec);
 
@@ -52,7 +52,7 @@ export async function convertMp3ToM4b(
     }
     
     // Path to the conversion script
-    const scriptPath = path.join(process.cwd(), 'samplefiles/mp3tom4b.sh');
+    const scriptPath = path.join(process.cwd(), 'src/converters/scripts/mp3tom4b.sh');
     
     // Build the full command
     const command = `cd "${sourceDirectory}" && "${scriptPath}" ${args.join(' ')}`;

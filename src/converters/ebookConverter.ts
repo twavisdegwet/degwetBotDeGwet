@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
-import { Logger } from './logger';
+import { Logger } from '../shared/logger';
 
 const execAsync = promisify(exec);
 
@@ -51,7 +51,7 @@ export async function convertEbook(
     }
 
     // Path to the conversion script
-    const scriptPath = path.join(process.cwd(), 'samplefiles/ebookconvert.sh');
+    const scriptPath = path.join(process.cwd(), 'src/converters/scripts/ebookconvert.sh');
 
     // Build the full command
     const command = `"${scriptPath}" ${args.join(' ')}`;

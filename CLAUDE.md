@@ -48,8 +48,8 @@ The codebase is organized into three main layers:
   - `delugeClientManager.ts` - Singleton pattern for Deluge connection management
 - **Routes**: RESTful endpoints for MAM search, downloads, and uploads
 
-### 2. Discord Bot Layer (`src/bot/`)
-- **Entry point**: `src/bot/index.ts` - Discord client setup and command registration
+### 2. Discord Bot Layer (`src/discord/`)
+- **Entry point**: `src/discord/index.ts` - Discord client setup and command registration
 - **Commands**: Slash commands in `commands/` directory, each exports `data` and `execute`
 - **Core utilities**:
   - `utils.ts` - Unified upload system and interaction handlers
@@ -68,7 +68,7 @@ The codebase is organized into three main layers:
 ## Key Architectural Patterns
 
 ### Unified Upload System
-The bot uses a centralized upload system (`src/bot/utils.ts`) that handles:
+The bot uses a centralized upload system (`src/discord/utils.ts`) that handles:
 - Content type analysis (audiobook/ebook/mixed media)
 - MP3→M4B conversion with user interaction
 - Google Drive folder organization with content type prefixes
@@ -170,10 +170,11 @@ The project uses Jest with TypeScript:
 
 ## Integration Dependencies
 
-### External Files in `samplefiles/`
-- `discord-468217-313c7eccba67.json` - Service account credentials for Google Drive and Gmail API
-- `mp3tom4b.sh` - MP3 to M4B conversion script (requires ffmpeg)
-- `ebookconvert.sh` - Ebook format conversion script (requires Calibre's ebook-convert)
+### External Files
+- `samplefiles/discord-468217-313c7eccba67.json` - Service account credentials for Google Drive and Gmail API
+- `src/converters/scripts/mp3tom4b.sh` - MP3 to M4B conversion script (requires ffmpeg)
+- `src/converters/scripts/ebookconvert.sh` - Ebook format conversion script (requires Calibre's ebook-convert)
+- `data/bible.json`, `data/biblersv.json` - Bible data files
 
 ### Service Requirements
 - Deluge daemon with Web UI enabled

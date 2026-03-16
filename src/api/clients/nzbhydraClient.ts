@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { parseString } from 'xml2js';
-import { Logger } from '../../utils/logger';
+import { Logger } from '../../shared/logger';
 import { env } from '../../config/env';
 
 export interface NZBHydraSearchResult {

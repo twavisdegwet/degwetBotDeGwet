@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { DownloadManager } from '../clients/downloadManagement';
 import DelugeClientManager from '../clients/delugeClientManager';
-import { uploadTorrentToGDrive } from '../../bot/uploadUtils';
+import { uploadTorrentToGDrive } from '../../discord/uploadUtils';
 
 const router = Router();
 

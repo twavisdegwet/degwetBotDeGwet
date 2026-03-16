@@ -4,8 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { exec, execSync } from 'child_process';
 import { promisify } from 'util';
-import { convertMp3ToM4b, hasMP3Files } from '../../utils/mp3Converter';
-import { convertEbook, hasConvertibleEbooks } from '../../utils/ebookConverter';
+import { convertMp3ToM4b, hasMP3Files } from '../../converters/mp3Converter';
+import { convertEbook, hasConvertibleEbooks } from '../../converters/ebookConverter';
 
 const execAsync = promisify(exec);
 

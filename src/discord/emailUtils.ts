@@ -212,7 +212,7 @@ async function convertToEpub(inputFilePath: string): Promise<string> {
   }
 
   // Get the path to ebookconvert.sh
-  const scriptPath = path.join(__dirname, '../../samplefiles/ebookconvert.sh');
+  const scriptPath = path.join(__dirname, '../../converters/scripts/ebookconvert.sh');
 
   if (!fs.existsSync(scriptPath)) {
     throw new Error(`ebookconvert.sh script not found at ${scriptPath}`);
